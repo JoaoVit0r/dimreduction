@@ -1,8 +1,14 @@
 import random
+import math
+import pickle
 
 PRINT_DEBUG = True
 
 class IOFile:
+    @staticmethod
+    def write_ties(originalagn, tiesout, targetindex, avgedges, topology, originalpredictors, q_entropy, predictors, ties, h_global, flag):
+        pass
+    
     @staticmethod
     def read_data_first_row(filepath, startrow, startcolumn, delimiter):
         with open(filepath, 'r') as file:
@@ -38,11 +44,66 @@ class IOFile:
 
     @staticmethod
     def write_agn_to_file(agn, filepath):
-        # Placeholder for writing AGN object to file
-        pass
+        try:
+            with open(filepath, 'wb') as file:
+                pickle.dump(agn, file)
+            return True
+        except IOError as e:
+            print(f"Error when creating FileOutputStream: {e}")
+            return False
 
 class Preprocessing:
     SKIP_VALUE = -999
+
+    @staticmethod
+    def max_min_column(M, col):
+        mm = [M[0][col], M[0][col]]
+        for row in M:
+            if row[col] > mm[0]:
+                mm[0] = row[col]
+            if row[col] < mm[1]:
+                mm[1] = row[col]
+        return mm
+
+    @staticmethod
+    def max_min_row(M, row, label):
+        mm = [M[row][0], M[row][0]]
+        for j in range(len(M[0]) - label):
+            if M[row][j] > mm[0]:
+                mm[0] = M[row][j]
+            if M[row][j] < mm[1]:
+                mm[1] = M[row][j]
+        return mm
+
+    @staticmethod
+    def max_min(M):
+        mm = [M[0][0], M[0][0]]
+        for row in M:
+            for value in row:
+                if value > mm[0]:
+                    mm[0] = value
+                if value < mm[1]:
+                    mm[1] = value
+        return mm
+
+    @staticmethod
+    def filter_ma(expressiondata, geneids):
+        remaingenes = []
+        removedgenes = []
+        for lin in range(len(expressiondata)):
+            if all(value != 0 for value in expressiondata[lin]):
+                remaingenes.append(lin)
+            else:
+                removedgenes.append(geneids[0][lin])
+                print(f"Gene {geneids[0][lin]} was removed by filter.")
+        print(f"{len(removedgenes)} removed genes.")
+        filtereddata = [[expressiondata[lin][col] for col in range(len(expressiondata[0]))] for lin in remaingenes]
+        return filtereddata
+
+    @staticmethod
+    def apply_log2(expressiondata):
+        filtereddata = [[((math.log(value) / math.log(2)) if value != Preprocessing.SKIP_VALUE else value) for value in row] for row in expressiondata]
+        return filtereddata
 
     @staticmethod
     def copy_matrix(matrix):
@@ -91,6 +152,82 @@ class Preprocessing:
                 arr[i], arr[j] = arr[j], arr[i]
         arr[i + 1], arr[high] = arr[high], arr[i + 1]
         return i + 1
+
+    @staticmethod
+    def selection_sort(M):
+        for j in range(len(M) - 1):
+            minvalue = M[j][0]
+            minposition = j
+            for i in range(j + 1, len(M)):
+                if M[i][0] < minvalue:
+                    minvalue = M[i][0]
+                    minposition = i
+            if minposition != j:
+                M[j], M[minposition] = M[minposition], M[j]
+
+    @staticmethod
+    def bubble_sort(M):
+        change = True
+        while change:
+            change = False
+            for i in range(len(M) - 1):
+                if M[i][0] > M[i + 1][0]:
+                    M[i], M[i + 1] = M[i + 1], M[i]
+                    change = True
+
+    @staticmethod
+    def normalize(M, qd, label):
+        for lin in range(len(M)):
+            maxmin = Preprocessing.max_min(M[lin])
+            for col in range(len(M[lin]) - label):
+                normalizedvalue = (qd - 1) * (M[lin][col] - maxmin[1]) / (maxmin[0] - maxmin[1])
+                k = 0
+                for k in range(qd - 1):
+                    if normalizedvalue <= k:
+                        break
+                M[lin][col] = k
+
+    @staticmethod
+    def quantize_rows(M, qd, extreme_values, label):
+        Preprocessing.normal_transform_lines(M, extreme_values, label)
+        for j in range(len(M)):
+            negatives = []
+            positives = []
+            for i in range(len(M[0]) - label):
+                if M[j][i] < 0:
+                    negatives.append(M[j][i])
+                else:
+                    positives.append(M[j][i])
+            meanneg = sum(negatives) / len(negatives) if negatives else 0
+            meanpos = sum(positives) / len(positives) if positives else 0
+            threshold = [meanneg, meanpos]
+            for i in range(len(M[0]) - label):
+                k = 0
+                for k in range(qd - 1):
+                    if M[j][i] <= threshold[k]:
+                        break
+                M[j][i] = k
+
+    @staticmethod
+    def quantize_columns(M, qd, extreme_values, label):
+        Preprocessing.normal_transform_columns(M, extreme_values, label)
+        for j in range(len(M[0]) - label):
+            negatives = []
+            positives = []
+            for i in range(len(M)):
+                if M[i][j] < 0:
+                    negatives.append(M[i][j])
+                else:
+                    positives.append(M[i][j])
+            meanneg = sum(negatives) / len(negatives) if negatives else 0
+            meanpos = sum(positives) / len(positives) if positives else 0
+            threshold = [meanneg, meanpos]
+            for i in range(len(M)):
+                k = 0
+                for k in range(qd - 1):
+                    if M[i][j] <= threshold[k]:
+                        break
+                M[i][j] = k
 
     @staticmethod
     def quantize_columns_ma_normal(M, quantizeddata, qd, mean, std, lowthreshold, hithreshold):
@@ -146,7 +283,7 @@ class Preprocessing:
                             k = 0
                     if k == 0:
                         count0 += 1
-                    else: 
+                    else:
                         count1 += 1
                     quantizeddata[i][col] = k
                     
@@ -540,6 +677,476 @@ class AGN:
     def set_temporalsignalquantized_from_float(self, temporalsignalquantized):
         self.temporalsignalquantized = [[int(value) for value in row] for row in temporalsignalquantized]
 
+class FS:
+    def __init__(self, samples, npv, nc, typeMCE_COD, alphaPenalty, betaConfidence, qentropy, maxresultlistsize):
+        self.I = []
+        self.probtable = []
+        self.columns = len(samples[0])
+        self.h_global = 1.0
+        self.A = samples
+        self.n = npv
+        self.c = nc
+        self.type = typeMCE_COD
+        self.alpha = alphaPenalty
+        self.beta = betaConfidence
+        self.q = qentropy
+        self.itmax = int(math.floor(math.log(len(samples)) / math.log(npv)))
+        self.resultlist = []
+        self.resultlistsize = maxresultlistsize
+        self.maxresultvalue = 1
+        self.bestentropy = []
+        self.bestset = []
+        self.tiesentropy = []
+        self.ties = []
+        self.jointentropiesties = []
+
+    def insert_in_result_list(self, I, hmin):
+        item = [hmin, I[:]]
+        if len(self.resultlist) < self.resultlistsize:
+            self.resultlist.append(item)
+            if len(self.resultlist) > 1:
+                Preprocessing.selection_sort(self.resultlist)
+        else:
+            vi = item[0]
+            vs = self.resultlist[-1][0]
+            if vi < vs:
+                self.resultlist[-1] = item
+                Preprocessing.selection_sort(self.resultlist)
+
+    def break_ties(self, i):
+        if not self.ties[i] or self.tiesentropy[i] == 1:
+            return
+        self.jointentropiesties = [0] * len(self.ties[i])
+        maxjointentropy = 0
+        maxjointentropyposition = 0
+        for p in range(len(self.ties[i])):
+            predictors = self.ties[i][p]
+            self.jointentropiesties[p] = Criteria.joint_entropy(self.n, predictors, self.A, self.c)
+            if self.jointentropiesties[p] > maxjointentropy:
+                maxjointentropy = self.jointentropiesties[p]
+                maxjointentropyposition = p
+        self.I = self.ties[i][maxjointentropyposition]
+
+    def minimal(self, maxsetsize):
+        posminimal = 0
+        for i in range(1, maxsetsize + 1):
+            if self.bestentropy[i] < self.h_global:
+                self.h_global = self.bestentropy[i]
+                self.I = self.bestset[i]
+                posminimal = i
+        if self.ties[posminimal] and len(self.ties[posminimal]) > 1:
+            self.break_ties(posminimal)
+        cfvalue = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+        self.probtable = Criteria.probtable[:]
+
+    def minimal_ma(self, maxsetsize):
+        posminimal = 0
+        for i in range(1, maxsetsize + 1):
+            if self.bestentropy[i] <= self.h_global:
+                self.h_global = self.bestentropy[i]
+                self.I = self.bestset[i]
+                posminimal = i
+        if self.ties[posminimal] and len(self.ties[posminimal]) > 1:
+            self.break_ties(posminimal)
+        cfvalue = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+        self.probtable = Criteria.probtable[:]
+
+    def inicialize(self, maxfeatures):
+        self.bestentropy = [1] * maxfeatures
+        self.bestset = [[] for _ in range(maxfeatures)]
+        self.tiesentropy = [1] * maxfeatures
+        self.ties = [[] for _ in range(maxfeatures)]
+
+    def run_sfs(self, called_by_exhaustive, maxfeatures):
+        columns = len(self.A[0])
+        for i in range(columns - 1):
+            h_min = 1.1
+            f_min = -1
+            H = 1
+            self.I.append(-1)
+            for f in range(columns - 1):
+                if f in self.I:
+                    continue
+                self.I[-1] = f
+                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                if H < h_min:
+                    f_min = f
+                    h_min = H
+                    self.insert_in_result_list(self.I, H)
+                if H == 0:
+                    break
+            if h_min < self.h_global:
+                self.I[-1] = f_min
+                self.h_global = h_min
+                if self.h_global == 0 or len(self.I) >= maxfeatures:
+                    break
+            else:
+                self.I.pop()
+                break
+        if called_by_exhaustive:
+            self.itmax = len(self.I)
+
+    def best_set(self, bestset, bestentropy, other, entropy):
+        size = len(other)
+        if entropy < bestentropy[size]:
+            bestentropy[size] = entropy
+            bestset.clear()
+            bestset.extend(other)
+
+    def run_sffs(self, maxfeatures, targetindex, agn):
+        if maxfeatures >= self.columns:
+            maxfeatures = self.columns - 1
+        self.inicialize(maxfeatures + 1)
+        while len(self.I) < maxfeatures:
+            h_min = 1
+            f_min = -1
+            H = 1
+            self.I.append(-1)
+            for f in range(self.columns - 1):
+                if agn:
+                    predictorindex = f
+                    if predictorindex >= targetindex:
+                        predictorindex += 1
+                    if agn.get_genes()[predictorindex].is_control():
+                        continue
+                if f in self.I:
+                    continue
+                self.I[-1] = f
+                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                if H < h_min:
+                    f_min = f
+                    h_min = H
+                    self.insert_in_result_list(self.I, H)
+                if abs(H - h_min) < 0.00001:
+                    if not self.ties[len(self.I)]:
+                        self.ties[len(self.I)] = []
+                    if H < self.tiesentropy[len(self.I)]:
+                        self.ties[len(self.I)].clear()
+                        self.tiesentropy[len(self.I)] = H
+                    titem = self.I[:]
+                    self.ties[len(self.I)].append(titem)
+            if len(self.I) <= maxfeatures and f_min != -1:
+                self.I[-1] = f_min
+                if not self.bestset[len(self.I)]:
+                    self.bestset[len(self.I)] = self.I[:]
+                    self.bestentropy[len(self.I)] = h_min
+                else:
+                    self.best_set(self.bestset[len(self.I)], self.bestentropy, self.I, h_min)
+                repeticoes = 0
+                for be in range(1, len(self.bestentropy) - 1):
+                    if self.bestentropy[be] < 1 and abs(self.bestentropy[be] - self.bestentropy[be + 1]) < 0.001:
+                        repeticoes += 1
+                if repeticoes > 1:
+                    break
+                again = True
+                while len(self.I) > 2 and again:
+                    combinations = len(self.I)
+                    le = 1
+                    lmf = -1
+                    for comb in range(combinations):
+                        xk = [self.I[nc] for nc in range(combinations) if nc != comb]
+                        nh = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, xk, self.A, self.q)
+                        if nh < le:
+                            le = nh
+                            lmf = self.I[comb]
+                    if le < self.bestentropy[len(self.I) - 1] and lmf != f_min:
+                        self.I.remove(lmf)
+                        self.best_set(self.bestset[len(self.I)], self.bestentropy, self.I, le)
+                        self.insert_in_result_list(self.I, le)
+                        again = True
+                        f_min = -1
+                        self.ties[len(self.I)].clear()
+                        self.tiesentropy[len(self.I)] = le
+                        titem = self.I[:]
+                        self.ties[len(self.I)].append(titem)
+                    else:
+                        again = False
+                if h_min == 0:
+                    break
+            else:
+                self.I.pop()
+                break
+        self.minimal(maxfeatures)
+
+    def run_sffs_stack(self, maxfeatures, targetindex, agn):
+        print(f"Running Target index == {targetindex}")
+        if agn:
+            print(f", name == {agn.get_genes()[targetindex].get_name()}")
+        print("\n")
+        if maxfeatures >= self.columns:
+            maxfeatures = self.columns - 1
+        self.inicialize(maxfeatures + 1)
+        exestack = [[-1]]
+        expandedestack = []
+        while exestack:
+            h_min = 1
+            f_min = -1
+            H = 1
+            self.I = exestack.pop(0)
+            expandedestack.append(self.I[:])
+            print("\nExpanded tied predictors: ", self.I)
+            for f in range(self.columns - 1):
+                if agn:
+                    predictorindex = f
+                    if predictorindex >= targetindex:
+                        predictorindex += 1
+                    if agn.get_genes()[predictorindex].is_control():
+                        continue
+                if f in self.I:
+                    continue
+                self.I[-1] = f
+                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                if H < h_min:
+                    f_min = f
+                    h_min = H
+                    self.insert_in_result_list(self.I, H)
+                if abs(H - h_min) < 0.001:
+                    if H < self.tiesentropy[len(self.I)]:
+                        self.ties[len(self.I)].clear()
+                        self.tiesentropy[len(self.I)] = H
+                    if abs(H - self.tiesentropy[len(self.I)]) < 0.001:
+                        titem = self.I[:]
+                        if not self.contain_predictor_set(self.ties[len(self.I)], titem):
+                            self.ties[len(self.I)].append(titem)
+            if len(self.I) <= maxfeatures and f_min != -1:
+                self.I[-1] = f_min
+                self.best_set(self.bestset[len(self.I)], self.bestentropy, self.I, h_min)
+                again = True
+                while len(self.I) > 2 and again:
+                    combinations = len(self.I)
+                    le = 1
+                    lmf = -1
+                    for comb in range(combinations):
+                        xk = [self.I[nc] for nc in range(combinations) if nc != comb]
+                        nh = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, xk, self.A, self.q)
+                        if nh < le:
+                            le = nh
+                            lmf = self.I[comb]
+                    if le < self.bestentropy[len(self.I) - 1] and lmf != f_min:
+                        self.I.remove(lmf)
+                        self.best_set(self.bestset[len(self.I)], self.bestentropy, self.I, le)
+                        self.insert_in_result_list(self.I, le)
+                        again = True
+                        f_min = -1
+                        self.ties[len(self.I)].clear()
+                        self.tiesentropy[len(self.I)] = le
+                        titem = self.I[:]
+                        self.ties[len(self.I)].append(titem)
+                    else:
+                        again = False
+                print(f"Preditores escolhidos com cardinalidade == {len(self.I)}")
+                print(f"Preditores escolhidos: {self.I}")
+                print("Preditores empatados empilhados:")
+                contp = 0
+                for t in range(len(self.ties[len(self.I)])):
+                    predictorset = self.ties[len(self.I)][t][:]
+                    predictorset.append(-1)
+                    if not self.contain_predictor_set(exestack, predictorset) and not self.contain_predictor_set(expandedestack, predictorset) and len(predictorset) <= maxfeatures:
+                        exestack.append(predictorset)
+                        print(predictorset)
+                        contp += 1
+                print(f"# empilhados == {contp}")
+                print(f"Tamanho da pilha == {len(exestack)}")
+            else:
+                self.I.pop()
+                break
+        print(f"Numero de conjuntos de preditores expandidos == {len(expandedestack)}")
+        self.minimal_ma(maxfeatures)
+
+    def contain_predictor_set(self, stack, predictorset):
+        for stackset in stack:
+            count = 0
+            for predictor in predictorset:
+                if predictor in stackset:
+                    count += 1
+            if count == len(predictorset):
+                return True
+        return False
+
+    def run_exhaustive(self, it, f, tempI):
+        if self.itmax == 1:
+            for i in range(self.columns - 1):
+                tempI.append(i)
+                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, tempI, self.A, self.q)
+                if H < self.h_global:
+                    self.I = tempI[:]
+                    self.h_global = H
+                    self.insert_in_result_list(tempI, H)
+                tempI.pop()
+            return
+        tempI.append(f)
+        if it >= self.itmax - 1:
+            H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, tempI, self.A, self.q)
+            if H < self.h_global:
+                self.I = tempI[:]
+                self.h_global = H
+                self.insert_in_result_list(tempI, H)
+            return
+        for i in range(f + 1, self.columns - 1):
+            self.run_exhaustive(it + 1, i, tempI)
+            tempI.pop()
+        if it == 0 and f < self.columns - self.itmax:
+            tempI.clear()
+            self.run_exhaustive(0, f + 1, tempI)
+
+
+class FIFOQueue:
+    def __init__(self, size):
+        self.queue = []
+        self.size = size
+
+    def add(self, item):
+        self.queue.append(item)
+
+    def deq(self):
+        if not self.is_empty():
+            return self.queue.pop(0)
+        return None
+
+    def is_empty(self):
+        return len(self.queue) == 0
+
+class RadixSort:
+    @staticmethod
+    def radix_sort(v, I, n):
+        lines = len(v)
+        queues = RadixSort.create_queues(n, lines)
+        for pos in range(len(I) - 1, -1, -1):
+            for i in range(lines):
+                q = RadixSort.queue_no(v[i], I[pos])
+                queues[q].add(v[i])
+            RadixSort.restore(queues, v)
+        queues = None
+
+    @staticmethod
+    def restore(qs, v):
+        contv = 0
+        for q in qs:
+            while not q.is_empty():
+                v[contv] = q.deq()
+                contv += 1
+
+    @staticmethod
+    def create_queues(n, lines):
+        return [FIFOQueue(lines) for _ in range(n)]
+
+    @staticmethod
+    def queue_no(v, pos):
+        return ord(v[pos])
+
+class Criteria:
+    probtable = []
+
+    @staticmethod
+    def get_position_of_instances(line, I, A):
+        binnumber = ''.join(str(ord(A[line - 1][i])) for i in I)
+        return int(binnumber, 2)
+
+    @staticmethod
+    def equal_instances(line, I, A):
+        return all(A[line - 1][i] == A[line][i] for i in I)
+
+    @staticmethod
+    def joint_entropy(n, predictors, A, c):
+        H = 0
+        RadixSort.radix_sort(A, predictors, n)
+        lines = len(A)
+        pxy = 0
+        for j in range(lines):
+            if j > 0 and not Criteria.equal_instances(j, predictors, A):
+                pxy /= lines
+                H -= pxy * (math.log(pxy) / math.log(c))
+                pxy = 0
+            pxy += 1
+        pxy /= lines
+        H -= pxy * (math.log(pxy) / math.log(c))
+        return H
+
+    @staticmethod
+    def instance_criterion(pydx, px, type, alpha, beta, lines, n, dim, c, q):
+        H = 0
+        if type == "poor_obs":
+            if px == 1:
+                for k in range(c):
+                    pydx[k] = beta if pydx[k] > 0 else (1 - beta) / (c - 1)
+            else:
+                for k in range(c):
+                    pydx[k] /= px
+            px /= lines
+        elif type == "no_obs":
+            for k in range(c):
+                pydx[k] /= px
+            px += alpha
+            px /= (lines + alpha * (n ** dim))
+        if q == 0:
+            max_prob = max(pydx)
+            H = px * (1 - max_prob)
+            return H
+        elif q == 1:
+            H = 0
+        else:
+            H = 1
+        for k in range(c):
+            if pydx[k] > 0:
+                if q == 1:
+                    H -= pydx[k] * (math.log(pydx[k]) / math.log(c))
+                else:
+                    H -= pydx[k] ** q
+        if q != 1:
+            H /= (q - 1)
+        H *= px
+        return H
+
+    @staticmethod
+    def MCE_COD(type, alpha, beta, n, c, I, A, q):
+        pYdX = [0] * c
+        pY = [0] * c
+        pX = 0
+        H = 0
+        HY = 0
+        lines = len(A)
+        no_obs = n ** len(I)
+        RadixSort.radix_sort(A, I, n)
+        Criteria.probtable = [[0] * c for _ in range(no_obs)]
+        for j in range(lines):
+            if j > 0 and not Criteria.equal_instances(j, I, A):
+                no_obs -= 1
+                position = Criteria.get_position_of_instances(j, I, A)
+                Criteria.probtable[position] = pYdX[:]
+                H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
+                pYdX = [0] * c
+                pX = 0
+            pYdX[ord(A[j][-1])] += 1
+            pY[ord(A[j][-1])] += 1
+            pX += 1
+        position = Criteria.get_position_of_instances(lines, I, A)
+        Criteria.probtable[position] = pYdX[:]
+        H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
+        no_obs -= 1
+        HY = Criteria.instance_criterion(pY, lines, "poor_obs", 0, 1, lines, 0, 0, c, q)
+        if type == "no_obs" and no_obs > 0:
+            penalization = (alpha * no_obs * HY) / (lines + alpha * (n ** len(I)))
+            H += penalization
+        if q == 0:
+            return H / HY
+        return H
+
+class CNMeasurements:
+    @staticmethod
+    def has_variation(M, is_periodic):
+        change = False
+        lastcol = len(M[0]) - 1
+
+        for row in range(len(M) - 2):
+            if M[row][lastcol] != M[row + 1][lastcol]:
+                change = True
+                break
+
+        if is_periodic and M[-2][lastcol] != M[-1][lastcol]:
+            change = True
+
+        return change
+
 class AGNRoutines:
     @staticmethod
     def set_gene_names(agn, genenames):
@@ -551,14 +1158,197 @@ class AGNRoutines:
             print("Error on labeling genes, size does not match.")
 
     @staticmethod
-    def recover_network_from_temporal_expression(agn, datatype, threshold_entropy, type_entropy, alpha, beta, q_entropy, maxfeatures, resultsetsize):
-        # Placeholder for network recovery logic
-        pass
+    def make_temporal_training_set(agn, target, is_periodic):
+        rowsoriginal = len(agn.get_temporalsignalquantized())
+        colsoriginal = len(agn.get_temporalsignalquantized()[0])
+        rowsts = colsoriginal if is_periodic else colsoriginal - 1
+
+        trainingset = [[''] * rowsoriginal for _ in range(rowsts)]
+
+        for col in range(target):
+            for i in range(rowsts):
+                newrow = agn.get_temporalsignalquantized()[col][i]
+                trainingset[i][col] = chr(newrow)
+
+        for col in range(target + 1, rowsoriginal):
+            for i in range(rowsts):
+                newrow = agn.get_temporalsignalquantized()[col][i]
+                trainingset[i][col - 1] = chr(newrow)
+
+        for col in range(1, rowsts + 1):
+            i = agn.get_temporalsignalquantized()[target][col % colsoriginal]
+            trainingset[col - 1][rowsoriginal - 1] = chr(i)
+
+        rowsfr = []
+
+        for i in range(len(trainingset)):
+            remove = False
+            for j in range(len(trainingset[0])):
+                if trainingset[i][j] == 'ﰙ':
+                    remove = True
+                    break
+            if remove:
+                rowsfr.append(i)
+
+        if rowsfr:
+            newtrainingset = [[''] * len(trainingset[0]) for _ in range(len(trainingset) - len(rowsfr))]
+            newrow = 0
+            for i in range(len(trainingset)):
+                if i in rowsfr:
+                    newrow += 1
+                else:
+                    for j in range(len(trainingset[0])):
+                        newtrainingset[i - newrow][j] = trainingset[i][j]
+            trainingset = newtrainingset
+
+        return trainingset
+
+    def make_steady_state_training_set(agn, target):
+        rowsoriginal = len(agn.get_temporalsignalquantized())
+        colsoriginal = len(agn.get_temporalsignalquantized()[0])
+        rowsts = colsoriginal
+
+        trainingset = [[''] * rowsoriginal for _ in range(rowsts)]
+
+        for col in range(target):
+            for i in range(rowsts):
+                newrow = agn.get_temporalsignalquantized()[col][i]
+                trainingset[i][col] = chr(newrow)
+
+        for col in range(target + 1, rowsoriginal):
+            for i in range(rowsts):
+                newrow = agn.get_temporalsignalquantized()[col][i]
+                trainingset[i][col - 1] = chr(newrow)
+
+        for col in range(rowsts):
+            i = agn.get_temporalsignalquantized()[target][col]
+            trainingset[col][rowsoriginal - 1] = chr(i)
+
+        rowsfr = []
+
+        for i in range(len(trainingset)):
+            remove = False
+            for j in range(len(trainingset[0])):
+                if trainingset[i][j] == 'ﰙ':
+                    remove = True
+                    break
+            if remove:
+                rowsfr.append(i)
+
+        if rowsfr:
+            newtrainingset = [[''] * len(trainingset[0]) for _ in range(len(trainingset) - len(rowsfr))]
+            newrow = 0
+            for i in range(len(trainingset)):
+                if i in rowsfr:
+                    newrow += 1
+                else:
+                    for j in range(len(trainingset[0])):
+                        newtrainingset[i - newrow][j] = trainingset[i][j]
+            trainingset = newtrainingset
+
+        return trainingset
+    
+    @staticmethod
+    def recover_network_from_temporal_expression(recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout):
+        txt = []
+        rows = len(recoveredagn.get_temporalsignalquantized())
+        print("\n\n")
+        txt.append("\n\n")
+
+        if targets is None:
+            targets = [str(i) for i in range(rows)]
+
+        for target in targets:
+            targetindex = int(target)
+            predictors = []
+            ties = []
+            if datatype == 1:
+                strainingset = AGNRoutines.make_temporal_training_set(recoveredagn, targetindex, is_periodic)
+            else:
+                strainingset = AGNRoutines.make_steady_state_training_set(recoveredagn, targetindex)
+            fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
+            if not CNMeasurements.has_variation(strainingset, is_periodic):
+                if targetaspredictors:
+                    print(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                    txt.append(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                else:
+                    print(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                    txt.append(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+            else:
+                if searchalgorithm == 1:
+                    fs.run_sfs(False, maxfeatures)
+                elif searchalgorithm == 3:
+                    fs.run_sffs(maxfeatures, targetindex, recoveredagn)
+                elif searchalgorithm == 4:
+                    fs.run_sffs_stack(maxfeatures, targetindex, recoveredagn)
+                elif searchalgorithm == 2:
+                    fs.run_sfs(True, maxfeatures)
+                    s = fs.itmax
+                    fs_prev = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
+                    for j in range(1, s + 1):
+                        fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
+                        fs.itmax = j
+                        fs.run_exhaustive(0, 0, fs.I)
+                        if not (fs.h_global < fs_prev.h_global):
+                            fs = fs_prev
+                            break
+                        fs_prev = fs
+                if targetaspredictors:
+                    txt.append(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: ")
+                    print(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets:", end=" ")
+                else:
+                    txt.append(f"Target: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors: ")
+                    print(f"\nTarget: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors:", end=" ")
+                for s in range(len(fs.I)):
+                    predictor_gene = int(fs.I[s])
+                    if predictor_gene >= targetindex:
+                        predictor_gene += 1
+                    if fs.h_global < threshold_entropy:
+                        txt.append(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()} ")
+                        print(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()}", end=" ")
+                        predictors.append(predictor_gene)
+                        recoveredagn.get_genes()[targetindex].add_predictor(predictor_gene, fs.h_global)
+                        recoveredagn.get_genes()[predictor_gene].add_target(targetindex)
+                        recoveredagn.get_genes()[targetindex].set_probtable(fs.probtable)
+                    else:
+                        if targetaspredictors:
+                            txt.append(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                            print(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                        else:
+                            txt.append(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                            print(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                s = len(fs.I)
+                if (searchalgorithm == 3 or searchalgorithm == 4) and fs.ties[s] and len(fs.ties[s]) > 1 and fs.h_global < threshold_entropy:
+                    txt.append("\nPredictors Ties: ")
+                    print("\nPredictors Ties:", end=" ")
+                    predictorsties = [None] * len(fs.ties[s])
+                    for j in range(len(fs.ties[s])):
+                        predictorsties[j] = []
+                        item = fs.ties[s][j]
+                        tie = []
+                        for k in range(len(item)):
+                            geneindex = int(item[k])
+                            if geneindex >= targetindex:
+                                geneindex += 1
+                            predictorsties[j].append(geneindex)
+                            txt.append(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()} ")
+                            print(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()}", end=" ")
+                            tie.append(geneindex)
+                            
+                        print(" (" + str(fs.jointentropiesties[j]) + ") ", end="\t")
+                        ties.append(tie)
+                    recoveredagn.get_genes()[targetindex].set_predictorsties(predictorsties)
+                if tiesout and originalagn:
+                    originalpredictors = originalagn.get_genes()[targetindex].get_predictors()
+                    IOFile.write_ties(originalagn, tiesout, targetindex, int(originalagn.get_avgedges()), originalagn.get_topology(), originalpredictors, q_entropy, predictors, ties, fs.h_global, False)
+            print(f"\n\nCriterion Function Value: {fs.h_global}")
+            txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
+        return "\n".join(txt)
 
 def main():
     delimiter = "\t"
     inpath = "./data/QCDataSet-first300-with-labels.txt"
-    outpath = "./out"
+    outpath = "./out/"
 
     threshold_entropy = 1
     type_entropy = "no_obs"
@@ -608,19 +1398,25 @@ def main():
     recoverednetwork.set_labelstemporalsignal(featurestitles)
     AGNRoutines.set_gene_names(recoverednetwork, genenames)
 
-    # AGNRoutines.recover_network_from_temporal_expression(
-    #     recoverednetwork,
-    #     1,  # datatype: 1==temporal, 2==steady-state.
-    #     threshold_entropy,
-    #     type_entropy,
-    #     alpha,
-    #     beta,
-    #     q_entropy,
-    #     maxfeatures,
-    #     resultsetsize
-    # )
+    AGNRoutines.recover_network_from_temporal_expression(
+                        recoverednetwork,
+                        None,
+                        1, # datatype: 1==temporal, 2==steady-state. 
+                        False,
+                        threshold_entropy,
+                        type_entropy,
+                        alpha,
+                        beta,
+                        q_entropy,
+                        None, # targets
+                        maxfeatures,
+                        3,# SFFS_stack(pilha) # 1==SFS, 2==Exhaustive, 3==SFFS, 4==SFFS_stack(expandindo todos os empates encontrados).
+                        False,# jCB_TargetsAsPredictors.isSelected()
+                        resultsetsize,
+                        None
+    )
 
-    # IOFile.write_agn_to_file(recoverednetwork, outpath + "log2-complete.agn")
+    IOFile.write_agn_to_file(recoverednetwork, outpath + "log2-complete.agn")
 
 if __name__ == "__main__":
     main()
