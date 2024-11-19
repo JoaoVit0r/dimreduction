@@ -7,6 +7,13 @@ import threading
 
 PRINT_DEBUG = True
 
+# int or ord function
+def int_or_ord(value):
+    try:
+        return int(value)
+    except ValueError:
+        return ord(value)
+
 class IOFile:
     @staticmethod
     def write_ties(originalagn, tiesout, targetindex, avgedges, topology, originalpredictors, q_entropy, predictors, ties, h_global, flag):
@@ -1066,14 +1073,14 @@ class RadixSort:
 
     @staticmethod
     def queue_no(v, pos):
-        return int(v[pos])
+        return int_or_ord(v[pos])
 
 class Criteria:
     probtable = []
 
     @staticmethod
     def get_position_of_instances(line, I, A):
-        binnumber = ''.join(str(int(A[line - 1][i])) for i in I)
+        binnumber = ''.join(str(int_or_ord(A[line - 1][i])) for i in I)
         return int(binnumber, 2)
 
     @staticmethod
@@ -1150,8 +1157,8 @@ class Criteria:
                 H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
                 pYdX = [0] * c
                 pX = 0
-            pYdX[int(A[j][-1])] += 1
-            pY[int(A[j][-1])] += 1
+            pYdX[int_or_ord(A[j][-1])] += 1
+            pY[int_or_ord(A[j][-1])] += 1
             pX += 1
         position = Criteria.get_position_of_instances(lines, I, A)
         Criteria.probtable[position] = pYdX[:]
@@ -1380,6 +1387,111 @@ class AGNRoutines:
             txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
         return "\n".join(txt)
 
+class Classifier:
+    def __init__(self):
+        self.table = []
+        self.instances = []
+        self.labels = []
+
+    def equal_instances(self, line, I, A):
+        for i in I:
+            if A[line - 1][i] != A[line][i]:
+                return False
+        return True
+
+    def index_max_value(self, v):
+        index_max = -1
+        maximum = float('-inf')
+        for i, value in enumerate(v):
+            if value > maximum:
+                index_max = i
+                maximum = value
+        ties = [i for i, value in enumerate(v) if value == maximum]
+        if len(ties) > 1:
+            return random.choice(ties)
+        return index_max
+
+    def instance_index(self, sample, I, n):
+        instance = 0
+        dim = len(I)
+        for i in range(dim):
+            instance += int(sample[I[dim - i - 1]]) * (n ** i)
+        return instance
+
+    def add_table_line(self, sample, I, pYdX, pX, n, c):
+        instance = self.instance_index(sample, I, n)
+        table_line = [pYdX[k] for k in range(c)]
+        for k in range(c):
+            pYdX[k] = 0
+        pX = 0
+        self.instances.append(instance)
+        self.table.append(table_line)
+
+    def binary_search(self, value):
+        start, end = 0, len(self.instances) - 1
+        while start <= end:
+            v = (start + end) // 2
+            if self.instances[v] == value:
+                return v
+            elif self.instances[v] < value:
+                start = v + 1
+            else:
+                end = v - 1
+        return -1
+
+    def instance_vector(self, instance_index, n, d):
+        V = [0] * d
+        for i in range(d - 1, -1, -1):
+            if instance_index == 0:
+                break
+            V[i] = int(instance_index % n)
+            instance_index = math.floor(instance_index / n)
+        return V
+
+    def euclidean_distance(self, v1, v2):
+        return math.sqrt(sum((v1[i] - v2[i]) ** 2 for i in range(len(v1))))
+
+    def nearest_neighbors(self, instance_index, n, d, c):
+        instance_values = self.instance_vector(instance_index, n, d)
+        distances = [self.euclidean_distance(instance_values, self.instance_vector(inst, n, d)) for inst in self.instances]
+        pYdX = [0] * c
+        while True:
+            min_dist = min(distances)
+            for i, dist in enumerate(distances):
+                if dist == min_dist:
+                    for j in range(c):
+                        pYdX[j] += self.table[i][j]
+                    distances[i] = float('inf')
+            index_max = self.index_max_value(pYdX)
+            if index_max > -1:
+                return index_max
+
+    def classifier_table(self, A, I, n, c):
+        lines = len(A)
+        pX = 0
+        pYdX = [0] * c
+        RadixSort.radix_sort(A, I, n)
+        for j in range(lines):
+            if j > 0 and not self.equal_instances(j, I, A):
+                self.add_table_line(A[j - 1], I, pYdX, pX, n, c)
+            pYdX[int_or_ord(A[j][-1])] += 1
+            pX += 1
+        self.add_table_line(A[lines - 1], I, pYdX, pX, n, c)
+
+    def classify_test_samples(self, A, I, n, c):
+        lines = len(A)
+        self.labels = [0] * lines
+        test_instances = [self.instance_index(A[i], I, n) for i in range(lines)]
+        for i in range(lines):
+            index = self.binary_search(test_instances[i])
+            if index == -1:
+                self.labels[i] = self.nearest_neighbors(test_instances[i], n, len(I), c)
+            else:
+                self.labels[i] = self.index_max_value(self.table[index])
+                if self.labels[i] == -1:
+                    self.labels[i] = self.nearest_neighbors(test_instances[i], n, len(I), c)
+        return test_instances
+
 def main():
     load_dotenv(override=True)
 
@@ -1538,8 +1650,18 @@ def main():
             instance = clas.instances[i]
             print(instance, table_line)
         instances = clas.classify_test_samples(stestset, fs.I, n, c)
-        hits = sum(1 for i in range(len(clas.labels)) if stestset[i][-1] == clas.labels[i])
+        
+        print("Correct Labels  -  Classified Labels - Classification Instances\n(Considering the first selected features)")
+        hits = 0
+        for i in range(len(clas.labels)):
+            correct_label = int(stestset[i][-1])
+            classified_label = clas.labels[i]
+            if correct_label == classified_label:
+                hits += 1
+            print(f"{correct_label}  -  {classified_label}  -  {instances[i]}")
+        # hits = sum(1 for i in range(len(clas.labels)) if int(stestset[i][-1]) == clas.labels[i])
         hit_rate = hits / len(clas.labels)
+            
         print(f"rate of hits = {hit_rate}")
 
     def network_inference_action_performed():
