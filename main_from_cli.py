@@ -12,7 +12,108 @@ def int_or_ord(value):
     try:
         return int(value)
     except ValueError:
-        return ord(value)
+        try:
+            return int(float(value))
+        except ValueError:
+            return ord(value)
+
+class MathRoutines:
+    @staticmethod
+    def number_combinations(n, c):
+        combinations = 1
+        for i in range(n, n - c, -1):
+            combinations *= i
+        for i in range(2, c + 1):
+            combinations //= i
+        return combinations
+
+    @staticmethod
+    def get_column_average(M, column, classe=None):
+        sum_values = 0
+        count = 0
+        for row in M:
+            if classe is None or int(row[-1]) == classe:
+                sum_values += row[column]
+                count += 1
+        return sum_values / count if count > 0 else 0
+
+    @staticmethod
+    def get_std(M, average, column, classe):
+        sum_values = 0
+        for row in M:
+            if int(row[-1]) == classe:
+                sum_values += (row[column] - average) ** 2
+        return math.sqrt(sum_values)
+
+    @staticmethod
+    def get_correlation_coeficient_classes(Md, features):
+        lines = len(Md)
+        columns = len(Md[0])
+        classes = max(row[-1] for row in Md) + 1
+        avg_values = [[MathRoutines.get_column_average(Md, f, c) for f in features] for c in range(classes)]
+        avg_classes = [sum(avg_values[c]) / len(features) for c in range(classes)]
+        std_values = [math.sqrt(sum((avg_values[c][f] - avg_classes[c]) ** 2 for f in range(len(features))) / len(features)) for c in range(classes)]
+        output = [[0] * classes for _ in range(classes)]
+        for c1 in range(classes):
+            for c2 in range(c1 + 1, classes):
+                sum_c1c2 = sum((avg_values[c1][f] - avg_classes[c1]) * (avg_values[c2][f] - avg_classes[c2]) for f in range(len(features)))
+                output[c1][c2] = sum_c1c2 / (std_values[c1] * std_values[c2])
+        return output
+
+    @staticmethod
+    def get_correlation_coeficient_features(Md, features):
+        avg_values = [MathRoutines.get_column_average(Md, f) for f in features]
+        std_values = [math.sqrt(sum((row[f] - avg_values[i]) ** 2 for row in Md) / len(Md)) for i, f in enumerate(features)]
+        output = [[0] * len(features) for _ in range(len(features))]
+        for f1 in range(len(features)):
+            for f2 in range(f1 + 1, len(features)):
+                sum_f1f2 = sum((row[features[f1]] - avg_values[f1]) * (row[features[f2]] - avg_values[f2]) for row in Md)
+                output[f1][f2] = sum_f1f2 / (std_values[f1] * std_values[f2])
+        return output
+
+    @staticmethod
+    def transpose_matrix(M):
+        return list(map(list, zip(*M)))
+
+    @staticmethod
+    def bin2dec(bin_str):
+        return int(bin_str, 2)
+
+    @staticmethod
+    def base_n2dec(str_val, base):
+        return int(str_val, base)
+
+    @staticmethod
+    def dec2base_n(dec, base, size):
+        result = []
+        while dec > 0:
+            result.append(str(dec % base))
+            dec //= base
+        while len(result) < size:
+            result.append('0')
+        return ''.join(reversed(result))
+
+    @staticmethod
+    def str2boolean(bindigits):
+        return [char == '1' for char in bindigits]
+
+    @staticmethod
+    def int2boolean(bindigit):
+        return bindigit == 1
+
+    @staticmethod
+    def boolean2int(bindigit):
+        return 1 if bindigit else 0
+
+    @staticmethod
+    def float2char(M):
+        lines = len(M)
+        columns = len(M[0])
+        M2 = [[''] * columns for _ in range(lines)]
+        for i in range(lines):
+            for j in range(columns):
+                M2[i][j] = chr(int(M[i][j]))
+        return M2
 
 class IOFile:
     @staticmethod
@@ -1054,7 +1155,7 @@ class RadixSort:
         while pos >= 0:
             for i in range(lines):
                 q = RadixSort.queue_no(v[i], I[pos])
-                queues[q].add(v[i])
+                queues[int(q)].add(v[i])
             RadixSort.restore(queues, v)
             pos -= 1
         queues = None
@@ -1069,7 +1170,7 @@ class RadixSort:
 
     @staticmethod
     def create_queues(n, lines):
-        return [FIFOQueue(lines) for _ in range(n)]
+        return [FIFOQueue(lines) for _ in range(int(n))]
 
     @staticmethod
     def queue_no(v, pos):
@@ -1081,7 +1182,7 @@ class Criteria:
     @staticmethod
     def get_position_of_instances(line, I, A):
         binnumber = ''.join(str(int_or_ord(A[line - 1][i])) for i in I)
-        return int(binnumber, 2)
+        return MathRoutines.bin2dec(binnumber)
 
     @staticmethod
     def equal_instances(line, I, A):
@@ -1108,14 +1209,14 @@ class Criteria:
         H = 0
         if type == "poor_obs":
             if px == 1:
-                for k in range(c):
+                for k in range(int(c)):
                     pydx[k] = beta if pydx[k] > 0 else (1 - beta) / (c - 1)
             else:
-                for k in range(c):
+                for k in range(int(c)):
                     pydx[k] /= px
             px /= lines
         elif type == "no_obs":
-            for k in range(c):
+            for k in range(int(c)):
                 pydx[k] /= px
             px += alpha
             px /= (lines + alpha * (n ** dim))
@@ -1127,7 +1228,7 @@ class Criteria:
             H = 0
         else:
             H = 1
-        for k in range(c):
+        for k in range(int(c)):
             if pydx[k] > 0:
                 if q == 1:
                     H -= pydx[k] * (math.log(pydx[k]) / math.log(c))
@@ -1140,22 +1241,22 @@ class Criteria:
 
     @staticmethod
     def MCE_COD(type, alpha, beta, n, c, I, A, q):
-        pYdX = [0] * c
-        pY = [0] * c
+        pYdX = [0] * int(c)
+        pY = [0] * int(c)
         pX = 0
         H = 0
         HY = 0
         lines = len(A)
         no_obs = n ** len(I)
         RadixSort.radix_sort(A, I, n)
-        Criteria.probtable = [[0] * c for _ in range(no_obs)]
+        Criteria.probtable = [[0] * int(c) for _ in range(int(no_obs))]
         for j in range(lines):
             if j > 0 and not Criteria.equal_instances(j, I, A):
                 no_obs -= 1
                 position = Criteria.get_position_of_instances(j, I, A)
                 Criteria.probtable[position] = pYdX[:]
                 H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
-                pYdX = [0] * c
+                pYdX = [0] * int(c)
                 pX = 0
             pYdX[int_or_ord(A[j][-1])] += 1
             pY[int_or_ord(A[j][-1])] += 1
@@ -1420,8 +1521,8 @@ class Classifier:
 
     def add_table_line(self, sample, I, pYdX, pX, n, c):
         instance = self.instance_index(sample, I, n)
-        table_line = [pYdX[k] for k in range(c)]
-        for k in range(c):
+        table_line = [pYdX[k] for k in range(int(c))]
+        for k in range(int(c)):
             pYdX[k] = 0
         pX = 0
         self.instances.append(instance)
@@ -1454,12 +1555,12 @@ class Classifier:
     def nearest_neighbors(self, instance_index, n, d, c):
         instance_values = self.instance_vector(instance_index, n, d)
         distances = [self.euclidean_distance(instance_values, self.instance_vector(inst, n, d)) for inst in self.instances]
-        pYdX = [0] * c
+        pYdX = [0] * int(c)
         while True:
             min_dist = min(distances)
             for i, dist in enumerate(distances):
                 if dist == min_dist:
-                    for j in range(c):
+                    for j in range(int(c)):
                         pYdX[j] += self.table[i][j]
                     distances[i] = float('inf')
             index_max = self.index_max_value(pYdX)
@@ -1469,7 +1570,7 @@ class Classifier:
     def classifier_table(self, A, I, n, c):
         lines = len(A)
         pX = 0
-        pYdX = [0] * c
+        pYdX = [0] * int(c)
         RadixSort.radix_sort(A, I, n)
         for j in range(lines):
             if j > 0 and not self.equal_instances(j, I, A):
@@ -1582,7 +1683,7 @@ def main():
             return
         if search_method_feature_selection > 0 and search_method_feature_selection <= 3:
             thread = threading.Thread(target=execute_feature_selection, args=(search_method_feature_selection,))
-            thread.setName("SE")
+            thread.name = "SE"
             thread.start()
             
             thread.join()
@@ -1602,11 +1703,13 @@ def main():
         n = max(max(row[:-1]) for row in Md) + 1
         c = max(row[-1] for row in Md) + 1
         
-        strainingset = [[str(value) for value in row] for row in Md]
+        # strainingset = [[str(value) for value in row] for row in Md]
+        strainingset = MathRoutines.float2char(Md)
         if input_test_set_feature_selection:
             stestset = IOFile.read_matrix(input_test_set_feature_selection, 0, 0, delimiter)
         else:
-            stestset = [[str(value) for value in row] for row in Md]
+            # stestset = [[str(value) for value in row] for row in Md]
+            stestset = MathRoutines.float2char(Md)
         
         resultsetsize = maximum_result_list_size_feature_selection
         if resultsetsize < 1:
