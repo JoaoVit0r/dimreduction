@@ -1358,7 +1358,7 @@ class AGNRoutines:
         for i in range(len(trainingset)):
             remove = False
             for j in range(len(trainingset[0])):
-                if trainingset[i][j] == 'ﰙ':
+                if trainingset[i][j] == Preprocessing.SKIP_VALUE:
                     remove = True
                     break
             if remove:
@@ -1403,7 +1403,7 @@ class AGNRoutines:
         for i in range(len(trainingset)):
             remove = False
             for j in range(len(trainingset[0])):
-                if trainingset[i][j] == 'ﰙ':
+                if trainingset[i][j] == Preprocessing.SKIP_VALUE:
                     remove = True
                     break
             if remove:
