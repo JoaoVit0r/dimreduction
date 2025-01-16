@@ -7,15 +7,21 @@ import threading
 
 PRINT_DEBUG = True
 
+def chr_4_digit(int_value):
+    return f"\\u{(int_value):04x}"
+
+def ord_4_digit(unicode_escape):
+    return int(unicode_escape[2:], 16)
+
 # int or ord function
-def int_or_ord(value):
+def int_or_ord_4_digit(value):
     try:
         return int(value)
     except ValueError:
         try:
             return int(float(value))
         except ValueError:
-            return ord(value)
+            return ord_4_digit(value)
 
 class MathRoutines:
     @staticmethod
@@ -112,7 +118,7 @@ class MathRoutines:
         M2 = [[''] * columns for _ in range(lines)]
         for i in range(lines):
             for j in range(columns):
-                M2[i][j] = chr(int(M[i][j]))
+                M2[i][j] = chr_4_digit(int(M[i][j]))
         return M2
 
 class IOFile:
@@ -1174,14 +1180,14 @@ class RadixSort:
 
     @staticmethod
     def queue_no(v, pos):
-        return int_or_ord(v[pos])
+        return int_or_ord_4_digit(v[pos])
 
 class Criteria:
     probtable = []
 
     @staticmethod
     def get_position_of_instances(line, I, A):
-        binnumber = ''.join(str(int_or_ord(A[line - 1][i])) for i in I)
+        binnumber = ''.join(str(int_or_ord_4_digit(A[line - 1][i])) for i in I)
         return MathRoutines.bin2dec(binnumber)
 
     @staticmethod
@@ -1258,8 +1264,8 @@ class Criteria:
                 H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
                 pYdX = [0] * int(c)
                 pX = 0
-            pYdX[int_or_ord(A[j][-1])] += 1
-            pY[int_or_ord(A[j][-1])] += 1
+            pYdX[int_or_ord_4_digit(A[j][-1])] += 1
+            pY[int_or_ord_4_digit(A[j][-1])] += 1
             pX += 1
         position = Criteria.get_position_of_instances(lines, I, A)
         Criteria.probtable[position] = pYdX[:]
@@ -1311,16 +1317,16 @@ class AGNRoutines:
         for col in range(target):
             for i in range(rowsts):
                 newrow = agn.get_temporalsignalquantized()[col][i]
-                trainingset[i][col] = chr(newrow)
+                trainingset[i][col] = chr_4_digit(newrow)
 
         for col in range(target + 1, rowsoriginal):
             for i in range(rowsts):
                 newrow = agn.get_temporalsignalquantized()[col][i]
-                trainingset[i][col - 1] = chr(newrow)
+                trainingset[i][col - 1] = chr_4_digit(newrow)
 
         for col in range(1, rowsts + 1):
             i = agn.get_temporalsignalquantized()[target][col % colsoriginal]
-            trainingset[col - 1][rowsoriginal - 1] = chr(i)
+            trainingset[col - 1][rowsoriginal - 1] = chr_4_digit(i)
 
         rowsfr = []
 
@@ -1356,16 +1362,16 @@ class AGNRoutines:
         for col in range(target):
             for i in range(rowsts):
                 newrow = agn.get_temporalsignalquantized()[col][i]
-                trainingset[i][col] = chr(newrow)
+                trainingset[i][col] = chr_4_digit(newrow)
 
         for col in range(target + 1, rowsoriginal):
             for i in range(rowsts):
                 newrow = agn.get_temporalsignalquantized()[col][i]
-                trainingset[i][col - 1] = chr(newrow)
+                trainingset[i][col - 1] = chr_4_digit(newrow)
 
         for col in range(rowsts):
             i = agn.get_temporalsignalquantized()[target][col]
-            trainingset[col][rowsoriginal - 1] = chr(i)
+            trainingset[col][rowsoriginal - 1] = chr_4_digit(i)
 
         rowsfr = []
 
@@ -1575,7 +1581,7 @@ class Classifier:
         for j in range(lines):
             if j > 0 and not self.equal_instances(j, I, A):
                 self.add_table_line(A[j - 1], I, pYdX, pX, n, c)
-            pYdX[int_or_ord(A[j][-1])] += 1
+            pYdX[int_or_ord_4_digit(A[j][-1])] += 1
             pX += 1
         self.add_table_line(A[lines - 1], I, pYdX, pX, n, c)
 
