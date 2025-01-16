@@ -83,11 +83,36 @@ class MathRoutines:
 
     @staticmethod
     def bin2dec(bin_str):
-        return int(bin_str, 2)
+        dec = 0
+        size = len(bin_str) - 1
+        or_ = 1
+        for i in range(size + 1):
+            vs = bin_str[size - i]
+            v = int(vs)
+            dec += v * or_
+            if or_ == 1:
+                or_ = 2
+            else:
+                or_ *= 2
+                
+        return dec
+        
 
     @staticmethod
     def base_n2dec(str_val, base):
-        return int(str_val, base)
+        dec = 0
+        size = len(str_val) - 1
+        or_ = 1
+        for i in range(size + 1):
+            vs = str_val[size - i]
+            v = int(vs)
+            dec += v * or_
+            if or_ == 1:
+                or_ = base
+            else:
+                or_ *= base
+                
+        return dec
 
     @staticmethod
     def dec2base_n(dec, base, size):
