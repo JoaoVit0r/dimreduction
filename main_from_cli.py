@@ -730,7 +730,7 @@ class AGN:
             self.genes[i].set_probsetname(f"g{i}")
             self.genes[i].set_description(f"g{i}")
             self.genes[i].set_index(i)
-            self.genes[i].set_value(float(rn.randint(0, quantization)))
+            self.genes[i].set_value(rn.randint(0, quantization))
 
     def get_initial_values(self):
         return [gene.get_value() for gene in self.genes]
