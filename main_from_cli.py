@@ -1547,7 +1547,7 @@ class Classifier:
         instance = 0
         dim = len(I)
         for i in range(dim):
-            instance += int(sample[I[dim - i - 1]]) * (n ** i)
+            instance += int_or_ord_4_digit(sample[I[dim - i - 1]]) * (n ** i)
         return instance
 
     def add_table_line(self, sample, I, pYdX, pX, n, c):
@@ -1788,7 +1788,7 @@ def main():
         print("Correct Labels  -  Classified Labels - Classification Instances\n(Considering the first selected features)")
         hits = 0
         for i in range(len(clas.labels)):
-            correct_label = int(stestset[i][-1])
+            correct_label = int_or_ord_4_digit(stestset[i][-1])
             classified_label = clas.labels[i]
             if correct_label == classified_label:
                 hits += 1
