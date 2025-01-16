@@ -1810,7 +1810,7 @@ def main():
         if is_targets_as_predictors:
             Md = Preprocessing.invert_columns(Md)
         resultsetsize = 1
-        n = max(max(row) for row in Md) + 1
+        n = int(max(max(row) for row in Md)) + 1
         recoverednetwork = AGN(len(Md), len(Md[0]), n)
         recoverednetwork.set_temporalsignal(Mo)
         recoverednetwork.set_temporalsignalquantized(Md)
