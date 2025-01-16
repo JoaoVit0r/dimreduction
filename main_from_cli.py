@@ -1341,16 +1341,16 @@ class AGNRoutines:
 
         for col in range(target):
             for i in range(rowsts):
-                newrow = agn.get_temporalsignalquantized()[col][i]
+                newrow = int(agn.get_temporalsignalquantized()[col][i])
                 trainingset[i][col] = chr_4_digit(newrow)
 
         for col in range(target + 1, rowsoriginal):
             for i in range(rowsts):
-                newrow = agn.get_temporalsignalquantized()[col][i]
+                newrow = int(agn.get_temporalsignalquantized()[col][i])
                 trainingset[i][col - 1] = chr_4_digit(newrow)
 
         for col in range(1, rowsts + 1):
-            i = agn.get_temporalsignalquantized()[target][col % colsoriginal]
+            i = int(agn.get_temporalsignalquantized()[target][col % colsoriginal])
             trainingset[col - 1][rowsoriginal - 1] = chr_4_digit(i)
 
         rowsfr = []
@@ -1386,16 +1386,16 @@ class AGNRoutines:
 
         for col in range(target):
             for i in range(rowsts):
-                newrow = agn.get_temporalsignalquantized()[col][i]
+                newrow = int(agn.get_temporalsignalquantized()[col][i])
                 trainingset[i][col] = chr_4_digit(newrow)
 
         for col in range(target + 1, rowsoriginal):
             for i in range(rowsts):
-                newrow = agn.get_temporalsignalquantized()[col][i]
+                newrow = int(agn.get_temporalsignalquantized()[col][i])
                 trainingset[i][col - 1] = chr_4_digit(newrow)
 
         for col in range(rowsts):
-            i = agn.get_temporalsignalquantized()[target][col]
+            i = int(agn.get_temporalsignalquantized()[target][col])
             trainingset[col][rowsoriginal - 1] = chr_4_digit(i)
 
         rowsfr = []
