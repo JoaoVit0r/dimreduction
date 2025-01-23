@@ -4,6 +4,8 @@ import pickle
 import os
 from dotenv import load_dotenv
 import threading
+from datetime import datetime
+import time
 
 PRINT_DEBUG = True
 
@@ -184,15 +186,41 @@ class IOFile:
             raise Exception(f"Error when saving matrix: {error}")
 
 
-    @staticmethod
-    def write_agn_to_file(agn, filepath):
+    def write_agn_to_file(self, agn, filepath):
         try:
             with open(filepath, 'wb') as file:
                 pickle.dump(agn, file)
             return True
         except IOError as e:
-            print(f"Error when creating FileOutputStream: {e}")
+            self.print_and_log(f"Error when creating FileOutputStream: {e}")
             return False
+        
+    @staticmethod
+    def print_and_log(*message, end = "\n", path = "logs/logs.log"):
+        print(" ".join(map(str, message)), end=end)
+        with open(path, 'a') as file:
+            file.write(f"{datetime.now()} - {" ".join(map(str, message))}{end}")
+
+class Timer:
+    def __init__(self):
+        self.timers = {}
+    
+    def start(self, name):
+        if name in self.timers:
+            IOFile.print_and_log(f"Timer {name} is already running.", path="timing/timers.log")
+        else:
+            self.timers[name] = time.time()
+            IOFile.print_and_log(f"Timer {name} started at {datetime.now()}", path="timing/timers.log")
+
+    def end(self, name):
+        if name not in self.timers:
+            IOFile.print_and_log(f"Timer {name} was not started.", path="timing/timers.log")
+        else:
+            start_time = self.timers.pop(name)
+            end_time = time.time()
+            duration = end_time - start_time
+            IOFile.print_and_log(f"Timer {name} ended at {datetime.now()}", path="timing/timers.log")
+            IOFile.print_and_log(f"Duration for {name}: {duration:.4f} seconds", path="timing/timers.log")
 
 class Preprocessing:
     SKIP_VALUE = -999
@@ -237,8 +265,8 @@ class Preprocessing:
                 remaingenes.append(lin)
             else:
                 removedgenes.append(geneids[0][lin])
-                print(f"Gene {geneids[0][lin]} was removed by filter.")
-        print(f"{len(removedgenes)} removed genes.")
+                IOFile.print_and_log(f"Gene {geneids[0][lin]} was removed by filter.")
+        IOFile.print_and_log(f"{len(removedgenes)} removed genes.")
         filtereddata = [[expressiondata[lin][col] for col in range(len(expressiondata[0]))] for lin in remaingenes]
         return filtereddata
 
@@ -414,10 +442,10 @@ class Preprocessing:
                 std[col] = (sum((M[row][col] - mean[col]) ** 2 for row in range(totalrows)) / (totalrows - 1)) ** 0.5
 
                 if PRINT_DEBUG:
-                    print(colvalues)
+                    IOFile.print_and_log(colvalues)
                 Preprocessing.quick_sort(colvalues, 0, totalrows - 1) # right? make egual?
                 if PRINT_DEBUG:
-                    print(colvalues)
+                    IOFile.print_and_log(colvalues)
 
                 negatives = [val for val in colvalues if val < 0]
                 positives = [val for val in colvalues if val >= 0]
@@ -459,10 +487,10 @@ class Preprocessing:
                     quantizeddata[i][col] = k
                     
                     if PRINT_DEBUG:
-                        print("Totais quantizados na coluna " + str(col) + ": " + str(count0 + count1))
-                        print("zeros = " + str(count0))
-                        print("ums = " + str(count1))
-                        print()
+                        IOFile.print_and_log("Totais quantizados na coluna " + str(col) + ": " + str(count0 + count1))
+                        IOFile.print_and_log("zeros = " + str(count0))
+                        IOFile.print_and_log("ums = " + str(count1))
+                        IOFile.print_and_log()
             else:
                 for i in range(totalrows):
                     quantizeddata[i][col] = int(M[i][col])
@@ -870,6 +898,7 @@ class FS:
         self.tiesentropy = []
         self.ties = []
         self.jointentropiesties = []
+        self.timer = Timer()
 
     def insert_in_result_list(self, I, hmin):
         item = [hmin, I[:]]
@@ -939,7 +968,9 @@ class FS:
                 if f in self.I:
                     continue
                 self.I[-1] = f
+                self.timer.start("MCE_COD")
                 H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                self.timer.end("MCE_COD")
                 if H < h_min:
                     f_min = f
                     h_min = H
@@ -1040,10 +1071,10 @@ class FS:
         self.minimal(maxfeatures)
 
     def run_sffs_stack(self, maxfeatures, targetindex, agn):
-        print(f"Running Target index == {targetindex}")
+        IOFile.print_and_log(f"Running Target index == {targetindex}")
         if agn:
-            print(f", name == {agn.get_genes()[targetindex].get_name()}")
-        print("\n")
+            IOFile.print_and_log(f", name == {agn.get_genes()[targetindex].get_name()}")
+        IOFile.print_and_log("\n")
         if maxfeatures >= self.columns:
             maxfeatures = self.columns - 1
         self.inicialize(maxfeatures + 1)
@@ -1055,7 +1086,7 @@ class FS:
             H = 1
             self.I = exestack.pop(0)
             expandedestack.append(self.I[:])
-            print("\nExpanded tied predictors: ", self.I)
+            IOFile.print_and_log("\nExpanded tied predictors: ", self.I)
             for f in range(self.columns - 1):
                 if agn:
                     predictorindex = f
@@ -1105,23 +1136,23 @@ class FS:
                         self.ties[len(self.I)].append(titem)
                     else:
                         again = False
-                print(f"Preditores escolhidos com cardinalidade == {len(self.I)}")
-                print(f"Preditores escolhidos: {self.I}")
-                print("Preditores empatados empilhados:")
+                IOFile.print_and_log(f"Preditores escolhidos com cardinalidade == {len(self.I)}")
+                IOFile.print_and_log(f"Preditores escolhidos: {self.I}")
+                IOFile.print_and_log("Preditores empatados empilhados:")
                 contp = 0
                 for t in range(len(self.ties[len(self.I)])):
                     predictorset = self.ties[len(self.I)][t][:]
                     predictorset.append(-1)
                     if not self.contain_predictor_set(exestack, predictorset) and not self.contain_predictor_set(expandedestack, predictorset) and len(predictorset) <= maxfeatures:
                         exestack.append(predictorset)
-                        print(predictorset)
+                        IOFile.print_and_log(predictorset)
                         contp += 1
-                print(f"# empilhados == {contp}")
-                print(f"Tamanho da pilha == {len(exestack)}")
+                IOFile.print_and_log(f"# empilhados == {contp}")
+                IOFile.print_and_log(f"Tamanho da pilha == {len(exestack)}")
             else:
                 self.I.pop()
                 break
-        print(f"Numero de conjuntos de preditores expandidos == {len(expandedestack)}")
+        IOFile.print_and_log(f"Numero de conjuntos de preditores expandidos == {len(expandedestack)}")
         self.minimal_ma(maxfeatures)
 
     def contain_predictor_set(self, stack, predictorset):
@@ -1322,6 +1353,8 @@ class CNMeasurements:
         return change
 
 class AGNRoutines:
+    timer = Timer()
+    
     @staticmethod
     def set_gene_names(agn, genenames):
         if agn.get_nrgenes() == len(genenames):
@@ -1329,7 +1362,7 @@ class AGNRoutines:
                 name = genenames[g]
                 agn.get_genes()[g].set_name(name)
         else:
-            print("Error on labeling genes, size does not match.")
+            IOFile.print_and_log("Error on labeling genes, size does not match.")
 
     @staticmethod
     def make_temporal_training_set(agn, target, is_periodic):
@@ -1422,11 +1455,10 @@ class AGNRoutines:
 
         return trainingset
     
-    @staticmethod
-    def recover_network_from_temporal_expression(recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout):
+    def recover_network_from_temporal_expression(self, recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout):
         txt = []
         rows = len(recoveredagn.get_temporalsignalquantized())
-        print("\n\n")
+        IOFile.print_and_log("\n\n")
         txt.append("\n\n")
 
         if targets is None:
@@ -1443,12 +1475,13 @@ class AGNRoutines:
             fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
             if not CNMeasurements.has_variation(strainingset, is_periodic):
                 if targetaspredictors:
-                    print(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                    IOFile.print_and_log(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
                     txt.append(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
                 else:
-                    print(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                    IOFile.print_and_log(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
                     txt.append(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
             else:
+                self.timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
                     fs.run_sfs(False, maxfeatures)
                 elif searchalgorithm == 3:
@@ -1467,19 +1500,20 @@ class AGNRoutines:
                             fs = fs_prev
                             break
                         fs_prev = fs
+                self.timer.end(f"running_search_algorithm-target_index_{targetindex}")
                 if targetaspredictors:
                     txt.append(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: ")
-                    print(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets:", end=" ")
+                    IOFile.print_and_log(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets:", end=" ")
                 else:
                     txt.append(f"Target: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors: ")
-                    print(f"\nTarget: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors:", end=" ")
+                    IOFile.print_and_log(f"\nTarget: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors:", end=" ")
                 for s in range(len(fs.I)):
                     predictor_gene = int(fs.I[s])
                     if predictor_gene >= targetindex:
                         predictor_gene += 1
                     if fs.h_global < threshold_entropy:
                         txt.append(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()} ")
-                        print(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()}", end=" ")
+                        IOFile.print_and_log(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()}", end=" ")
                         predictors.append(predictor_gene)
                         recoveredagn.get_genes()[targetindex].add_predictor(predictor_gene, fs.h_global)
                         recoveredagn.get_genes()[predictor_gene].add_target(targetindex)
@@ -1487,14 +1521,14 @@ class AGNRoutines:
                     else:
                         if targetaspredictors:
                             txt.append(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
-                            print(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                            IOFile.print_and_log(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
                         else:
                             txt.append(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
-                            print(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                            IOFile.print_and_log(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
                 s = len(fs.I)
                 if (searchalgorithm == 3 or searchalgorithm == 4) and fs.ties[s] and len(fs.ties[s]) > 1 and fs.h_global < threshold_entropy:
                     txt.append("\nPredictors Ties: ")
-                    print("\nPredictors Ties:", end=" ")
+                    IOFile.print_and_log("\nPredictors Ties:", end=" ")
                     predictorsties = [None] * len(fs.ties[s])
                     for j in range(len(fs.ties[s])):
                         predictorsties[j] = []
@@ -1506,16 +1540,16 @@ class AGNRoutines:
                                 geneindex += 1
                             predictorsties[j].append(geneindex)
                             txt.append(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()} ")
-                            print(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()}", end=" ")
+                            IOFile.print_and_log(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()}", end=" ")
                             tie.append(geneindex)
                             
-                        print(" (" + str(fs.jointentropiesties[j]) + ") ", end="\t")
+                        IOFile.print_and_log(" (" + str(fs.jointentropiesties[j]) + ") ", end="\t")
                         ties.append(tie)
                     recoveredagn.get_genes()[targetindex].set_predictorsties(predictorsties)
                 if tiesout and originalagn:
                     originalpredictors = originalagn.get_genes()[targetindex].get_predictors()
                     IOFile.write_ties(originalagn, tiesout, targetindex, int(originalagn.get_avgedges()), originalagn.get_topology(), originalpredictors, q_entropy, predictors, ties, fs.h_global, False)
-            print(f"\n\nCriterion Function Value: {fs.h_global}")
+            IOFile.print_and_log(f"\n\nCriterion Function Value: {fs.h_global}")
             txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
         return "\n".join(txt)
 
@@ -1626,8 +1660,13 @@ class Classifier:
 
 def main():
     load_dotenv(override=True)
+    timer = Timer()
 
     # Configuration parameters
+    output_folder = os.getenv("OUTPUT_FOLDER")
+    if output_folder is not None and output_folder != "":
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
     input_file_path = os.getenv("INPUT_FILE_PATH")
     has_column_description = os.getenv("ARE_COLUMNS_DESCRIPTIVE") == "true"
     has_data_titles_columns = os.getenv("ARE_TITLES_ON_FIRST_COLUMN") == "true"
@@ -1655,6 +1694,10 @@ def main():
     is_it_periodic = os.getenv("IS_IT_PERIODIC") == "true"
     threshold = float(os.getenv("THRESHOLD", "0.3"))
 
+    # Config Outputs
+    prefix = str(datetime.now().timestamp()).replace(".", "_")
+    is_to_save_quantized_data = output_folder is not None and output_folder != ""
+    
     # delimiter = " \t\n\r\f;"
     delimiter = "\t"
     Mo = None
@@ -1676,7 +1719,7 @@ def main():
         start_column = 0
         try:
             if input_file_path.endswith('agn'):
-                print("Skipping reading AGN file")
+                IOFile.print_and_log("Skipping reading AGN file")
             else:
                 if has_column_description:
                     featurestitles = IOFile.read_data_first_row(input_file_path, 0, 0, delimiter)
@@ -1688,7 +1731,7 @@ def main():
             if has_transpose_matrix:
                 Mo = list(map(list, zip(*Mo)))
         except:
-          print('Something went wrong')
+          IOFile.print_and_log('Something went wrong')
         finally:
             lines = len(Mo)
             columns = len(Mo[0])
@@ -1703,14 +1746,17 @@ def main():
             else:
                 Preprocessing.quantize_rows(Md, qtvalues, True, has_labels)
             flag_quantization = True
+
+            if is_to_save_quantized_data:
+                IOFile.write_matrix(f"{output_folder}/{prefix}-quantized_data.txt", Md, delimiter)
         else:
-            print("Execution Error: Select and read input file first.")
+            IOFile.print_and_log("Execution Error: Select and read input file first.")
 
     def execute_feature_selection_action_performed():
         alpha = alpha_feature_selection
         q_entropy = q_entropy_feature_selection
         if q_entropy < 0 or alpha < 0:
-            print("Error on parameter value: The values of q-entropy and Alpha must be positives.")
+            IOFile.print_and_log("Error on parameter value: The values of q-entropy and Alpha must be positives.")
             return
         if search_method_feature_selection > 0 and search_method_feature_selection <= 3:
             thread = threading.Thread(target=execute_feature_selection, args=(search_method_feature_selection,))
@@ -1719,9 +1765,10 @@ def main():
             
             thread.join()
         else:
-            print("Error on parameter value: The search method must be selected.")
+            IOFile.print_and_log("Error on parameter value: The search method must be selected.")
 
     def execute_feature_selection(selector):
+        timer.start("feature_selection_inside_thread")
         penalization_type = "no_obs" if penalization_method_feature_selection == 0 else "poor_obs"
         alpha = float(alpha_feature_selection)
         q_entropy = float(q_entropy_feature_selection)
@@ -1729,7 +1776,7 @@ def main():
         if criteria_function_feature_selection == 1:
             q_entropy = 0
         if q_entropy < 0 or alpha < 0:
-            print("Error on parameter value: The values of q-entropy and Alpha must be positives.")
+            IOFile.print_and_log("Error on parameter value: The values of q-entropy and Alpha must be positives.")
             return
         n = max(max(row[:-1]) for row in Md) + 1
         c = max(row[-1] for row in Md) + 1
@@ -1744,12 +1791,12 @@ def main():
         
         resultsetsize = maximum_result_list_size_feature_selection
         if resultsetsize < 1:
-            print("Error on parameter value: The Size of the Result List must be a integer value greater or equal to 1.")
+            IOFile.print_and_log("Error on parameter value: The Size of the Result List must be a integer value greater or equal to 1.")
             return
         fs = FS(strainingset, n, c, penalization_type, alpha, beta, q_entropy, resultsetsize)
         maxfeatures = maximum_set_size_feature_selection
         if maxfeatures <= 0:
-            print("Error on parameter value: The Maximum Set Size be a integer value greater or equal to 1.")
+            IOFile.print_and_log("Error on parameter value: The Maximum Set Size be a integer value greater or equal to 1.")
             return
         if selector == 1:
             fs.run_sfs(False, maxfeatures)
@@ -1762,10 +1809,10 @@ def main():
                 itmax = maxfeatures
             combinations = sum(math.comb(columns - 1, i) for i in range(1, itmax + 1))
             estimated_time = (0.0062 + 3.2334e-7 * len(strainingset)) * combinations * math.log2(combinations)
-            print(f"Estimated time to finish: {estimated_time} s")
+            IOFile.print_and_log(f"Estimated time to finish: {estimated_time} s")
             fs_prev = FS(strainingset, n, c, penalization_type, alpha, beta, q_entropy, resultsetsize)
             for i in range(1, itmax + 1):
-                print(f"Iteration {i}")
+                IOFile.print_and_log(f"Iteration {i}")
                 fs = FS(strainingset, n, c, penalization_type, alpha, beta, q_entropy, resultsetsize)
                 fs.itmax = i
                 fs.run_exhaustive(0, 0, fs.I)
@@ -1776,27 +1823,28 @@ def main():
                     break
         for i, result in enumerate(fs.resultlist):
             fsvalue = result[0]
-            print(f"{i + 1}st Global Criterion Function Value: {fsvalue}")
-            print("Selected Features: ", result[1])
+            IOFile.print_and_log(f"{i + 1}st Global Criterion Function Value: {fsvalue}")
+            IOFile.print_and_log("Selected Features: ", result[1])
         clas = Classifier()
         clas.classifier_table(strainingset, fs.I, n, c)
         for i, table_line in enumerate(clas.table):
             instance = clas.instances[i]
-            print(instance, table_line)
+            IOFile.print_and_log(instance, table_line)
         instances = clas.classify_test_samples(stestset, fs.I, n, c)
         
-        print("Correct Labels  -  Classified Labels - Classification Instances\n(Considering the first selected features)")
+        IOFile.print_and_log("Correct Labels  -  Classified Labels - Classification Instances\n(Considering the first selected features)")
         hits = 0
         for i in range(len(clas.labels)):
             correct_label = int_or_ord_4_digit(stestset[i][-1])
             classified_label = clas.labels[i]
             if correct_label == classified_label:
                 hits += 1
-            print(f"{correct_label}  -  {classified_label}  -  {instances[i]}")
+            IOFile.print_and_log(f"{correct_label}  -  {classified_label}  -  {instances[i]}")
         # hits = sum(1 for i in range(len(clas.labels)) if int(stestset[i][-1]) == clas.labels[i])
         hit_rate = hits / len(clas.labels)
             
-        print(f"rate of hits = {hit_rate}")
+        IOFile.print_and_log(f"rate of hits = {hit_rate}")
+        timer.end("Feature Selection Inside Thread")
 
     def network_inference_action_performed():
         nonlocal Md
@@ -1819,6 +1867,7 @@ def main():
         if datatitles:
             AGNRoutines.set_gene_names(recoverednetwork, datatitles)
         datatype = 1 if is_time_series_data else 2
+        timer.start("network_inference")
         txt = AGNRoutines.recover_network_from_temporal_expression(
             recoverednetwork,
             None,
@@ -1836,15 +1885,29 @@ def main():
             resultsetsize,
             None
         )
-        print(txt)
+        IOFile.print_and_log(txt)
 
+    timer.start("read_data")
     read_data_action_performed()
+    timer.end("read_data")
+
     if quantization_type > 0 and quantization_type <= 2:
+        timer.start("apply_quantization")
         apply_quantization_action(quantization_value, quantization_type)
+        timer.end("apply_quantization")
+
     if is_to_look_for_cycles and Md is not None:
+        timer.start("find_cycle")
         CNMeasurements.find_cycle(Md)
+        timer.end("find_cycle")
+
+    timer.start("execute_feature_selection")
     execute_feature_selection_action_performed()
+    timer.end("execute_feature_selection")
+
+    timer.start("network_inference")
     network_inference_action_performed()
+    timer.end("network_inference")
 
 if __name__ == "__main__":
     main()
