@@ -1352,10 +1352,7 @@ class CNMeasurements:
 
         return change
 
-class AGNRoutines:
-    timer = Timer()
-    
-    @staticmethod
+class AGNRoutines:    
     def set_gene_names(agn, genenames):
         if agn.get_nrgenes() == len(genenames):
             for g in range(len(agn.get_genes())):
@@ -1364,7 +1361,6 @@ class AGNRoutines:
         else:
             IOFile.print_and_log("Error on labeling genes, size does not match.")
 
-    @staticmethod
     def make_temporal_training_set(agn, target, is_periodic):
         rowsoriginal = len(agn.get_temporalsignalquantized())
         colsoriginal = len(agn.get_temporalsignalquantized()[0])
@@ -1455,11 +1451,13 @@ class AGNRoutines:
 
         return trainingset
     
-    def recover_network_from_temporal_expression(self, recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout):
+    def recover_network_from_temporal_expression(recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout):
         txt = []
         rows = len(recoveredagn.get_temporalsignalquantized())
         IOFile.print_and_log("\n\n")
         txt.append("\n\n")
+        timer = Timer()
+        
 
         if targets is None:
             targets = [str(i) for i in range(rows)]
@@ -1481,7 +1479,7 @@ class AGNRoutines:
                     IOFile.print_and_log(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
                     txt.append(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
             else:
-                self.timer.start(f"running_search_algorithm-target_index_{targetindex}")
+                timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
                     fs.run_sfs(False, maxfeatures)
                 elif searchalgorithm == 3:
@@ -1500,7 +1498,7 @@ class AGNRoutines:
                             fs = fs_prev
                             break
                         fs_prev = fs
-                self.timer.end(f"running_search_algorithm-target_index_{targetindex}")
+                timer.end(f"running_search_algorithm-target_index_{targetindex}")
                 if targetaspredictors:
                     txt.append(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: ")
                     IOFile.print_and_log(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets:", end=" ")
