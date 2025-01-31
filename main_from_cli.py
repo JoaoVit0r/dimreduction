@@ -10,20 +10,32 @@ import time
 PRINT_DEBUG = True
 
 def chr_4_digit(int_value):
-    return f"\\u{(int_value):04x}"
+    # return f"\\u{(int_value):04x}"
+    return chr(int_value)
 
 def ord_4_digit(unicode_escape):
-    return int(unicode_escape[2:], 16)
+    # return int(unicode_escape[2:], 16)
+    return ord(unicode_escape)
 
 # int or ord function
 def int_or_ord_4_digit(value):
+    # # return ord_4_digit(value)
+    # if isinstance(value, str) and value.startswith("\\u"):
+    #     return ord_4_digit(value)
+    # try:
+    #     return int(value)
+    # except ValueError:
+    #     # try:
+    #     return int(float(value))
+    #     # except ValueError:
+    #     #     return ord_4_digit(value)
     try:
-        return int(value)
-    except ValueError:
+        return ord_4_digit(value)
+    except TypeError:
         try:
-            return int(float(value))
+            return int(value)
         except ValueError:
-            return ord_4_digit(value)
+            return int(float(value))
 
 class MathRoutines:
     @staticmethod
@@ -368,10 +380,10 @@ class Preprocessing:
                 negatives = []
                 positives = []
                 for i in range(columns - label):
-                    if M[i][j] < 0:
-                        negatives.append(M[i][j])
+                    if M[j][i] < 0:
+                        negatives.append(M[j][i])
                     else:
-                        positives.append(M[i][j])
+                        positives.append(M[j][i])
                 meanneg = sum(negatives) / len(negatives) if negatives else 0
                 meanpos = sum(positives) / len(positives) if positives else 0
 
@@ -1243,32 +1255,151 @@ class FS:
 
 
 class FIFOQueue:
-    def __init__(self, size):
-        self.queue = []
-        self.size = size
+    DEFAULT_SIZE = 10
 
-    def add(self, item):
-        self.queue.append(item)
+    def __init__(self, size=DEFAULT_SIZE):
+        self.m_values = [None] * size
+        self.clear()
+
+    def enq(self, element):
+        if self.m_full:
+            raise Exception("Queue full.")
+        self.m_empty = False
+
+        self.m_values[self.m_in] = element
+        self.m_in += 1
+        if self.m_in == len(self.m_values):
+            self.m_in = 0
+        self.m_full = self.m_in == self.m_out
 
     def deq(self):
-        if not self.is_empty():
-            return self.queue.pop(0)
-        return None
+        if self.m_empty:
+            raise Exception("Queue empty.")
+        self.m_full = False
+
+        o = self.m_values[self.m_out]
+        self.m_values[self.m_out] = None
+        self.m_out += 1
+
+        if self.m_out == len(self.m_values):
+            self.m_out = 0
+        self.m_empty = self.m_in == self.m_out
+
+        return o
+
+    def size(self):
+        if self.m_empty:
+            return 0
+        if self.m_full:
+            return len(self.m_values)
+
+        size = 0
+        for i in range(self.m_out, len(self.m_values)):
+            size += 1
+            if i == self.m_in:
+                return size
+
+        for i in range(0, self.m_in):
+            size += 1
+
+        return size
+
+    def clear(self):
+        self.m_in = 0
+        self.m_out = 0
+        self.m_full = False
+        self.m_empty = True
 
     def is_empty(self):
-        return len(self.queue) == 0
+        return self.m_empty
+
+    def is_full(self):
+        return self.m_full
+
+    def to_array(self):
+        return self.m_values
+
+    def add(self, o):
+        self.enq(o)
+        return True
+
+    def contains(self, o):
+        for value in self.m_values:
+            if value is not None and value == o:
+                return True
+        return False
+
+    def remove(self, o):
+        raise NotImplementedError("remove(Object)")
+
+    def add_all(self, c):
+        for element in c:
+            self.enq(element)
+        return True
+
+    def contains_all(self, c):
+        for element in c:
+            if not self.contains(element):
+                return False
+        return True
+
+    def remove_all(self, c):
+        raise NotImplementedError("removeAll(Collection)")
+
+    def retain_all(self, c):
+        raise NotImplementedError("retainAll(Collection)")
+
+    def __iter__(self):
+        return self.QueueIterator(self)
+
+    class QueueIterator:
+        def __init__(self, queue):
+            self.queue = queue
+            self.m_index = queue.m_out
+
+        def __next__(self):
+            if self.m_index == self.queue.m_in:
+                raise StopIteration
+            o = self.queue.m_values[self.m_index]
+            self.m_index += 1
+            if self.m_index == len(self.queue.m_values):
+                self.m_index = 0
+            return o
+
+        def __iter__(self):
+            return self
+
+    # package level visibility data methods for testing
+    def in_(self):
+        return self.m_in
+
+    def out(self):
+        return self.m_out
+
+    def values(self):
+        return self.m_values
 
 class RadixSort:
+    # timer = Timer()
+    
     @staticmethod
     def radix_sort(v, I, n):
         lines = len(v)
+        # RadixSort.timer.start("create_queues")
         queues = RadixSort.create_queues(n, lines)
+        # RadixSort.timer.end("create_queues")
         pos = len(I) - 1
+        
+        # RadixSort.timer.start("loop_radix_sort")
         while pos >= 0:
+            # RadixSort.timer.start("loop_radix_sort-internal")
             for i in range(lines):
                 q = RadixSort.queue_no(v[i], I[pos])
                 queues[int(q)].add(v[i])
+            # RadixSort.timer.end("loop_radix_sort-internal")
+            # RadixSort.timer.start("loop_radix_sort-restore")
             RadixSort.restore(queues, v)
+            # RadixSort.timer.end("loop_radix_sort-restore")
             pos -= 1
         queues = None
 
@@ -1290,6 +1421,7 @@ class RadixSort:
 
 class Criteria:
     probtable = []
+    timer = Timer()
 
     @staticmethod
     def get_position_of_instances(line, I, A):
@@ -1360,8 +1492,11 @@ class Criteria:
         HY = 0
         lines = len(A)
         no_obs = n ** len(I)
+        Criteria.timer.start("Sort")
         RadixSort.radix_sort(A, I, n)
+        Criteria.timer.end("Sort")
         Criteria.probtable = [[0] * int(c) for _ in range(int(no_obs))]
+        Criteria.timer.start("loop_MCE_COD")
         for j in range(lines):
             if j > 0 and not Criteria.equal_instances(j, I, A):
                 no_obs -= 1
@@ -1373,6 +1508,7 @@ class Criteria:
             pYdX[int_or_ord_4_digit(A[j][-1])] += 1
             pY[int_or_ord_4_digit(A[j][-1])] += 1
             pX += 1
+        Criteria.timer.end("loop_MCE_COD")
         position = Criteria.get_position_of_instances(lines, I, A)
         Criteria.probtable[position] = pYdX[:]
         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
