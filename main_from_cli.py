@@ -359,7 +359,7 @@ class Preprocessing:
 
     @staticmethod
     def quantize_rows(M, qd, extreme_values, label):
-        Preprocessing.normal_transform_lines(M, qd, extreme_values, label)
+        Preprocessing.normal_transform_lines(M, extreme_values, label)
         for j in range(len(M)):
             negatives = []
             positives = []
@@ -498,50 +498,32 @@ class Preprocessing:
         return auxM
 
     @staticmethod
-    def normal_transform_lines(M, qd, extreme_values, label):
+    def normal_transform_lines(M, extreme_values, label):
         lines = len(M)
         columns = len(M[0])
-        Preprocessing.normal_transform_columns(M, extreme_values, label)  # applying a normal transformation to the matrix M
 
-        for j in range(lines):  # for each feature
-            if M[0][j] != Preprocessing.SKIP_VALUE:
-                negatives = []
-                positives = []
-                meanneg = 0.0
-                meanpos = 0.0
+        if extreme_values:
+            means = [0] * lines
+            stds = [0] * lines
+        else:
+            raise Exception("Error on applying normal transform.")
+
+        for j in range(lines):
+            if extreme_values:
+                sum_values = sum(M[j][i] for i in range(columns - label))
+                means[j] = sum_values / (columns - label)
+
+                stds[j] = sum((M[j][i] - means[j]) ** 2 for i in range(columns - label))
+                stds[j] /= (columns - label - 1)
+                stds[j] = math.sqrt(stds[j])
+
+            if stds[j] > 0:
                 for i in range(columns - label):
-                    if M[j][i] < 0:
-                        negatives.append(M[j][i])
-                        meanneg += M[j][i]
-                    else:
-                        positives.append(M[j][i])
-                        meanpos += M[j][i]
-                meanneg /= len(negatives) if negatives else 1
-                meanpos /= len(positives) if positives else 1
-
-                ind_threshold = 0
-                increment = -meanneg / (qd / 2)
-                threshold = [0] * (qd - 1)
-                i = meanneg + increment
-                while i < 0:
-                    threshold[ind_threshold] = i
-                    ind_threshold += 1
-                    i += increment
-                increment = meanpos / (qd / 2)
-                ind_threshold = qd - 2
-                i = meanpos - increment
-                while i > 0:
-                    threshold[ind_threshold] = i
-                    ind_threshold -= 1
-                    i -= increment
-
+                    M[j][i] -= means[j]
+                    M[j][i] /= stds[j]
+            else:
                 for i in range(columns - label):
-                    k = 0
-                    while k < qd - 1:
-                        if threshold[k] >= M[j][i]:
-                            break
-                        k += 1
-                    M[j][i] = k
+                    M[j][i] = 0
 
 class Gene:
     def __init__(self):
