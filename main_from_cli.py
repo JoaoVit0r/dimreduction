@@ -1539,6 +1539,24 @@ class CNMeasurements:
         return change
 
 class AGNRoutines:    
+    def create_adjacency_matrix(agn):
+        if not isinstance(agn, AGN):
+            return []
+        num_genes = agn.get_nrgenes()
+        adjacency_matrix = [[0] * num_genes for _ in range(num_genes)]
+
+        for gt in range(num_genes):
+            gene = agn.get_genes()[gt]
+            if gene.get_predictorsties() is None or len(gene.get_predictorsties()) == 0:
+                for predictor in gene.get_predictors():
+                    adjacency_matrix[predictor][gt] = 1
+            else:
+                for predictorstied in gene.get_predictorsties():
+                    for predictor in predictorstied:
+                        adjacency_matrix[predictor][gt] = 1
+
+        return adjacency_matrix
+
     def set_gene_names(agn, genenames):
         if agn.get_nrgenes() == len(genenames):
             for g in range(len(agn.get_genes())):
@@ -1877,10 +1895,13 @@ def main():
     is_time_series_data = os.getenv("TIME_SERIES_DATA") == "true"
     is_it_periodic = os.getenv("IS_IT_PERIODIC") == "true"
     threshold = float(os.getenv("THRESHOLD", "0.3"))
+    is_to_save_final_data = os.getenv("SAVE_FINAL_DATA") == "true"
 
     # Config Outputs
     prefix = str(datetime.now().timestamp()).replace(".", "_")
-    is_to_save_quantized_data = output_folder is not None and output_folder != ""
+    if output_folder is None or output_folder == "":
+        is_to_save_quantized_data = False
+        is_to_save_final_data = False
     
     # delimiter = " \t\n\r\f;"
     delimiter = "\t"
@@ -1932,7 +1953,7 @@ def main():
             flag_quantization = True
 
             if is_to_save_quantized_data:
-                IOFile.write_matrix(f"{output_folder}/{prefix}-quantized_data.txt", Md, delimiter)
+                IOFile.write_matrix(f"{output_folder}/quantized_data/{prefix}-quantized_data.txt", Md, delimiter)
         else:
             IOFile.print_and_log("Execution Error: Select and read input file first.")
 
@@ -2069,6 +2090,9 @@ def main():
             resultsetsize,
             None
         )
+        if is_to_save_final_data:
+            IOFile.write_matrix(f"{output_folder}/final_data/{prefix}-final_data.txt", AGNRoutines.create_adjacency_matrix(recoverednetwork), delimiter)
+        
         IOFile.print_and_log(txt)
 
     timer.start("read_data")

@@ -29,6 +29,18 @@ def compute_difference_matrix(matrix1, matrix2):
     return difference_matrix, non_zero_count
 
 def main():
+    # folder1 = 'results/original_temporal_data'
+    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/original_temporal_data'
+    
+    # folder1 = 'results/quantized_temporal_data'
+    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/quantized_temporal_data'
+    
+    # folder1 = 'results/recovered_temporal_data'
+    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/recovered_temporal_data'
+
+    # folder1 = 'results/quantized_data'
+    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/quantized_data'
+    
     folder1 = 'results'
     folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/'
     output_folder = 'results/diffs'
