@@ -285,8 +285,8 @@ class Preprocessing:
         columns = len(matrix[0])
 
         if extreme_values: # maybe not necessary
-            means = [0] * (columns - label)
-            stds = [0] * (columns - label)
+            means = [0.0] * (columns - label)
+            stds = [0.0] * (columns - label)
         else:
             raise Exception("Error on applying normal transform.")
 
@@ -503,8 +503,8 @@ class Preprocessing:
         columns = len(M[0])
 
         if extreme_values:
-            means = [0] * lines
-            stds = [0] * lines
+            means = [0.0] * lines
+            stds = [0.0] * lines
         else:
             raise Exception("Error on applying normal transform.")
 
