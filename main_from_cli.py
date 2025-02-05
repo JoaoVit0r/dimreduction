@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import threading
 from datetime import datetime
 import time
+import gc
 
 PRINT_DEBUG = True
 
@@ -1380,7 +1381,7 @@ class FIFOQueue:
         return self.m_values
 
 class RadixSort:
-    # timer = Timer()
+    timer = Timer()
     
     @staticmethod
     def radix_sort(v, I, n):
@@ -1392,16 +1393,23 @@ class RadixSort:
         
         # RadixSort.timer.start("loop_radix_sort")
         while pos >= 0:
-            # RadixSort.timer.start("loop_radix_sort-internal")
-            for i in range(lines):
+            RadixSort.timer.start("loop_radix_sort-internal")
+            # for i in range(lines):
+            #     q = RadixSort.queue_no(v[i], I[pos])
+            #     queues[int(q)].add(v[i])
+            i = 0
+            while i < lines:
                 q = RadixSort.queue_no(v[i], I[pos])
-                queues[int(q)].add(v[i])
-            # RadixSort.timer.end("loop_radix_sort-internal")
+                queues[q].add(v[i])
+                i += 1
+            RadixSort.timer.end("loop_radix_sort-internal")
             # RadixSort.timer.start("loop_radix_sort-restore")
             RadixSort.restore(queues, v)
             # RadixSort.timer.end("loop_radix_sort-restore")
             pos -= 1
         queues = None
+        # call garbage collector
+        gc.collect()
 
     @staticmethod
     def restore(qs, v):
@@ -1413,7 +1421,12 @@ class RadixSort:
 
     @staticmethod
     def create_queues(n, lines):
-        return [FIFOQueue(lines) for _ in range(int(n))]
+        queues = []
+        i = 0
+        while i < int(n):
+            queues.append(FIFOQueue(lines))
+            i += 1
+        return queues
 
     @staticmethod
     def queue_no(v, pos):
@@ -1492,11 +1505,11 @@ class Criteria:
         HY = 0
         lines = len(A)
         no_obs = n ** len(I)
-        Criteria.timer.start("Sort")
+        # Criteria.timer.start("Sort")
         RadixSort.radix_sort(A, I, n)
-        Criteria.timer.end("Sort")
+        # Criteria.timer.end("Sort")
         Criteria.probtable = [[0] * int(c) for _ in range(int(no_obs))]
-        Criteria.timer.start("loop_MCE_COD")
+        # Criteria.timer.start("loop_MCE_COD")
         for j in range(lines):
             if j > 0 and not Criteria.equal_instances(j, I, A):
                 no_obs -= 1
@@ -1508,7 +1521,7 @@ class Criteria:
             pYdX[int_or_ord_4_digit(A[j][-1])] += 1
             pY[int_or_ord_4_digit(A[j][-1])] += 1
             pX += 1
-        Criteria.timer.end("loop_MCE_COD")
+        # Criteria.timer.end("loop_MCE_COD")
         position = Criteria.get_position_of_instances(lines, I, A)
         Criteria.probtable[position] = pYdX[:]
         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
@@ -2049,7 +2062,7 @@ def main():
         hit_rate = hits / len(clas.labels)
             
         IOFile.print_and_log(f"rate of hits = {hit_rate}")
-        timer.end("Feature Selection Inside Thread")
+        timer.end("feature_selection_inside_thread")
 
     def network_inference_action_performed():
         nonlocal Md
