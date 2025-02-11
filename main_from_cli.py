@@ -9,6 +9,14 @@ import time
 import gc
 
 PRINT_DEBUG = True
+VERBOSE_LEVEL = {
+    "NONE": 0,
+    "ERROR": 1,
+    "WARNING": 2,
+    "INFO": 3,
+    "TIMER": 4,
+    "DEBUG": 5
+}
 
 def chr_4_digit(int_value):
     # return f"\\u{(int_value):04x}"
@@ -162,6 +170,11 @@ class MathRoutines:
         return M2
 
 class IOFile:
+    VERBOSITY_LEVEL = VERBOSE_LEVEL["DEBUG"]  # Default verbosity level
+    @staticmethod
+    def set_verbosity(level):
+        IOFile.VERBOSITY_LEVEL = level
+
     @staticmethod
     def write_ties(originalagn, tiesout, targetindex, avgedges, topology, originalpredictors, q_entropy, predictors, ties, h_global, flag):
         pass
@@ -205,35 +218,46 @@ class IOFile:
                 pickle.dump(agn, file)
             return True
         except IOError as e:
-            self.print_and_log(f"Error when creating FileOutputStream: {e}")
+            self.print_and_log(f"Error when creating FileOutputStream: {e}", verbosity=VERBOSE_LEVEL["ERROR"])
             return False
         
     @staticmethod
-    def print_and_log(*message, end = "\n", path = "logs/logs.log"):
-        print(" ".join(map(str, message)), end=end)
-        with open(path, 'a') as file:
-            file.write(f"{datetime.now()} - {" ".join(map(str, message))}{end}")
+    def print_and_log(*message, end="\n", path="logs/logs.log", verbosity=VERBOSE_LEVEL["DEBUG"]):
+        if verbosity <= IOFile.VERBOSITY_LEVEL:
+            print(" ".join(map(str, message)), end=end)
+            with open(path, 'a') as file:
+                file.write(f"{' '.join(map(str, message))}{end}")
 
 class Timer:
-    def __init__(self):
+    PATH = "timing/timers.log"
+    VERBOSITY = VERBOSE_LEVEL["TIMER"]
+    
+    def __init__(self, verbosity=VERBOSE_LEVEL["TIMER"]):
         self.timers = {}
+        self.VERBOSITY = verbosity
+
+    def set_verbosity(self, level):
+        self.VERBOSITY = level
+    
+    def print_and_log(self, message):
+        IOFile.print_and_log(message, path=self.PATH, verbosity=self.VERBOSITY)
     
     def start(self, name):
         if name in self.timers:
-            IOFile.print_and_log(f"Timer {name} is already running.", path="timing/timers.log")
+            self.print_and_log(f"Timer {name} is already running.")
         else:
             self.timers[name] = time.time()
-            IOFile.print_and_log(f"Timer {name} started at {datetime.now()}", path="timing/timers.log")
+            self.print_and_log(f"Timer {name} started at {datetime.now()}")
 
     def end(self, name):
         if name not in self.timers:
-            IOFile.print_and_log(f"Timer {name} was not started.", path="timing/timers.log")
+            self.print_and_log(f"Timer {name} was not started.")
         else:
             start_time = self.timers.pop(name)
             end_time = time.time()
             duration = end_time - start_time
-            IOFile.print_and_log(f"Timer {name} ended at {datetime.now()}", path="timing/timers.log")
-            IOFile.print_and_log(f"Duration for {name}: {duration:.4f} seconds", path="timing/timers.log")
+            self.print_and_log(f"Timer {name} ended at {datetime.now()}")
+            self.print_and_log(f"Duration for {name}: {duration:.4f} seconds")
 
 class Preprocessing:
     SKIP_VALUE = -999
@@ -1576,7 +1600,7 @@ class AGNRoutines:
                 name = genenames[g]
                 agn.get_genes()[g].set_name(name)
         else:
-            IOFile.print_and_log("Error on labeling genes, size does not match.")
+            IOFile.print_and_log("Error on labeling genes, size does not match.", verbosity=VERBOSE_LEVEL["ERROR"])
 
     def make_temporal_training_set(agn, target, is_periodic):
         rowsoriginal = len(agn.get_temporalsignalquantized())
@@ -1879,6 +1903,9 @@ def main():
 
     # Configuration parameters
     output_folder = os.getenv("OUTPUT_FOLDER")
+    verbosity_level = int(os.getenv("VERBOSITY_LEVEL", ))
+    IOFile.set_verbosity(verbosity_level)
+    
     if output_folder is not None and output_folder != "":
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -1968,13 +1995,13 @@ def main():
             if is_to_save_quantized_data:
                 IOFile.write_matrix(f"{output_folder}/quantized_data/{prefix}-quantized_data.txt", Md, delimiter)
         else:
-            IOFile.print_and_log("Execution Error: Select and read input file first.")
+            IOFile.print_and_log("Execution Error: Select and read input file first.", verbosity=VERBOSE_LEVEL["ERROR"])
 
     def execute_feature_selection_action_performed():
         alpha = alpha_feature_selection
         q_entropy = q_entropy_feature_selection
         if q_entropy < 0 or alpha < 0:
-            IOFile.print_and_log("Error on parameter value: The values of q-entropy and Alpha must be positives.")
+            IOFile.print_and_log("Error on parameter value: The values of q-entropy and Alpha must be positives.", verbosity=VERBOSE_LEVEL["ERROR"])
             return
         if search_method_feature_selection > 0 and search_method_feature_selection <= 3:
             thread = threading.Thread(target=execute_feature_selection, args=(search_method_feature_selection,))
@@ -1983,7 +2010,7 @@ def main():
             
             thread.join()
         else:
-            IOFile.print_and_log("Error on parameter value: The search method must be selected.")
+            IOFile.print_and_log("Error on parameter value: The search method must be selected.", verbosity=VERBOSE_LEVEL["ERROR"])
 
     def execute_feature_selection(selector):
         timer.start("feature_selection_inside_thread")
@@ -1994,7 +2021,7 @@ def main():
         if criteria_function_feature_selection == 1:
             q_entropy = 0
         if q_entropy < 0 or alpha < 0:
-            IOFile.print_and_log("Error on parameter value: The values of q-entropy and Alpha must be positives.")
+            IOFile.print_and_log("Error on parameter value: The values of q-entropy and Alpha must be positives.", verbosity=VERBOSE_LEVEL["ERROR"])
             return
         n = max(max(row[:-1]) for row in Md) + 1
         c = max(row[-1] for row in Md) + 1
@@ -2009,12 +2036,12 @@ def main():
         
         resultsetsize = maximum_result_list_size_feature_selection
         if resultsetsize < 1:
-            IOFile.print_and_log("Error on parameter value: The Size of the Result List must be a integer value greater or equal to 1.")
+            IOFile.print_and_log("Error on parameter value: The Size of the Result List must be a integer value greater or equal to 1.", verbosity=VERBOSE_LEVEL["ERROR"])
             return
         fs = FS(strainingset, n, c, penalization_type, alpha, beta, q_entropy, resultsetsize)
         maxfeatures = maximum_set_size_feature_selection
         if maxfeatures <= 0:
-            IOFile.print_and_log("Error on parameter value: The Maximum Set Size be a integer value greater or equal to 1.")
+            IOFile.print_and_log("Error on parameter value: The Maximum Set Size be a integer value greater or equal to 1.", verbosity=VERBOSE_LEVEL["ERROR"])
             return
         if selector == 1:
             fs.run_sfs(False, maxfeatures)
