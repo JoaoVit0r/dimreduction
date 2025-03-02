@@ -230,9 +230,9 @@ class IOFile:
 
 class Timer:
     PATH = "timing/timers.log"
-    VERBOSITY = VERBOSE_LEVEL["TIMER"]
+    VERBOSITY = VERBOSE_LEVEL["DEBUG"]
     
-    def __init__(self, verbosity=VERBOSE_LEVEL["TIMER"]):
+    def __init__(self, verbosity=VERBOSE_LEVEL["DEBUG"]):
         self.timers = {}
         self.VERBOSITY = verbosity
 
@@ -240,9 +240,11 @@ class Timer:
         self.VERBOSITY = level
     
     def print_and_log(self, message):
-        IOFile.print_and_log(message, path=self.PATH, verbosity=self.VERBOSITY)
+        IOFile.print_and_log(message, path=self.PATH, verbosity=VERBOSE_LEVEL["TIMER"])
     
     def start(self, name):
+        if VERBOSE_LEVEL["TIMER"] < self.VERBOSITY:
+            return
         if name in self.timers:
             self.print_and_log(f"Timer {name} is already running.")
         else:
@@ -250,6 +252,8 @@ class Timer:
             self.print_and_log(f"Timer {name} started at {datetime.now()}")
 
     def end(self, name):
+        if VERBOSE_LEVEL["TIMER"] < self.VERBOSITY:
+            return
         if name not in self.timers:
             self.print_and_log(f"Timer {name} was not started.")
         else:
@@ -985,7 +989,7 @@ class FS:
         self.tiesentropy = []
         self.ties = []
         self.jointentropiesties = []
-        self.timer = Timer()
+        self.timer = Timer(IOFile.VERBOSITY_LEVEL)
 
     def insert_in_result_list(self, I, hmin):
         item = [hmin, I[:]]
@@ -1405,7 +1409,7 @@ class FIFOQueue:
         return self.m_values
 
 class RadixSort:
-    timer = Timer()
+    timer = Timer(IOFile.VERBOSITY_LEVEL)
     
     @staticmethod
     def radix_sort(v, I, n):
@@ -1458,7 +1462,7 @@ class RadixSort:
 
 class Criteria:
     probtable = []
-    timer = Timer()
+    timer = Timer(IOFile.VERBOSITY_LEVEL)
 
     @staticmethod
     def get_position_of_instances(line, I, A):
@@ -1697,7 +1701,7 @@ class AGNRoutines:
         rows = len(recoveredagn.get_temporalsignalquantized())
         IOFile.print_and_log("\n\n")
         txt.append("\n\n")
-        timer = Timer()
+        timer = Timer(IOFile.VERBOSITY_LEVEL)
         
 
         if targets is None:
@@ -1905,6 +1909,7 @@ def main():
     output_folder = os.getenv("OUTPUT_FOLDER")
     verbosity_level = int(os.getenv("VERBOSITY_LEVEL", ))
     IOFile.set_verbosity(verbosity_level)
+    timer.set_verbosity(verbosity_level)
     
     if output_folder is not None and output_folder != "":
         if not os.path.exists(output_folder):
