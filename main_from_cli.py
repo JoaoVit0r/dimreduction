@@ -7,6 +7,7 @@ import threading
 from datetime import datetime
 import time
 import gc
+import concurrent.futures
 
 PRINT_DEBUG = True
 VERBOSE_LEVEL = {
@@ -1047,36 +1048,68 @@ class FS:
         self.bestset = [[] for _ in range(maxfeatures)]
         self.tiesentropy = [1] * maxfeatures
         self.ties = [[] for _ in range(maxfeatures)]
-
+    
+    def __evaluate_entropy__(self, f, I, A, h_min_dict, h_min_lock):
+        H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, I, A, self.q)
+        
+        h_min_lock.acquire()
+        if H < h_min_dict["h_min"]:
+            # f_min = f
+            # h_min = H
+            h_min_dict["f_min"] = f
+            h_min_dict["h_min"] = H
+            self.insert_in_result_list(I, H)
+        if H == 0:
+            return "break"
+        h_min_lock.release()
+        return "continue"
+    
     def run_sfs(self, called_by_exhaustive, maxfeatures):
         columns = len(self.A[0])
-        for i in range(columns - 1):
-            h_min = 1.1
-            f_min = -1
+        for i in range(min(columns - 1, maxfeatures)):
+        # for i in range(columns - 1):
+            # h_min = 1.1
+            # f_min = -1
+            h_min_lock = threading.Lock()
+            min_dict = {"h_min": 1.1, "f_min": -1}
             H = 1
             self.I.append(-1)
-            for f in range(columns - 1):
-                if f in self.I:
-                    continue
-                self.I[-1] = f
-                self.timer.start("MCE_COD")
-                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
-                self.timer.end("MCE_COD")
-                if H < h_min:
-                    f_min = f
-                    h_min = H
-                    self.insert_in_result_list(self.I, H)
-                if H == 0:
+            
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for f in range(columns - 1):
+                    if f in self.I:
+                        continue
+                    self.I[-1] = f
+                    AuxI = self.I[:]
+                    AuxA = self.A[:]
+                    # result = self.__evaluate_entropy__(f, AuxI, AuxA, min_dict, h_min_lock)
+                    futures.append(executor.submit(self.__evaluate_entropy__, f, AuxI, AuxA, min_dict, h_min_lock))
+                    
+                # TODO: change to wait for FIRST_EXCEPTION
+                results = concurrent.futures.wait(futures, None)
+                
+                for future in results.not_done:
+                    future.cancel()
+
+                for future in results.done:
+                    result = future.result()
+                    if result == "break":
+                        # TODO: uncomment ?
+                        # h_min_lock.release()
+                        break
+                    
+                if min_dict["h_min"] < self.h_global:
+                    self.I[-1] = min_dict["f_min"]
+                    self.h_global = min_dict["h_min"]
+                    # if self.h_global == 0 or len(self.I) >= maxfeatures:
+                    if self.h_global == 0:
+                        break 
+                else:
+                    self.I.pop()
                     break
-            if h_min < self.h_global:
-                self.I[-1] = f_min
-                self.h_global = h_min
-                if self.h_global == 0 or len(self.I) >= maxfeatures:
-                    break
-            else:
-                self.I.pop()
-                break
         if called_by_exhaustive:
+            # TODO: check if I can use self.I
             self.itmax = len(self.I)
 
     def best_set(self, bestset, bestentropy, other, entropy):

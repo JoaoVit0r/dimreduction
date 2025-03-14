@@ -1050,7 +1050,7 @@ class FS:
 
     def run_sfs(self, called_by_exhaustive, maxfeatures):
         columns = len(self.A[0])
-        for i in range(columns - 1):
+        for i in range(min(columns - 1, maxfeatures)):
             h_min = 1.1
             f_min = -1
             H = 1
@@ -1071,7 +1071,7 @@ class FS:
             if h_min < self.h_global:
                 self.I[-1] = f_min
                 self.h_global = h_min
-                if self.h_global == 0 or len(self.I) >= maxfeatures:
+                if self.h_global == 0:
                     break
             else:
                 self.I.pop()
