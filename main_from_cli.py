@@ -1049,7 +1049,9 @@ class FS:
         self.tiesentropy = [1] * maxfeatures
         self.ties = [[] for _ in range(maxfeatures)]
     
-    def __evaluate_entropy__(self, f, I, A, h_min_dict, h_min_lock):
+    def __evaluate_entropy__(self, f, I, A, h_min_dict, h_min_lock, abort):
+        if abort.is_set():
+            raise Exception("Abort is set.")
         H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, I, A, self.q)
         
         h_min_lock.acquire()
@@ -1059,10 +1061,10 @@ class FS:
             h_min_dict["f_min"] = f
             h_min_dict["h_min"] = H
             self.insert_in_result_list(I, H)
-        if H == 0:
-            return "break"
         h_min_lock.release()
-        return "continue"
+        if H == 0:
+            abort.set()
+            raise Exception(f"H == 0, f: {f}, I: {I}")
     
     def run_sfs(self, called_by_exhaustive, maxfeatures):
         columns = len(self.A[0])
@@ -1071,6 +1073,7 @@ class FS:
             # h_min = 1.1
             # f_min = -1
             h_min_lock = threading.Lock()
+            abort = threading.Event()
             min_dict = {"h_min": 1.1, "f_min": -1}
             H = 1
             self.I.append(-1)
@@ -1084,20 +1087,20 @@ class FS:
                     AuxI = self.I[:]
                     AuxA = self.A[:]
                     # result = self.__evaluate_entropy__(f, AuxI, AuxA, min_dict, h_min_lock)
-                    futures.append(executor.submit(self.__evaluate_entropy__, f, AuxI, AuxA, min_dict, h_min_lock))
+                    futures.append(executor.submit(self.__evaluate_entropy__, f, AuxI, AuxA, min_dict, h_min_lock, abort))
                     
-                # TODO: change to wait for FIRST_EXCEPTION
-                results = concurrent.futures.wait(futures, None)
+                results = concurrent.futures.wait(futures, None, concurrent.futures.FIRST_EXCEPTION)
                 
                 for future in results.not_done:
                     future.cancel()
 
                 for future in results.done:
-                    result = future.result()
-                    if result == "break":
-                        # TODO: uncomment ?
-                        # h_min_lock.release()
-                        break
+                    try:
+                        future.result()
+                    except Exception as e:
+                        IOFile.print_and_log("Exception in run_sfs: ", e)
+                    except concurrent.futures.CancelledError as e:
+                        IOFile.print_and_log("CancelledError in run_sfs: ", e)
                     
                 if min_dict["h_min"] < self.h_global:
                     self.I[-1] = min_dict["f_min"]
