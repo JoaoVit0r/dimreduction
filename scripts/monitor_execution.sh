@@ -31,7 +31,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check if required commands are available
-for cmd in dstat python3; do
+for cmd in dool python3; do
     if ! command -v $cmd &> /dev/null; then
         echo "Error: $cmd is required but not installed."
         exit 1

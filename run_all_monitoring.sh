@@ -4,7 +4,7 @@ SLEEP_TIME=900
 MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between executions
 
 REPOSITORY_PYTHON="${1:-.}"
-REPOSITORY_JAVA="${2:-../java-dimreduction}"
+REPOSITORY_JAVA="${2:-../dimreduction-java}"
 
 echo "==============================================="
 echo "Starting Monitoring Session"
@@ -20,6 +20,22 @@ REPOSITORY_JAVA=$(realpath "$REPOSITORY_JAVA")
 
 . "$REPOSITORY_PYTHON"/venv/bin/activate
 echo -e "\nVirtual Environment: $VIRTUAL_ENV"
+
+# Check if required commands are available
+for cmd in dool python3; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "Error: $cmd is required but not installed."
+        exit 1
+    fi
+done
+
+# Check if required Python packages are available
+python3 -c "import pandas, matplotlib" # 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Error: Required Python packages (pandas, matplotlib) are not installed."
+    echo "Please install them using: pip install pandas matplotlib"
+    exit 1
+fi
 
 MONITOR_SCRIPT="$REPOSITORY_PYTHON/scripts/monitor_execution.sh"
 JAVA_CLASSPATH="./lib/*:./out/production/java-dimreduction:./lib/jgraph.jar:./lib/jgraphlayout.jar:./lib/prefuse.jar:./lib/jfreechart-1.0.9.jar:./lib/jcommon-1.0.12.jar:./lib/dotenv-java-3.0.2.jar"
