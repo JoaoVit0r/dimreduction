@@ -1112,7 +1112,6 @@ class FS:
                     self.I.pop()
                     break
         if called_by_exhaustive:
-            # TODO: check if I can use self.I
             self.itmax = len(self.I)
 
     def best_set(self, bestset, bestentropy, other, entropy):

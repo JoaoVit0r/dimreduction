@@ -5,6 +5,45 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "bashdb",
+      "request": "launch",
+      "name": "Bash-Debug (hardcoded script name)",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/run_all_monitoring.sh",
+      "args": []
+    },
+    {
+      "type": "bashdb",
+      "request": "launch",
+      "name": "monitor JAVA",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/scripts/monitor_execution.sh",
+      "args": [
+        "--output-dir",
+        "/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/dimreduction/monitoring_plots/20250326_213613/java/MainCLI",
+        // "${output_dir}",
+        "java",
+        "-Dfile.encoding=UTF-8",
+        "-Dsun.stdout.encoding=UTF-8",
+        "-Dsun.stderr.encoding=UTF-8",
+        "-classpath",
+        // "$JAVA_CLASSPATH",
+        "./lib/*:./out/production/java-dimreduction:./lib/jgraph.jar:./lib/jgraphlayout.jar:./lib/prefuse.jar:./lib/jfreechart-1.0.9.jar:./lib/jcommon-1.0.12.jar:./lib/dotenv-java-3.0.2.jar",
+        "-Xmx16384m",
+        "-XX:+UnlockDiagnosticVMOptions",
+        "-XX:+DumpPerfMapAtExit",
+        "fs.MainCLI"
+      ]
+    },
+    {
+      "name": "Python Monitoring Plot",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/plot_dstat.py",
+      "console": "integratedTerminal",
+      "args": ["monitoring_plots/dstat_output_20250320_112106.csv", "monitoring_plots/output", "monitoring_plots/execution_markers_20250320_112106.txt", "split_by:hour"]
+    },
+    {
       "name": "Python Debugger: Current File",
       "type": "debugpy",
       "request": "launch",
