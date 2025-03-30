@@ -3,22 +3,56 @@
 SLEEP_TIME=900
 MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between executions
 
-REPOSITORY_PYTHON="${1:-.}"
-REPOSITORY_JAVA="${2:-../dimreduction-java}"
+REPOSITORY_PYTHON="."
+REPOSITORY_JAVA="../dimreduction-java"
+COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --sleep-time)
+            SLEEP_TIME="$2"
+	        MONITOR_SLEEP_TIME="$2"
+            shift 2
+            ;;
+        --repository-python)
+            REPOSITORY_PYTHON="${2:-.}"
+            shift 2
+            ;;
+    	--repository-java)
+            REPOSITORY_JAVA="${2:-../dimreduction-java}"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: $0 [--sleep-time <seconds>] [--repository-python <path>] [--repository-java <path>] [java|venv_v12|venv_v13|venv_v13_no_gil]"
+            exit 0
+            ;;
+        *)
+            COMMANDS=("$@")
+            break
+            ;;
+    esac
+done
 
 echo "==============================================="
 echo "Starting Monitoring Session"
 echo "==============================================="
 echo "Python Repository: $REPOSITORY_PYTHON"
 echo "Java Repository: $REPOSITORY_JAVA"
-echo "Sleep Time: $(($SLEEP_TIME / 60)) minutes"
+if [ $SLEEP_TIME -ge 60 ]; then
+    echo "Sleep Time: $(($SLEEP_TIME / 60)) minutes"
+else
+    echo "Sleep Time: $SLEEP_TIME seconds"
+fi
+echo "Commands: ${COMMANDS[@]}"
 echo "==============================================="
 
 # Convert paths to absolute paths
 REPOSITORY_PYTHON=$(realpath "$REPOSITORY_PYTHON")
 REPOSITORY_JAVA=$(realpath "$REPOSITORY_JAVA")
 
-. "$REPOSITORY_PYTHON"/venv/bin/activate
+if [ -f "$REPOSITORY_PYTHON"/venv/bin/activate ]; then
+    . "$REPOSITORY_PYTHON"/venv/bin/activate
+fi
 echo -e "\nVirtual Environment: $VIRTUAL_ENV"
 
 # Check if required commands are available
@@ -64,7 +98,7 @@ move_files() {
 # Function to wait between executions with proper message
 wait_between_executions() {
     echo -e "\n-----------------------------------------------"
-    echo "Waiting between executions..."
+    echo "Waiting between Monitor script executions..."
     if [ $SLEEP_TIME -ge 60 ]; then
         echo "Next execution in $(($SLEEP_TIME / 60)) minutes"
     else
@@ -76,28 +110,28 @@ wait_between_executions() {
 
 # Function to run monitoring and move files
 run_monitoring_python() {
-    local venv=$1
+    local python_bin=$1
     local script=$2
 
     local script_name
     script_name="$(basename "${script}")"
-    local output_dir="${BASE_DIR}/${venv}/${script_name%.py}"
+    local output_dir="${BASE_DIR}/${python_bin%/bin/python}/${script_name%.py}"
     mkdir -p "${output_dir}"
     
-    echo -e "\n==============================================="
+    echo -e "\n================================================================="
     echo "Running Python Monitoring"
-    echo "==============================================="
-    echo "Environment: ${venv}"
+    echo "================================================================="
+    echo "Environment: ${python_bin}"
     echo "Script: ${script_name}"
     echo "Output Directory: ${output_dir}"
     echo "==============================================="
     
     cd "$REPOSITORY_PYTHON" || exit
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" "${venv}/bin/python" "${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" "${python_bin}" "${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
-    echo "Completed ${venv} with ${script_name}"
+    echo "Completed ${python_bin} with ${script_name}"
     echo "-----------------------------------------------"
 }
 
@@ -107,14 +141,15 @@ run_monitoring_java() {
     local output_dir="${BASE_DIR}/java/${script}"
     mkdir -p "${output_dir}"
     
-    echo -e "\n==============================================="
+    echo -e "\n================================================================="
     echo "Running Java Monitoring"
-    echo "==============================================="
+    echo "================================================================="
     echo "Script: ${script}"
     echo "Output Directory: ${output_dir}"
     echo "==============================================="
     
     cd "$REPOSITORY_JAVA" || exit
+    # javac -d out/production/java-dimreduction -cp ./lib:./out/production/java-dimreduction:./lib/jgraph.jar:./lib/jgraphlayout.jar:./lib/prefuse.jar:./lib/jfreechart-1.0.9.jar:./lib/jcommon-1.0.12.jar:./lib/dotenv-java-3.0.2.jar src/**/*.java
     $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" "java" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath $JAVA_CLASSPATH -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
     cd - || exit
     
@@ -124,29 +159,30 @@ run_monitoring_java() {
 }
 
 # Run all combinations in sequence
-run_monitoring_java "$REPOSITORY_JAVA/src/fs/MainCLI.java"
+for cmd in "${COMMANDS[@]}"; do
+    if [ "$cmd" == "java" ]; then
+        run_monitoring_java
+        wait_between_executions
+    else
+        if [ -f "$REPOSITORY_PYTHON/$cmd/bin/python" ]; then
+            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
+            wait_between_executions
+            
+            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli.py"
+            wait_between_executions
+        else
+            run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
+            wait_between_executions
 
-wait_between_executions
-run_monitoring_python "venv_v12" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
+            run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli.py"
+            wait_between_executions
+        fi
+    fi
+done
 
-wait_between_executions
-run_monitoring_python "venv_v12" "$REPOSITORY_PYTHON/main_from_cli_performing.py"
-
-wait_between_executions
-run_monitoring_python "venv_v13" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
-
-wait_between_executions
-run_monitoring_python "venv_v13" "$REPOSITORY_PYTHON/main_from_cli_performing.py"
-
-wait_between_executions
-run_monitoring_python "venv_v13-nogil" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
-
-wait_between_executions
-run_monitoring_python "venv_v13-nogil" "$REPOSITORY_PYTHON/main_from_cli_performing.py"
-
-echo -e "\n==============================================="
+echo -e "\n================================================================="
 echo "All Executions Completed"
-echo "==============================================="
+echo "================================================================="
 echo "Results are organized in: ${BASE_DIR}"
 echo "==============================================="
 date
