@@ -7,6 +7,7 @@ OUTPUT_DIR=""
 REPOSITORY_PYTHON=""
 COMMAND=""
 NUMBER_OF_EXECUTIONS=3
+CUSTOM_INPUT_FILE_PATH=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -24,6 +25,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --number-of-executions)
             NUMBER_OF_EXECUTIONS="$2"
+            shift 2
+            ;;
+        --custom-input-file)
+            CUSTOM_INPUT_FILE_PATH="$2"
             shift 2
             ;;
         --help)
@@ -62,13 +67,44 @@ if [ -z "$OUTPUT_DIR" ] || [ -z "$COMMAND" ]; then
 fi
 
 # Create output directory for plots
-PLOTS_DIR="$OUTPUT_DIR/monitoring_plots"
-mkdir -p "$PLOTS_DIR"
+MONITOR_DIR="$OUTPUT_DIR/monitoring_plots"
+mkdir -p "$MONITOR_DIR"
 
 # Create a unique temporary file for dstat output
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DSTAT_OUTPUT="$PLOTS_DIR/dstat_output_$TIMESTAMP.csv"
-DSTAT_MARKERS="$PLOTS_DIR/execution_markers_$TIMESTAMP.txt"
+DSTAT_OUTPUT_File="$MONITOR_DIR/dstat_output_$TIMESTAMP.csv"
+DSTAT_MARKERS_FILE="$MONITOR_DIR/execution_markers_$TIMESTAMP.txt"
+ENV_FILE="$MONITOR_DIR/env_variables_$TIMESTAMP.txt"
+
+# Create a directory for plots
+PLOTS_DIR="$MONITOR_DIR/plots"
+mkdir -p "$PLOTS_DIR"
+
+if [ -L .env ]; then
+    DEFAULT_ENV_FILE=$(realpath .env)
+else
+    DEFAULT_ENV_FILE=".env"
+fi
+
+if [ -n "$CUSTOM_INPUT_FILE_PATH" ]; then
+    if [ ! -f "$CUSTOM_INPUT_FILE_PATH" ]; then
+        echo "Error: Custom input file does not exist."
+        exit 1
+    fi
+    # Save the DEFAULT_ENV_FILE to restore it later
+    cp "$DEFAULT_ENV_FILE" "$DEFAULT_ENV_FILE.bak"
+
+    echo "-----------------------------------------------"
+    echo "Updating Environment Variables"
+    echo "-----------------------------------------------"
+    sed -i -E "s/^INPUT_FILE_PATH=.*/INPUT_FILE_PATH=$(realpath "$CUSTOM_INPUT_FILE_PATH" | sed 's/\//\\\//g')/" "$DEFAULT_ENV_FILE"
+fi
+
+
+echo "-----------------------------------------------"
+echo "Saving Environment Variables"
+echo "-----------------------------------------------"
+cp "$DEFAULT_ENV_FILE" "$ENV_FILE"
 
 echo "==============================================="
 echo "Starting System Monitoring"
@@ -78,7 +114,7 @@ echo "Output directory: $OUTPUT_DIR"
 echo "==============================================="
 
 # Start dstat(dool) in the background (time, cpu, load, mem)
-dool -tclm --output "$DSTAT_OUTPUT" 1 &
+dool -tclm --output "$DSTAT_OUTPUT_File" 1 &
 DSTAT_PID=$!
 
 # Wait for dstat to initialize
@@ -92,12 +128,12 @@ for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
     echo -e "\n-----------------------------------------------"
     echo "Execution $i of $NUMBER_OF_EXECUTIONS"
     echo "-----------------------------------------------"
-    echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_Start" >> "$DSTAT_MARKERS"
+    echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_Start" >> "$DSTAT_MARKERS_FILE"
     eval "$COMMAND"
-    echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_End" >> "$DSTAT_MARKERS"
+    echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_End" >> "$DSTAT_MARKERS_FILE"
     
     # Wait for SLEEP_TIME between executions if not the last one
-    if [ $i -lt 3 ]; then
+    if [ $i -lt "$NUMBER_OF_EXECUTIONS" ]; then
         echo -e "\nWaiting between executions..."
         if [ $SLEEP_TIME -ge 60 ]; then
             echo "Next execution in $(($SLEEP_TIME / 60)) minutes"
@@ -125,11 +161,33 @@ kill $DSTAT_PID
 echo -e "\n==============================================="
 echo "Generating Performance Plots"
 echo "==============================================="
-echo "Input data: $DSTAT_OUTPUT"
-echo "Output directory: $PLOTS_DIR/output"
+echo "Input data: $DSTAT_OUTPUT_File"
+echo "Output directory: $PLOTS_DIR"
 
 # Generate plots using the Python script
-python3 "$REPOSITORY_PYTHON"/scripts/plot_dstat.py "$DSTAT_OUTPUT" "$PLOTS_DIR/output" "$DSTAT_MARKERS" "split_by:hour"
+python3 "$REPOSITORY_PYTHON"/scripts/plot_dstat.py "$DSTAT_OUTPUT_File" "$PLOTS_DIR" "$DSTAT_MARKERS_FILE" "split_by:hour"
+
+# Restore the DEFAULT_ENV_FILE
+if [ -f "$DEFAULT_ENV_FILE.bak" ]; then
+    echo "-----------------------------------------------"
+    echo "Restoring Environment Variables"
+    echo "-----------------------------------------------"
+    mv "$DEFAULT_ENV_FILE.bak" "$DEFAULT_ENV_FILE"
+fi
+
+# Move command results to the output directory
+if [ -f "logs/logs.log" ]; then
+    mv "logs/logs.log" "$MONITOR_DIR"
+fi
+if [ -f "timing/timers.log" ]; then
+    mv "timing/timers.log" "$MONITOR_DIR"
+fi
+if [ -d "results" ]; then
+    mv results/*/*.txt "$MONITOR_DIR"
+fi
+if [ -f "perf.data" ]; then
+    mv "perf.data" "$MONITOR_DIR"
+fi
 
 echo -e "\n==============================================="
 echo "Monitoring Completed Successfully"

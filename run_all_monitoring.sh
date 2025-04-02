@@ -6,6 +6,7 @@ MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between executions
 REPOSITORY_PYTHON="."
 REPOSITORY_JAVA="../dimreduction-java"
 COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
+CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
 NUMBER_OF_EXECUTIONS=3
 
 while [[ $# -gt 0 ]]; do
@@ -25,6 +26,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --number-of-executions)
             NUMBER_OF_EXECUTIONS="$2"
+            shift 2
+            ;;
+        --custom-input-file)
+            CUSTOM_INPUT_FILE_PATH="$2"
             shift 2
             ;;
         --help)
@@ -49,6 +54,8 @@ else
     echo "Sleep Time: $SLEEP_TIME seconds"
 fi
 echo "Commands: ${COMMANDS[@]}"
+echo "Custom Input File: $CUSTOM_INPUT_FILE_PATH"
+echo "Number of Executions: $NUMBER_OF_EXECUTIONS"
 echo "==============================================="
 
 # Convert paths to absolute paths
@@ -86,20 +93,6 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BASE_DIR="$REPOSITORY_PYTHON/monitoring_plots/${TIMESTAMP}"
 mkdir -p "${BASE_DIR}"
 
-# Function to move files
-move_files() {
-    local output_dir="$1"
-    local source_dir="${2:-monitoring_plots}"
-    
-    # Create output directory
-    mkdir -p "${output_dir}"
-    
-    # Move monitoring files
-    mv "${source_dir}"/dstat_*.csv "${output_dir}/" 2>/dev/null || true
-    mv "${source_dir}"/execution_markers*.txt "${output_dir}/" 2>/dev/null || true
-    mv "${source_dir}"/output/dstat_plot_*.svg "${output_dir}/" 2>/dev/null || true
-}
-
 # Function to wait between executions with proper message
 wait_between_executions() {
     echo -e "\n-----------------------------------------------"
@@ -132,7 +125,7 @@ run_monitoring_python() {
     echo "==============================================="
     
     cd "$REPOSITORY_PYTHON" || exit
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" "${python_bin}" "${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" "${python_bin}" "${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
@@ -154,8 +147,9 @@ run_monitoring_java() {
     echo "==============================================="
     
     cd "$REPOSITORY_JAVA" || exit
-    # javac -d out/production/java-dimreduction -cp ./lib:./out/production/java-dimreduction:./lib/jgraph.jar:./lib/jgraphlayout.jar:./lib/prefuse.jar:./lib/jfreechart-1.0.9.jar:./lib/jcommon-1.0.12.jar:./lib/dotenv-java-3.0.2.jar src/**/*.java
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" "java" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath $JAVA_CLASSPATH -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
+    # cp -r src/img out/production/java-dimreduction/
+    # javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" "java" -cp "${JAVA_CLASSPATH}" -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"

@@ -72,7 +72,6 @@ def add_markers_to_plot(ax, markers, y_min, y_max):
 def create_plots(df, output_prefix, output_folder, markers_file=None, split_by_time=None):
     # Ensure the output folder exists
     ensure_dir_exists(output_folder)
-    ensure_dir_exists(os.path.join(output_folder, 'output'))
     
     # Set style to a default one
     plt.style.use('default')
