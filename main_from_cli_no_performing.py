@@ -243,6 +243,8 @@ class Timer:
         IOFile.print_and_log(message, path=self.PATH, verbosity=VERBOSE_LEVEL["TIMER"])
     
     def start(self, name):
+        if True:
+            return
         if VERBOSE_LEVEL["TIMER"] < self.VERBOSITY:
             return
         if name in self.timers:
@@ -252,6 +254,8 @@ class Timer:
             self.print_and_log(f"Timer {name} started at {datetime.now()}")
 
     def end(self, name):
+        if True:
+            return
         if VERBOSE_LEVEL["TIMER"] < self.VERBOSITY:
             return
         if name not in self.timers:
@@ -1925,6 +1929,7 @@ def main():
     quantization_type = int(os.getenv("APPLY_QUANTIZATION_TYPE"))
     is_to_save_quantized_data = os.getenv("SAVE_QUANTIZED_DATA") == "true"
 
+    is_to_execute_feature_selection = os.getenv("EXECUTE_FEATURE_SELECTION") == "true"
     criteria_function_feature_selection = int(os.getenv("CRITERION_FUNCTION_FEATURE_SELECTION", "0"))
     q_entropy_feature_selection = float(os.getenv("Q_ENTROPY_FEATURE_SELECTION", "1.0"))
     penalization_method_feature_selection = int(os.getenv("PENALIZATION_METHOD_FEATURE_SELECTION", "0"))
@@ -2154,12 +2159,15 @@ def main():
         CNMeasurements.find_cycle(Md)
         timer.end("find_cycle")
 
-    timer.start("execute_feature_selection")
-    execute_feature_selection_action_performed()
-    timer.end("execute_feature_selection")
+    if is_to_execute_feature_selection:
+        timer.start("execute_feature_selection")
+        execute_feature_selection_action_performed()
+        timer.end("execute_feature_selection")
 
     timer.start("network_inference")
+    IOFile.print_and_log(f"{datetime.now()}; start network inference - start", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
     network_inference_action_performed()
+    IOFile.print_and_log(f"{datetime.now()}; start network inference - end", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
     timer.end("network_inference")
 
 if __name__ == "__main__":

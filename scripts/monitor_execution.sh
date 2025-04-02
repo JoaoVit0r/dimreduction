@@ -6,6 +6,7 @@ SLEEP_TIME=5
 OUTPUT_DIR=""
 REPOSITORY_PYTHON=""
 COMMAND=""
+NUMBER_OF_EXECUTIONS=3
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -20,6 +21,14 @@ while [[ $# -gt 0 ]]; do
         --sleep-time)
             SLEEP_TIME="$2"
             shift 2
+            ;;
+        --number-of-executions)
+            NUMBER_OF_EXECUTIONS="$2"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: $0 --output-dir <output_directory> --repository-python <python_repository> --sleep-time <sleep_time> [--number-of-executions <number>] <command_to_execute>"
+            exit 0
             ;;
         *)
             if [ -z "$COMMAND" ]; then
@@ -79,9 +88,9 @@ echo -e "\nStarting command execution monitoring..."
 echo "Will execute: $COMMAND"
 
 # Execute the command 3 times with intervals
-for i in {1..3}; do
+for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
     echo -e "\n-----------------------------------------------"
-    echo "Execution $i of 3"
+    echo "Execution $i of $NUMBER_OF_EXECUTIONS"
     echo "-----------------------------------------------"
     echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_Start" >> "$DSTAT_MARKERS"
     eval "$COMMAND"

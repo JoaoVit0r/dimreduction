@@ -6,6 +6,7 @@ MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between executions
 REPOSITORY_PYTHON="."
 REPOSITORY_JAVA="../dimreduction-java"
 COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
+NUMBER_OF_EXECUTIONS=3
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -22,8 +23,12 @@ while [[ $# -gt 0 ]]; do
             REPOSITORY_JAVA="${2:-../dimreduction-java}"
             shift 2
             ;;
+        --number-of-executions)
+            NUMBER_OF_EXECUTIONS="$2"
+            shift 2
+            ;;
         --help)
-            echo "Usage: $0 [--sleep-time <seconds>] [--repository-python <path>] [--repository-java <path>] [java|venv_v12|venv_v13|venv_v13_no_gil]"
+            echo "Usage: $0 [--sleep-time <seconds>] [--repository-python <path>] [--repository-java <path>] [--number-of-executions <number>] [java|venv_v12|venv_v13|venv_v13_no_gil]"
             exit 0
             ;;
         *)
@@ -127,7 +132,7 @@ run_monitoring_python() {
     echo "==============================================="
     
     cd "$REPOSITORY_PYTHON" || exit
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" "${python_bin}" "${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" "${python_bin}" "${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
@@ -150,7 +155,7 @@ run_monitoring_java() {
     
     cd "$REPOSITORY_JAVA" || exit
     # javac -d out/production/java-dimreduction -cp ./lib:./out/production/java-dimreduction:./lib/jgraph.jar:./lib/jgraphlayout.jar:./lib/prefuse.jar:./lib/jfreechart-1.0.9.jar:./lib/jcommon-1.0.12.jar:./lib/dotenv-java-3.0.2.jar src/**/*.java
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" "java" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath $JAVA_CLASSPATH -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" "java" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath $JAVA_CLASSPATH -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
