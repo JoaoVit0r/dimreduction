@@ -1060,8 +1060,6 @@ class FS:
         
         h_min_lock.acquire()
         if H < h_min_dict["h_min"]:
-            # f_min = f
-            # h_min = H
             h_min_dict["f_min"] = f
             h_min_dict["h_min"] = H
             self.insert_in_result_list(I, H)
@@ -1073,48 +1071,28 @@ class FS:
     def run_sfs(self, called_by_exhaustive, maxfeatures):
         columns = len(self.A[0])
         for i in range(min(columns - 1, maxfeatures)):
-        # for i in range(columns - 1):
-            # h_min = 1.1
-            # f_min = -1
             h_min_lock = threading.Lock()
             abort = threading.Event()
             min_dict = {"h_min": 1.1, "f_min": -1}
             H = 1
             self.I.append(-1)
             
-            futures = []
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                for f in range(columns - 1):
-                    if f in self.I:
-                        continue
-                    self.I[-1] = f
-                    AuxI = self.I[:]
-                    AuxA = self.A[:]
-                    # result = self.__evaluate_entropy__(f, AuxI, AuxA, min_dict, h_min_lock)
-                    futures.append(executor.submit(self.__evaluate_entropy__, f, AuxI, AuxA, min_dict, h_min_lock, abort))
-                    
-                results = concurrent.futures.wait(futures, None, concurrent.futures.FIRST_EXCEPTION)
+            for f in range(columns - 1):
+                if f in self.I:
+                    continue
+                self.I[-1] = f
+                AuxI = self.I[:]
+                AuxA = self.A[:]
+                self.__evaluate_entropy__(f, AuxI, AuxA, min_dict, h_min_lock, abort)
                 
-                for future in results.not_done:
-                    future.cancel()
-
-                for future in results.done:
-                    try:
-                        future.result()
-                    except Exception as e:
-                        IOFile.print_and_log("Exception in run_sfs: ", e)
-                    except concurrent.futures.CancelledError as e:
-                        IOFile.print_and_log("CancelledError in run_sfs: ", e)
-                    
-                if min_dict["h_min"] < self.h_global:
-                    self.I[-1] = min_dict["f_min"]
-                    self.h_global = min_dict["h_min"]
-                    # if self.h_global == 0 or len(self.I) >= maxfeatures:
-                    if self.h_global == 0:
-                        break 
-                else:
-                    self.I.pop()
-                    break
+            if min_dict["h_min"] < self.h_global:
+                self.I[-1] = min_dict["f_min"]
+                self.h_global = min_dict["h_min"]
+                if self.h_global == 0:
+                    break 
+            else:
+                self.I.pop()
+                break
         if called_by_exhaustive:
             self.itmax = len(self.I)
 
