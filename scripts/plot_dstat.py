@@ -43,6 +43,7 @@ def read_markers_file(markers_file):
         return markers
         
     print(f"\nReading execution markers from: {markers_file}")
+    
     with open(markers_file, 'r') as f:
         for line in f:
             lineInfos = list(filter(lambda x: x != '',line.strip().split(' ')))
@@ -53,7 +54,7 @@ def read_markers_file(markers_file):
             lineDateTime = ' '.join(lineInfos[:2])
             lineLabel = ' '.join(lineInfos[2:])
             try:
-                timestamp = pd.to_datetime(lineDateTime, format='%b-%d %H:%M:%S')
+                timestamp = pd.to_datetime(lineDateTime, format='%Y-%m-%d %H:%M:%S')
                 if lineLabel:
                     markers[mdates.date2num(timestamp)] = lineLabel
             except ValueError as e:

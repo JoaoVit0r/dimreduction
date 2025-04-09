@@ -128,9 +128,9 @@ for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
     echo -e "\n-----------------------------------------------"
     echo "Execution $i of $NUMBER_OF_EXECUTIONS"
     echo "-----------------------------------------------"
-    echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_Start" >> "$DSTAT_MARKERS_FILE"
+    echo "$(date +'%Y-%m-%d %H:%M:%S') Execution_${i}_Start" >> "$DSTAT_MARKERS_FILE"
     eval "$COMMAND"
-    echo "$(date +'%b-%d %H:%M:%S') Execution_${i}_End" >> "$DSTAT_MARKERS_FILE"
+    echo "$(date +'%Y-%m-%d %H:%M:%S') Execution_${i}_End" >> "$DSTAT_MARKERS_FILE"
     
     # Wait for SLEEP_TIME between executions if not the last one
     if [ $i -lt "$NUMBER_OF_EXECUTIONS" ]; then
@@ -191,4 +191,12 @@ fi
 
 echo -e "\n==============================================="
 echo "Monitoring Completed Successfully"
+echo "==============================================="
+
+# Generate summary files
+echo -e "\nGenerating summary files..."
+python3 "$REPOSITORY_PYTHON"/scripts/generate_summary.py "$OUTPUT_DIR"
+
+echo -e "\n==============================================="
+echo "Summary Generation Completed"
 echo "==============================================="
