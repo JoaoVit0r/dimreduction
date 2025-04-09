@@ -1032,7 +1032,7 @@ class FS:
                 posminimal = i
         if self.ties[posminimal] and len(self.ties[posminimal]) > 1:
             self.break_ties(posminimal)
-        cfvalue = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+        cfvalue, _ = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
         self.probtable = Criteria.probtable[:]
 
     def minimal_ma(self, maxsetsize):
@@ -1044,7 +1044,7 @@ class FS:
                 posminimal = i
         if self.ties[posminimal] and len(self.ties[posminimal]) > 1:
             self.break_ties(posminimal)
-        cfvalue = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+        cfvalue, _ = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
         self.probtable = Criteria.probtable[:]
 
     def inicialize(self, maxfeatures):
@@ -1056,7 +1056,7 @@ class FS:
     def __evaluate_entropy__(self, f, I, A, h_min_dict, h_min_lock, abort):
         if abort.is_set():
             raise Exception("Abort is set.")
-        H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, I, A, self.q)
+        H, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, I, A, self.q)
         
         h_min_lock.acquire()
         if H < h_min_dict["h_min"]:
@@ -1122,7 +1122,7 @@ class FS:
                 if f in self.I:
                     continue
                 self.I[-1] = f
-                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                H, current_probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
                 if H < h_min:
                     f_min = f
                     h_min = H
@@ -1135,6 +1135,7 @@ class FS:
                         self.tiesentropy[len(self.I)] = H
                     titem = self.I[:]
                     self.ties[len(self.I)].append(titem)
+                    self.probtable = current_probtable  # Store in the FS instance
             if len(self.I) <= maxfeatures and f_min != -1:
                 self.I[-1] = f_min
                 if not self.bestset[len(self.I)]:
@@ -1205,7 +1206,7 @@ class FS:
                 if f in self.I:
                     continue
                 self.I[-1] = f
-                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                H, current_probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
                 if H < h_min:
                     f_min = f
                     h_min = H
@@ -1277,20 +1278,22 @@ class FS:
         if self.itmax == 1:
             for i in range(self.columns - 1):
                 tempI.append(i)
-                H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, tempI, self.A, self.q)
+                H, current_probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, tempI, self.A, self.q)
                 if H < self.h_global:
                     self.I = tempI[:]
                     self.h_global = H
                     self.insert_in_result_list(tempI, H)
+                    self.probtable = current_probtable  # Store in the FS instance
                 tempI.pop()
             return
         tempI.append(f)
         if it >= self.itmax - 1:
-            H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, tempI, self.A, self.q)
+            H, current_probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, tempI, self.A, self.q)
             if H < self.h_global:
                 self.I = tempI[:]
                 self.h_global = H
                 self.insert_in_result_list(tempI, H)
+                self.probtable = current_probtable  # Store in the FS instance
             return
         for i in range(f + 1, self.columns - 1):
             self.run_exhaustive(it + 1, i, tempI)
@@ -1553,13 +1556,13 @@ class Criteria:
         # Criteria.timer.start("Sort")
         RadixSort.radix_sort(A, I, n)
         # Criteria.timer.end("Sort")
-        Criteria.probtable = [[0] * int(c) for _ in range(int(no_obs))]
+        probtable = [[0] * int(c) for _ in range(int(no_obs))]
         # Criteria.timer.start("loop_MCE_COD")
         for j in range(lines):
             if j > 0 and not Criteria.equal_instances(j, I, A):
                 no_obs -= 1
                 position = Criteria.get_position_of_instances(j, I, A)
-                Criteria.probtable[position] = pYdX[:]
+                probtable[position] = pYdX[:]
                 H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
                 pYdX = [0] * int(c)
                 pX = 0
@@ -1568,7 +1571,7 @@ class Criteria:
             pX += 1
         # Criteria.timer.end("loop_MCE_COD")
         position = Criteria.get_position_of_instances(lines, I, A)
-        Criteria.probtable[position] = pYdX[:]
+        probtable[position] = pYdX[:]
         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
         no_obs -= 1
         HY = Criteria.instance_criterion(pY, lines, "poor_obs", 0, 1, lines, 0, 0, c, q)
@@ -1577,8 +1580,8 @@ class Criteria:
             H += penalization
         
         if q >= 0 and q <= 0.00001: # q == 0 -> COD
-            return H / HY
-        return H
+            return H / HY, probtable
+        return H, probtable
 
 class CNMeasurements:
     @staticmethod
@@ -1724,7 +1727,9 @@ class AGNRoutines:
         if targets is None:
             targets = [str(i) for i in range(rows)]
 
-        for target in targets:
+        # Process a single target and return results
+        def process_target(target):
+            local_txt = []
             targetindex = int(target)
             predictors = []
             ties = []
@@ -1735,11 +1740,22 @@ class AGNRoutines:
             fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
             if not CNMeasurements.has_variation(strainingset, is_periodic):
                 if targetaspredictors:
-                    IOFile.print_and_log(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
-                    txt.append(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                    message = f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values."
+                    IOFile.print_and_log(message)
+                    local_txt.append(message)
                 else:
-                    IOFile.print_and_log(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
-                    txt.append(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+                    message = f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values."
+                    IOFile.print_and_log(message)
+                    local_txt.append(message)
+                return {
+                    "targetindex": targetindex,
+                    "txt": local_txt,
+                    "predictors": [],
+                    "ties": [],
+                    "predictorsties": None,
+                    "probtable": None,
+                    "h_global": 1.0
+                }
             else:
                 timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
@@ -1761,33 +1777,42 @@ class AGNRoutines:
                             break
                         fs_prev = fs
                 timer.end(f"running_search_algorithm-target_index_{targetindex}")
+                
+                # Prepare text output and collect data to return
                 if targetaspredictors:
-                    txt.append(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: ")
-                    IOFile.print_and_log(f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets:", end=" ")
+                    prefix = f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: "
+                    local_txt.append(prefix)
+                    IOFile.print_and_log(prefix, end=" ")
                 else:
-                    txt.append(f"Target: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors: ")
-                    IOFile.print_and_log(f"\nTarget: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors:", end=" ")
+                    prefix = f"Target: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors: "
+                    local_txt.append(prefix)
+                    IOFile.print_and_log(f"\n{prefix}", end=" ")
+                
+                target_predictors = []
                 for s in range(len(fs.I)):
                     predictor_gene = int(fs.I[s])
                     if predictor_gene >= targetindex:
                         predictor_gene += 1
                     if fs.h_global < threshold_entropy:
-                        txt.append(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()} ")
-                        IOFile.print_and_log(f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()}", end=" ")
+                        info = f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()} "
+                        local_txt.append(info)
+                        IOFile.print_and_log(info, end=" ")
                         predictors.append(predictor_gene)
-                        recoveredagn.get_genes()[targetindex].add_predictor(predictor_gene, fs.h_global)
-                        recoveredagn.get_genes()[predictor_gene].add_target(targetindex)
-                        recoveredagn.get_genes()[targetindex].set_probtable(fs.probtable)
+                        target_predictors.append(predictor_gene)
                     else:
                         if targetaspredictors:
-                            txt.append(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
-                            IOFile.print_and_log(f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                            info = f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}"
+                            local_txt.append(info)
+                            IOFile.print_and_log(info)
                         else:
-                            txt.append(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
-                            IOFile.print_and_log(f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}")
+                            info = f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}"
+                            local_txt.append(info)
+                            IOFile.print_and_log(info)
+                
                 s = len(fs.I)
+                predictorsties = None
                 if (searchalgorithm == 3 or searchalgorithm == 4) and fs.ties[s] and len(fs.ties[s]) > 1 and fs.h_global < threshold_entropy:
-                    txt.append("\nPredictors Ties: ")
+                    local_txt.append("\nPredictors Ties: ")
                     IOFile.print_and_log("\nPredictors Ties:", end=" ")
                     predictorsties = [None] * len(fs.ties[s])
                     for j in range(len(fs.ties[s])):
@@ -1799,18 +1824,53 @@ class AGNRoutines:
                             if geneindex >= targetindex:
                                 geneindex += 1
                             predictorsties[j].append(geneindex)
-                            txt.append(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()} ")
+                            local_txt.append(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()} ")
                             IOFile.print_and_log(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()}", end=" ")
                             tie.append(geneindex)
                             
                         IOFile.print_and_log(" (" + str(fs.jointentropiesties[j]) + ") ", end="\t")
                         ties.append(tie)
-                    recoveredagn.get_genes()[targetindex].set_predictorsties(predictorsties)
+                
                 if tiesout and originalagn:
                     originalpredictors = originalagn.get_genes()[targetindex].get_predictors()
                     IOFile.write_ties(originalagn, tiesout, targetindex, int(originalagn.get_avgedges()), originalagn.get_topology(), originalpredictors, q_entropy, predictors, ties, fs.h_global, False)
-            IOFile.print_and_log(f"\n\nCriterion Function Value: {fs.h_global}")
-            txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
+                
+                IOFile.print_and_log(f"\n\nCriterion Function Value: {fs.h_global}")
+                local_txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
+                
+                return {
+                    "targetindex": targetindex,
+                    "txt": local_txt,
+                    "predictors": target_predictors,
+                    "ties": ties,
+                    "predictorsties": predictorsties,
+                    "probtable": fs.probtable,
+                    "h_global": fs.h_global
+                }
+
+        # Use ThreadPoolExecutor to process targets in parallel
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Start all target processing tasks
+            future_to_target = {executor.submit(process_target, target): target for target in targets}
+            
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_target):
+                result = future.result()
+                targetindex = result["targetindex"]
+                txt.extend(result["txt"])
+                
+                # Update the AGN object with results for this target
+                if result["predictors"]:
+                    for predictor in result["predictors"]:
+                        recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
+                        recoveredagn.get_genes()[predictor].add_target(targetindex)
+                    
+                    if result["predictorsties"]:
+                        recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
+                    
+                    if result["probtable"]:
+                        recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
+
         return "\n".join(txt)
 
 class Classifier:
