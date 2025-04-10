@@ -164,16 +164,22 @@ for cmd in "${COMMANDS[@]}"; do
         wait_between_executions
     else
         if [ -f "$REPOSITORY_PYTHON/$cmd/bin/python" ]; then
-            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
-            wait_between_executions
-            
             run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli.py"
             wait_between_executions
-        else
-            run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
+
+            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_ThreadPoolExecutor.py"
             wait_between_executions
 
+            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
+            wait_between_executions
+        else
             run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli.py"
+            wait_between_executions
+
+            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_ThreadPoolExecutor.py"
+            wait_between_executions
+
+            run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
             wait_between_executions
         fi
     fi

@@ -1836,42 +1836,28 @@ class AGNRoutines:
                     "h_global": fs.h_global
                 }
 
-        results = []
-        results_lock = threading.Lock()
-        group_size = 10
-
-        def process_target_wrapper(target):
-            result = process_target(target)
-            with results_lock:
-                results.append(result)
-
-        for i in range(0, len(targets), group_size):
-            group = targets[i:i + group_size]
-            threads = []
+        # Use ThreadPoolExecutor to process targets in parallel
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Start all target processing tasks
+            future_to_target = {executor.submit(process_target, target): target for target in targets}
             
-            for target in group:
-                thread = threading.Thread(target=process_target_wrapper, args=(target,))
-                threads.append(thread)
-                thread.start()
-            
-            for thread in threads:
-                thread.join()
-
-        for result in results:
-            targetindex = result["targetindex"]
-            txt.extend(result["txt"])
-            
-            # Update the AGN object with results for this target
-            if result["predictors"]:
-                for predictor in result["predictors"]:
-                    recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
-                    recoveredagn.get_genes()[predictor].add_target(targetindex)
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_target):
+                result = future.result()
+                targetindex = result["targetindex"]
+                txt.extend(result["txt"])
                 
-                if result["predictorsties"]:
-                    recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
-                
-                if result["probtable"]:
-                    recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
+                # Update the AGN object with results for this target
+                if result["predictors"]:
+                    for predictor in result["predictors"]:
+                        recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
+                        recoveredagn.get_genes()[predictor].add_target(targetindex)
+                    
+                    if result["predictorsties"]:
+                        recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
+                    
+                    if result["probtable"]:
+                        recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
 
         return "\n".join(txt)
 
