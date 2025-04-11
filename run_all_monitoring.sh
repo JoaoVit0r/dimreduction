@@ -8,6 +8,7 @@ REPOSITORY_JAVA="../dimreduction-java"
 COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
 CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
 NUMBER_OF_EXECUTIONS=3
+PYTHON_FILES=("main_from_cli.py" "main_from_cli_ThreadPoolExecutor.py" "main_from_cli_no_performing.py")
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -32,8 +33,48 @@ while [[ $# -gt 0 ]]; do
             CUSTOM_INPUT_FILE_PATH="$2"
             shift 2
             ;;
+        --python-files)
+            # Convert comma-separated string to array
+            IFS=',' read -r -a PYTHON_FILES <<< "$2"
+            shift 2
+            ;;
         --help)
-            echo "Usage: $0 [--sleep-time <seconds>] [--repository-python <path>] [--repository-java <path>] [--number-of-executions <number>] [java|venv_v12|venv_v13|venv_v13_no_gil]"
+            cat << 'EOF'
+Usage: ./run_all_monitoring.sh [OPTIONS] [COMMANDS]
+
+Monitor system performance while executing Python and Java programs.
+
+Commands:
+  java              Execute Java implementation
+  venv_v12          Execute using Python 3.12 virtual environment
+  venv_v13          Execute using Python 3.13 virtual environment
+  venv_v13-nogil    Execute using Python 3.13 no-GIL virtual environment
+
+Options:
+  Basic Configuration:
+    --sleep-time <seconds>           Time to wait between executions (default: 900)
+    --number-of-executions <number>  Number of times to run each test (default: 3)
+
+  File and Directory Settings:
+    --repository-python <path>       Path to Python repository (default: .)
+    --repository-java <path>         Path to Java repository (default: ../dimreduction-java)
+    --custom-input-file <path>       Path to custom input dataset
+    --python-files <files>           Comma-separated list of Python files to execute
+                                    (default: main_from_cli.py,main_from_cli_ThreadPoolExecutor.py,main_from_cli_no_performing.py)
+
+  Help:
+    --help                          Show this help message
+
+Examples:
+  # Run all Python files with venv_v12:
+  ./run_all_monitoring.sh venv_v12
+
+  # Run specific Python files with custom sleep time:
+  ./run_all_monitoring.sh --sleep-time 300 --python-files main_from_cli.py,main_from_cli_ThreadPoolExecutor.py venv_v12
+
+  # Run Java implementation with custom input file:
+  ./run_all_monitoring.sh --custom-input-file path/to/dataset.csv java
+EOF
             exit 0
             ;;
         *)
@@ -53,7 +94,8 @@ if [ $SLEEP_TIME -ge 60 ]; then
 else
     echo "Sleep Time: $SLEEP_TIME seconds"
 fi
-echo "Commands: ${COMMANDS[@]}"
+echo "Commands: ${COMMANDS[*]}"
+echo "Python Files: ${PYTHON_FILES[*]}"
 echo "Custom Input File: $CUSTOM_INPUT_FILE_PATH"
 echo "Number of Executions: $NUMBER_OF_EXECUTIONS"
 echo "==============================================="
@@ -164,23 +206,15 @@ for cmd in "${COMMANDS[@]}"; do
         wait_between_executions
     else
         if [ -f "$REPOSITORY_PYTHON/$cmd/bin/python" ]; then
-            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli.py"
-            wait_between_executions
-
-            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_ThreadPoolExecutor.py"
-            wait_between_executions
-
-            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
-            wait_between_executions
+            for python_file in "${PYTHON_FILES[@]}"; do
+                run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/$python_file"
+                wait_between_executions
+            done
         else
-            run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli.py"
-            wait_between_executions
-
-            run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/main_from_cli_ThreadPoolExecutor.py"
-            wait_between_executions
-
-            run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/main_from_cli_no_performing.py"
-            wait_between_executions
+            for python_file in "${PYTHON_FILES[@]}"; do
+                run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/$python_file"
+                wait_between_executions
+            done
         fi
     fi
 done

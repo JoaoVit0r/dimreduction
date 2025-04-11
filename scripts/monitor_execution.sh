@@ -32,7 +32,45 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --help)
-            echo "Usage: $0 --output-dir <output_directory> --repository-python <python_repository> --sleep-time <sleep_time> [--number-of-executions <number>] <command_to_execute>"
+            cat << 'EOF'
+Usage: ./monitor_execution.sh [OPTIONS] COMMAND
+
+Monitor system performance metrics while executing a command.
+
+Required Arguments:
+  COMMAND                           The command to execute and monitor
+
+Required Options:
+  --output-dir <directory>          Directory to store monitoring results
+  --repository-python <path>        Path to Python repository for scripts
+
+Optional Settings:
+  --sleep-time <seconds>            Time between executions (default: 5)
+  --number-of-executions <number>   Times to run the command (default: 3)
+  --custom-input-file <path>        Path to custom input dataset
+
+Output Files Generated:
+  - monitoring_plots/               Directory containing all monitoring data
+    ├── dstat_output_*.csv          Raw monitoring data
+    ├── execution_markers_*.txt     Execution timestamps
+    ├── env_variables_*.txt         Environment variables snapshot
+    ├── plots/                      Generated performance plots
+    ├── logs.log                    Execution logs
+    ├── timers.log                  Timing information
+    └── thread_execution.log        Thread execution details
+
+Examples:
+  # Basic monitoring:
+  ./monitor_execution.sh --output-dir ./output --repository-python . "python script.py"
+
+  # Custom executions and timing:
+  ./monitor_execution.sh --output-dir ./output --repository-python . \
+    --sleep-time 10 --number-of-executions 5 "python script.py"
+
+  # With custom input file:
+  ./monitor_execution.sh --output-dir ./output --repository-python . \
+    --custom-input-file data.csv "python script.py"
+EOF
             exit 0
             ;;
         *)
