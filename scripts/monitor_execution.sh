@@ -182,6 +182,9 @@ fi
 if [ -f "timing/timers.log" ]; then
     mv "timing/timers.log" "$MONITOR_DIR"
 fi
+if [ -f "timing/thread_execution.log" ]; then
+    mv "timing/thread_execution.log" "$MONITOR_DIR"
+fi
 if [ -d "results" ]; then
     mv results/*/*.txt "$MONITOR_DIR"
 fi

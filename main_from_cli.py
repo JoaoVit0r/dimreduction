@@ -1717,8 +1717,15 @@ class AGNRoutines:
 
         # Process a single target and return results
         def process_target(target):
+            # Add a short random sleep to better demonstrate concurrency
+            sleep_time = random.uniform(0.1, 0.5)
+            time.sleep(sleep_time)
+            
             local_txt = []
             targetindex = int(target)
+            thread_id = threading.get_ident()
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - generating training set", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            
             predictors = []
             ties = []
             if datatype == 1:
@@ -1747,12 +1754,16 @@ class AGNRoutines:
             else:
                 # timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
                     fs.run_sfs(False, maxfeatures)
                 elif searchalgorithm == 3:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
                     fs.run_sffs(maxfeatures, targetindex, recoveredagn)
                 elif searchalgorithm == 4:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
                     fs.run_sffs_stack(maxfeatures, targetindex, recoveredagn)
                 elif searchalgorithm == 2:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
                     fs.run_sfs(True, maxfeatures)
                     s = fs.itmax
                     fs_prev = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
@@ -1840,20 +1851,30 @@ class AGNRoutines:
         group_size = 10
 
         def process_target_wrapper(target, index):
+            thread_id = threading.get_ident()
+            start_time = time.time()
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} STARTED at {start_time}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             result = process_target(target)
+            end_time = time.time()
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED at {end_time} (Duration: {end_time - start_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             results[index] = result
 
         for i in range(0, len(targets), group_size):
             group = targets[i:i + group_size]
             threads = []
             
-            for target in group:
-                thread = threading.Thread(target=process_target_wrapper, args=(target,))
+            IOFile.print_and_log(f"Starting group {i//group_size + 1} with targets: {group}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            
+            for j, target in enumerate(group):
+                index = i + j
+                thread = threading.Thread(target=process_target_wrapper, args=(target, index))
                 threads.append(thread)
                 thread.start()
             
             for thread in threads:
                 thread.join()
+            
+            IOFile.print_and_log(f"Completed group {i//group_size + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
 
         for result in results:
             targetindex = result["targetindex"]
@@ -2195,6 +2216,11 @@ def main():
         if datatitles:
             AGNRoutines.set_gene_names(recoverednetwork, datatitles)
         datatype = 1 if is_time_series_data else 2
+        
+        # Create timing directory if it doesn't exist
+        if not os.path.exists("timing"):
+            os.makedirs("timing")
+            
         # timer.start("network_inference")
         txt = AGNRoutines.recover_network_from_temporal_expression(
             recoverednetwork,
