@@ -1836,14 +1836,12 @@ class AGNRoutines:
                     "h_global": fs.h_global
                 }
 
-        results = []
-        results_lock = threading.Lock()
+        results = [None] * len(targets)  # Preallocate the results list with None values
         group_size = 10
 
-        def process_target_wrapper(target):
+        def process_target_wrapper(target, index):
             result = process_target(target)
-            with results_lock:
-                results.append(result)
+            results[index] = result  # Directly assign the result to the correct index
 
         for i in range(0, len(targets), group_size):
             group = targets[i:i + group_size]
