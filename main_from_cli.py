@@ -1064,9 +1064,9 @@ class FS:
                 if f in self.I:
                     continue
                 self.I[-1] = f
-                self.timer.start("MCE_COD")
+                # self.timer.start("MCE_COD")
                 H, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
-                self.timer.end("MCE_COD")
+                # self.timer.end("MCE_COD")
                 if H < h_min:
                     f_min = f
                     h_min = H
@@ -1422,14 +1422,14 @@ class RadixSort:
     @staticmethod
     def radix_sort(v, I, n):
         lines = len(v)
-        # RadixSort.timer.start("create_queues")
+        # # RadixSort.timer.start("create_queues")
         queues = RadixSort.create_queues(n, lines)
-        # RadixSort.timer.end("create_queues")
+        # # RadixSort.timer.end("create_queues")
         pos = len(I) - 1
         
-        # RadixSort.timer.start("loop_radix_sort")
+        # # RadixSort.timer.start("loop_radix_sort")
         while pos >= 0:
-            RadixSort.timer.start("loop_radix_sort-internal")
+            # RadixSort.timer.start("loop_radix_sort-internal")
             # for i in range(lines):
             #     q = RadixSort.queue_no(v[i], I[pos])
             #     queues[int(q)].add(v[i])
@@ -1438,10 +1438,10 @@ class RadixSort:
                 q = RadixSort.queue_no(v[i], I[pos])
                 queues[q].add(v[i])
                 i += 1
-            RadixSort.timer.end("loop_radix_sort-internal")
-            # RadixSort.timer.start("loop_radix_sort-restore")
+            # RadixSort.timer.end("loop_radix_sort-internal")
+            # # RadixSort.timer.start("loop_radix_sort-restore")
             RadixSort.restore(queues, v)
-            # RadixSort.timer.end("loop_radix_sort-restore")
+            # # RadixSort.timer.end("loop_radix_sort-restore")
             pos -= 1
         queues = None
         # call garbage collector
@@ -1541,11 +1541,11 @@ class Criteria:
         HY = 0
         lines = len(A)
         no_obs = n ** len(I)
-        # Criteria.timer.start("Sort")
+        # # Criteria.timer.start("Sort")
         RadixSort.radix_sort(A, I, n)
-        # Criteria.timer.end("Sort")
+        # # Criteria.timer.end("Sort")
         probtable = [[0] * int(c) for _ in range(int(no_obs))]
-        # Criteria.timer.start("loop_MCE_COD")
+        # # Criteria.timer.start("loop_MCE_COD")
         for j in range(lines):
             if j > 0 and not Criteria.equal_instances(j, I, A):
                 no_obs -= 1
@@ -1557,7 +1557,7 @@ class Criteria:
             pYdX[int_or_ord_4_digit(A[j][-1])] += 1
             pY[int_or_ord_4_digit(A[j][-1])] += 1
             pX += 1
-        # Criteria.timer.end("loop_MCE_COD")
+        # # Criteria.timer.end("loop_MCE_COD")
         position = Criteria.get_position_of_instances(lines, I, A)
         probtable[position] = pYdX[:]
         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
@@ -1745,7 +1745,7 @@ class AGNRoutines:
                     "h_global": 1.0
                 }
             else:
-                timer.start(f"running_search_algorithm-target_index_{targetindex}")
+                # timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
                     fs.run_sfs(False, maxfeatures)
                 elif searchalgorithm == 3:
@@ -1764,7 +1764,7 @@ class AGNRoutines:
                             fs = fs_prev
                             break
                         fs_prev = fs
-                timer.end(f"running_search_algorithm-target_index_{targetindex}")
+                # timer.end(f"running_search_algorithm-target_index_{targetindex}")
                 
                 # Prepare text output and collect data to return
                 if targetaspredictors:
@@ -1841,7 +1841,7 @@ class AGNRoutines:
 
         def process_target_wrapper(target, index):
             result = process_target(target)
-            results[index] = result  # Directly assign the result to the correct index
+            results[index] = result
 
         for i in range(0, len(targets), group_size):
             group = targets[i:i + group_size]
@@ -1986,7 +1986,7 @@ def main():
     output_folder = os.getenv("OUTPUT_FOLDER")
     verbosity_level = int(os.getenv("VERBOSITY_LEVEL", ))
     IOFile.set_verbosity(verbosity_level)
-    timer.set_verbosity(verbosity_level)
+    # timer.set_verbosity(verbosity_level)
     
     if output_folder is not None and output_folder != "":
         if not os.path.exists(output_folder):
@@ -2096,7 +2096,7 @@ def main():
             IOFile.print_and_log("Error on parameter value: The search method must be selected.", verbosity=VERBOSE_LEVEL["ERROR"])
 
     def execute_feature_selection(selector):
-        timer.start("feature_selection_inside_thread")
+        # timer.start("feature_selection_inside_thread")
         penalization_type = "no_obs" if penalization_method_feature_selection == 0 else "poor_obs"
         alpha = float(alpha_feature_selection)
         q_entropy = float(q_entropy_feature_selection)
@@ -2172,7 +2172,7 @@ def main():
         hit_rate = hits / len(clas.labels)
             
         IOFile.print_and_log(f"rate of hits = {hit_rate}")
-        timer.end("feature_selection_inside_thread")
+        # timer.end("feature_selection_inside_thread")
 
     def network_inference_action_performed():
         nonlocal Md
@@ -2195,7 +2195,7 @@ def main():
         if datatitles:
             AGNRoutines.set_gene_names(recoverednetwork, datatitles)
         datatype = 1 if is_time_series_data else 2
-        timer.start("network_inference")
+        # timer.start("network_inference")
         txt = AGNRoutines.recover_network_from_temporal_expression(
             recoverednetwork,
             None,
@@ -2218,30 +2218,30 @@ def main():
         
         IOFile.print_and_log(txt)
 
-    timer.start("read_data")
+    # timer.start("read_data")
     read_data_action_performed()
-    timer.end("read_data")
+    # timer.end("read_data")
 
     if quantization_type > 0 and quantization_type <= 2:
-        timer.start("apply_quantization")
+        # timer.start("apply_quantization")
         apply_quantization_action(quantization_value, quantization_type)
-        timer.end("apply_quantization")
+        # timer.end("apply_quantization")
 
     if is_to_look_for_cycles and Md is not None:
-        timer.start("find_cycle")
+        # timer.start("find_cycle")
         CNMeasurements.find_cycle(Md)
-        timer.end("find_cycle")
+        # timer.end("find_cycle")
 
     if is_to_execute_feature_selection:
-        timer.start("execute_feature_selection")
+        # timer.start("execute_feature_selection")
         execute_feature_selection_action_performed()
-        timer.end("execute_feature_selection")
+        # timer.end("execute_feature_selection")
 
-    timer.start("network_inference")
+    # timer.start("network_inference")
     IOFile.print_and_log(f"{datetime.now()}; start network inference - start", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
     network_inference_action_performed()
     IOFile.print_and_log(f"{datetime.now()}; start network inference - end", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
-    timer.end("network_inference")
+    # timer.end("network_inference")
 
 if __name__ == "__main__":
     main()
