@@ -166,9 +166,35 @@ for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
     echo -e "\n-----------------------------------------------"
     echo "Execution $i of $NUMBER_OF_EXECUTIONS"
     echo "-----------------------------------------------"
-    echo "$(date +'%Y-%m-%d %H:%M:%S') Execution_${i}_Start" >> "$DSTAT_MARKERS_FILE"
+    
+    # Record start time in seconds since epoch
+    start_time=$(date +%s)
+    start_datetime=$(date +'%Y-%m-%d %H:%M:%S')
+    echo "$start_datetime Execution_${i}_Start" >> "$DSTAT_MARKERS_FILE"
+    
     eval "$COMMAND"
-    echo "$(date +'%Y-%m-%d %H:%M:%S') Execution_${i}_End" >> "$DSTAT_MARKERS_FILE"
+    
+    # Record end time and calculate duration
+    end_time=$(date +%s)
+    end_datetime=$(date +'%Y-%m-%d %H:%M:%S')
+    duration=$((end_time - start_time))
+    
+    # Format duration into hours, minutes and seconds
+    hours=$((duration / 3600))
+    minutes=$(( (duration % 3600) / 60 ))
+    seconds=$((duration % 60))
+    
+    # Create duration string
+    duration_str=""
+    if [ $hours -gt 0 ]; then
+        duration_str="${hours}h "
+    fi
+    if [ $minutes -gt 0 ] || [ $hours -gt 0 ]; then
+        duration_str="${duration_str}${minutes}m "
+    fi
+    duration_str="${duration_str}${seconds}s"
+    
+    echo "$end_datetime Execution_${i}_End (Duration: $duration_str)" >> "$DSTAT_MARKERS_FILE"
     
     # Wait for SLEEP_TIME between executions if not the last one
     if [ $i -lt "$NUMBER_OF_EXECUTIONS" ]; then
@@ -217,11 +243,9 @@ fi
 if [ -f "logs/logs.log" ]; then
     mv "logs/logs.log" "$MONITOR_DIR"
 fi
-if [ -f "timing/timers.log" ]; then
-    mv "timing/timers.log" "$MONITOR_DIR"
-fi
-if [ -f "timing/thread_execution.log" ]; then
-    mv "timing/thread_execution.log" "$MONITOR_DIR"
+if [ -d "timing" ]; then
+    # Move all .log files from timing directory
+    find timing -name "*.log" -exec mv {} "$MONITOR_DIR" \;
 fi
 if [ -d "results" ]; then
     mv results/*/*.txt "$MONITOR_DIR"

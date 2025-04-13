@@ -19,20 +19,66 @@ def ensure_dir_exists(directory):
 
 def read_dstat_csv(file_path):
     print(f"\nReading data from: {file_path}")
-    # Skip the first rows that contain header information
-    df = pd.read_csv(file_path, skiprows=5)
     
-    # Rename columns to remove spaces and percentage signs
-    df.columns = [col.strip().replace('%', 'pct').replace(' ', '_').lower() for col in df.columns]
+    # First read the column names from the 6th row (0-based index 5)
+    column_names = None
+    with open(file_path, 'r') as f:
+        for i, line in enumerate(f):
+            if i == 5:  # This is the header row
+                # Get column names and remove any empty ones
+                column_names = [col.strip('"') for col in line.strip().split(',') if col.strip()]
+                break
+    
+    print("\nColumn names:", column_names)
+    
+    # Read the raw data lines to handle the time values correctly
+    data_lines = []
+    with open(file_path, 'r') as f:
+        for i, line in enumerate(f):
+            if i > 5:  # Skip header rows
+                # Split the line and remove empty values
+                parts = [p.strip() for p in line.strip().split(',') if p.strip()]
+                if len(parts) >= 2:
+                    data_lines.append(parts)
+    
+    # Create DataFrame from the processed data
+    df = pd.DataFrame(data_lines, columns=column_names)
+    
+    print("\nData after reading CSV:")
+    print(df.head())
+    print("\nColumns:", df.columns.tolist())
+    
+    # Rename columns to remove spaces and percentage signs, but preserve the time column
+    new_columns = []
+    for col in df.columns:
+        if col.strip().lower() == 'time':
+            new_columns.append('time')
+        else:
+            new_columns.append(col.strip().replace('%', 'pct').replace(' ', '_').lower())
+    df.columns = new_columns
+    
+    print("\nData after column renaming:")
+    print(df.head())
+    print("\nColumns:", df.columns.tolist())
+    
+    # Convert numeric columns to float
+    numeric_cols = df.columns.difference(['time'])
+    df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
     
     # Check if timestamp column exists (from dstat -t option)
-    time_cols = [col for col in df.columns if TIME_COLUMN in col]
+    time_cols = [col for col in df.columns if col == 'time']
     if len(time_cols):
         time_col = time_cols[0]
-        df[time_col] = pd.to_datetime(df[TIME_COLUMN], format='%b-%d %H:%M:%S')
+        # Add current year to the date string before parsing
+        df[time_col] = df[time_col].apply(lambda x: f"{x} {CURRENT_YEAR}")
+        df[time_col] = pd.to_datetime(df[time_col], format='%b-%d %H:%M:%S %Y')
         df.set_index(time_col, inplace=True)
         
     df.index = mdates.date2num(df.index)
+    
+    print("\nFinal data:")
+    print(df.head())
+    print("\nColumns:", df.columns.tolist())
     
     return df
 
@@ -56,7 +102,7 @@ def read_markers_file(markers_file):
             try:
                 timestamp = pd.to_datetime(lineDateTime, format='%Y-%m-%d %H:%M:%S')
                 if lineLabel:
-                    markers[mdates.date2num(timestamp)] = lineLabel
+                    markers[timestamp] = lineLabel
             except ValueError as e:
                 print(f"Warning: Could not parse timestamp in markers file: {line.strip()}")
     return markers
@@ -65,7 +111,7 @@ def add_markers_to_plot(ax, markers, y_min, y_max):
     """Add vertical lines and annotations for markers."""
     for timestamp, label in markers.items():
         # Convert timestamp to date2num if it's not already
-        if not isinstance(timestamp, float):
+        if isinstance(timestamp, pd.Timestamp):
             timestamp = mdates.date2num(timestamp)
         ax.axvline(x=timestamp, color='r', linestyle='--', alpha=0.7)
         ax.text(timestamp, y_max * 0.95, label, rotation=90, verticalalignment='top')
@@ -102,8 +148,12 @@ def create_plots(df, output_prefix, output_folder, markers_file=None, split_by_t
             start_time, start_label = sorted_markers[i]
             end_time, end_label = sorted_markers[i+1]
             
+            # Convert timestamps to date2num for comparison
+            start_num = mdates.date2num(start_time)
+            end_num = mdates.date2num(end_time)
+            
             # Filter data for this execution period
-            period_df = df[(df.index >= start_time) & (df.index <= end_time)]
+            period_df = df[(df.index >= start_num) & (df.index <= end_num)]
             if not period_df.empty:
                 period_name = f"Execution_{i//2 + 1}"
                 dfs_to_plot.append((period_name, period_df))
