@@ -1718,9 +1718,6 @@ class AGNRoutines:
         # Process a single target and return results
         def process_target(target):
             # Add a short random sleep to better demonstrate concurrency
-            sleep_time = random.uniform(0.1, 0.5)
-            time.sleep(sleep_time)
-            
             local_txt = []
             targetindex = int(target)
             thread_id = threading.get_ident()
@@ -1850,7 +1847,7 @@ class AGNRoutines:
         results = [None] * len(targets)  # Preallocate the results list with None values
         group_size = 10
 
-        def process_target_wrapper(target, index):
+        def process_target_wrapper(target, index, recoveredagn):
             thread_id = threading.get_ident()
             start_time = time.time()
             IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} STARTED at {start_time}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
@@ -1858,6 +1855,22 @@ class AGNRoutines:
             end_time = time.time()
             IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED at {end_time} (Duration: {end_time - start_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             results[index] = result
+            
+            if result["predictors"]:
+                targetindex = result["targetindex"]
+                for predictor in result["predictors"]:
+                    recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
+                    recoveredagn.get_genes()[predictor].add_target(targetindex)
+                
+                if result["predictorsties"]:
+                    recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
+                
+                if result["probtable"]:
+                    recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
+            end_results_transfer_time = time.time()
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED Transferring results to AGN at {end_results_transfer_time} (Duration: {end_results_transfer_time - end_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    
+
 
         for i in range(0, len(targets), group_size):
             group = targets[i:i + group_size]
@@ -1867,7 +1880,7 @@ class AGNRoutines:
             
             for j, target in enumerate(group):
                 index = i + j
-                thread = threading.Thread(target=process_target_wrapper, args=(target, index))
+                thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn))
                 threads.append(thread)
                 thread.start()
             
@@ -1892,6 +1905,7 @@ class AGNRoutines:
                 if result["probtable"]:
                     recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
 
+        IOFile.print_and_log(f"Completed all targets", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
         return "\n".join(txt)
 
 class Classifier:
