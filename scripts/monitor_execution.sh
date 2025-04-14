@@ -239,20 +239,11 @@ if [ -f "$DEFAULT_ENV_FILE.bak" ]; then
     mv "$DEFAULT_ENV_FILE.bak" "$DEFAULT_ENV_FILE"
 fi
 
-# Move command results to the output directory
-if [ -f "logs/logs.log" ]; then
-    mv "logs/logs.log" "$MONITOR_DIR"
-fi
-if [ -d "timing" ]; then
-    # Move all .log files from timing directory
-    find timing -name "*.log" -exec mv {} "$MONITOR_DIR" \;
-fi
-if [ -d "results" ]; then
-    mv results/*/*.txt "$MONITOR_DIR"
-fi
-if [ -f "perf.data" ]; then
-    mv "perf.data" "$MONITOR_DIR"
-fi
+# Move monitoring files to output directory using move_monitoring_files.sh
+echo -e "\n-----------------------------------------------"
+echo "Moving monitoring files"
+echo "-----------------------------------------------"
+"$REPOSITORY_PYTHON"/scripts/move_monitoring_files.sh "$MONITOR_DIR"
 
 echo -e "\n==============================================="
 echo "Monitoring Completed Successfully"

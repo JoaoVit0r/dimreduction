@@ -2,3 +2,4 @@ venv*/
 *.log
 
 old/
+__pycache__/

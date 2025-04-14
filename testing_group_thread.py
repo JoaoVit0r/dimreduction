@@ -1,25 +1,39 @@
 import threading
 import random
 import time
+import json
 from main_from_cli import IOFile, VERBOSE_LEVEL 
+
 IOFile.print_and_log(f"--------------------------------", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
 
-targets = [f"{i}" for i in range(100)]
+# Load target distribution from file
+try:
+    with open("timing/target_distribution.json", "r") as f:
+        target_heavy_levels = json.load(f)
+except FileNotFoundError:
+    print("Error: target_distribution.json not found. Please run generate_target_distribution.py first.")
+    exit(1)
+
+# Get all targets from the distribution
+targets = list(target_heavy_levels.keys())[:60]
 txt = ["\n--------------------------------\n"]
+
+def cpu_heavy(level):
+    sum(i * i for i in range(10**int(level)))
+    return level
 
 # Process a single target and return results
 def process_target(target):
-    # Add a short random sleep to better demonstrate concurrency
-    sleep_time = random.uniform(0.1, 0.5)
-    time.sleep(sleep_time)
-    
     targetindex = int(target)
     thread_id = threading.get_ident()
     IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - generating training set", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
     
+    heavy_level = target_heavy_levels[target]
+    cpu_heavy(heavy_level)
+    
     return {
         "targetindex": targetindex,
-        "sleep_time": sleep_time
+        "heavy_level": heavy_level
     }
 
 results = [None] * len(targets)  # Preallocate the results list with None values
@@ -39,7 +53,7 @@ def process_target_wrapper(target, index):
         "start_time": start_time,
         "end_time": end_time,
         "duration": end_time - start_time,
-        "sleep_time": result["sleep_time"]
+        "heavy_level": result["heavy_level"]
     }
 
 for i in range(0, len(targets), group_size):
@@ -61,15 +75,7 @@ for i in range(0, len(targets), group_size):
 
 print("writing results sequentially")
 with open("timing/results.log", "a") as f:
-    f.write("index target start_time end_time duration sleep_time\n")
+    f.write("index target start_time end_time duration heavy_level\n")
 for result in results:
-    targetindex = result["targetindex"]
-    # txt.extend(result["txt"])
-    
-    # # save result in a file
-    # with open("timing/txt.log", "a") as f:
-    #     f.write(result["txt"])
     with open("timing/results.log", "a") as f:
-        f.write(f"{result['index']} {result['targetindex']} {result['start_time']} {result['end_time']} {result['duration']} {result['sleep_time']}\n")
-        
-# print(txt)
+        f.write(f"{result['index']} {result['targetindex']} {result['start_time']} {result['end_time']} {result['duration']} {result['heavy_level']}\n")
