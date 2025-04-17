@@ -20,25 +20,25 @@ echo "Moving monitoring files to $OUTPUT_DIR..."
 # Move logs.log if it exists
 if [ -f "logs/logs.log" ]; then
     echo "Moving logs.log..."
-    mv "logs/logs.log" "$OUTPUT_DIR"
+    mv --backup="numbered" "logs/logs.log" "$OUTPUT_DIR"
 fi
 
 # Move timing log files if directory exists
 if [ -d "timing" ]; then
     echo "Moving timing log files..."
-    find timing -name "*.log" -exec mv {} "$OUTPUT_DIR" \;
+    find timing -name "*.log" -exec mv --backup="numbered" {} "$OUTPUT_DIR" \;
 fi
 
 # Move results text files if directory exists
 if [ -d "results" ]; then
     echo "Moving results text files..."
-    mv results/*/*.txt "$OUTPUT_DIR" 2>/dev/null || true
+    mv --backup="numbered" results/*/*.txt "$OUTPUT_DIR" 2>/dev/null || true
 fi
 
 # Move perf.data if it exists
 if [ -f "perf.data" ]; then
     echo "Moving perf.data..."
-    mv "perf.data" "$OUTPUT_DIR"
+    mv --backup="numbered" "perf.data" "$OUTPUT_DIR"
 fi
 
 echo "File moving completed successfully!" 

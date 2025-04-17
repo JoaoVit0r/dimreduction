@@ -1032,8 +1032,8 @@ class FS:
                 posminimal = i
         if self.ties[posminimal] and len(self.ties[posminimal]) > 1:
             self.break_ties(posminimal)
-        cfvalue, _ = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
-        self.probtable = Criteria.probtable[:]
+        cfvalue, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+        self.probtable = probtable[:]
 
     def minimal_ma(self, maxsetsize):
         posminimal = 0
@@ -1044,8 +1044,8 @@ class FS:
                 posminimal = i
         if self.ties[posminimal] and len(self.ties[posminimal]) > 1:
             self.break_ties(posminimal)
-        cfvalue, _ = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
-        self.probtable = Criteria.probtable[:]
+        cfvalue, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+        self.probtable = probtable[:]
 
     def inicialize(self, maxfeatures):
         self.bestentropy = [1] * maxfeatures
@@ -1065,7 +1065,7 @@ class FS:
                     continue
                 self.I[-1] = f
                 # self.timer.start("MCE_COD")
-                H, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
+                H, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I[:], self.A[:], self.q)
                 # self.timer.end("MCE_COD")
                 if H < h_min:
                     f_min = f
@@ -1469,7 +1469,7 @@ class RadixSort:
         return int_or_ord_4_digit(v[pos])
 
 class Criteria:
-    probtable = []
+    # probtable = []
     timer = Timer(IOFile.VERBOSITY_LEVEL)
 
     @staticmethod
@@ -1869,7 +1869,6 @@ class AGNRoutines:
                     recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
             end_results_transfer_time = time.time()
             IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED Transferring results to AGN at {end_results_transfer_time} (Duration: {end_results_transfer_time - end_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
-                    
 
 
         for i in range(0, len(targets), group_size):
@@ -1880,7 +1879,7 @@ class AGNRoutines:
             
             for j, target in enumerate(group):
                 index = i + j
-                thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn))
+                thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn), name=f"Target-{target}-main_from_cli")
                 threads.append(thread)
                 thread.start()
             
