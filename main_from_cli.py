@@ -1845,7 +1845,7 @@ class AGNRoutines:
                 }
 
         results = [None] * len(targets)  # Preallocate the results list with None values
-        group_size = 10
+        num_threads = 3
 
         def process_target_wrapper(target, index):
             thread_id = threading.get_ident()
@@ -1862,24 +1862,30 @@ class AGNRoutines:
                 process_target_wrapper(target, index)
 
         threads = []
-        for i in range(0, len(targets), group_size):
-            group = targets[i:i + group_size]
+        
+        # for i in range(0, len(targets), group_size):
+        #     group = targets[i:i + group_size]
+
+        num_processes_per_thread = len(targets) // num_threads + (1 if len(targets) % num_threads > 0 else 0)
+        
+        for i in range(0, num_threads * num_processes_per_thread, num_processes_per_thread):
+            group = targets[i:i + num_processes_per_thread]
             
-            IOFile.print_and_log(f"Starting group {i//group_size + 1} with targets: {group}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            IOFile.print_and_log(f"Starting group {i//num_processes_per_thread + 1} with targets: {group}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             
             # for j, target in enumerate(group):
             #     index = i + j
             #     thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn), name=f"Target-{target}-main_from_cli")
             #     threads.append(thread)
             #     thread.start()
-            thread = threading.Thread(target=process_group, args=(group, i), name=f"Group-{i//group_size + 1}-main_from_cli")
+            thread = threading.Thread(target=process_group, args=(group, i), name=f"Group-{i//num_processes_per_thread + 1}-main_from_cli")
             threads.append(thread)
             thread.start()
             
         for thread in threads:
             thread.join()
         
-        IOFile.print_and_log(f"Completed group {i//group_size + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+        IOFile.print_and_log(f"Completed group {i//num_processes_per_thread + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
 
         for result in results:
             targetindex = result["targetindex"]
