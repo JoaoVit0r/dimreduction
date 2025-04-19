@@ -1845,9 +1845,9 @@ class AGNRoutines:
                 }
 
         results = [None] * len(targets)  # Preallocate the results list with None values
-        group_size = 1
+        group_size = 10
 
-        def process_target_wrapper(target, index, recoveredagn):
+        def process_target_wrapper(target, index):
             thread_id = threading.get_ident()
             start_time = time.time()
             IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} STARTED at {start_time}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
@@ -1856,37 +1856,30 @@ class AGNRoutines:
             IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED at {end_time} (Duration: {end_time - start_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             results[index] = result
             
-            if result["predictors"]:
-                targetindex = result["targetindex"]
-                for predictor in result["predictors"]:
-                    recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
-                    recoveredagn.get_genes()[predictor].add_target(targetindex)
-                
-                if result["predictorsties"]:
-                    recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
-                
-                if result["probtable"]:
-                    recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
-            end_results_transfer_time = time.time()
-            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED Transferring results to AGN at {end_results_transfer_time} (Duration: {end_results_transfer_time - end_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+        def process_group(group, offet_index):
+            for i, target in enumerate(group):
+                index = offet_index + i
+                process_target_wrapper(target, index)
 
-
+        threads = []
         for i in range(0, len(targets), group_size):
             group = targets[i:i + group_size]
-            threads = []
             
             IOFile.print_and_log(f"Starting group {i//group_size + 1} with targets: {group}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             
-            for j, target in enumerate(group):
-                index = i + j
-                thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn), name=f"Target-{target}-main_from_cli")
-                threads.append(thread)
-                thread.start()
+            # for j, target in enumerate(group):
+            #     index = i + j
+            #     thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn), name=f"Target-{target}-main_from_cli")
+            #     threads.append(thread)
+            #     thread.start()
+            thread = threading.Thread(target=process_group, args=(group, i), name=f"Group-{i//group_size + 1}-main_from_cli")
+            threads.append(thread)
+            thread.start()
             
-            for thread in threads:
-                thread.join()
-            
-            IOFile.print_and_log(f"Completed group {i//group_size + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+        for thread in threads:
+            thread.join()
+        
+        IOFile.print_and_log(f"Completed group {i//group_size + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
 
         for result in results:
             targetindex = result["targetindex"]
