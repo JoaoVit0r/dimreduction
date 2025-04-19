@@ -1845,7 +1845,7 @@ class AGNRoutines:
                 }
 
         results = [None] * len(targets)  # Preallocate the results list with None values
-        group_size = 10
+        group_size = 1
 
         def process_target_wrapper(target, index, recoveredagn):
             thread_id = threading.get_ident()
