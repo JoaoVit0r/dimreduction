@@ -1735,25 +1735,25 @@ class AGNRoutines:
             else:
                 strainingset = AGNRoutines.make_steady_state_training_set(recoveredagn, targetindex)
             fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
+            if not CNMeasurements.has_variation(strainingset, is_periodic):
+                if targetaspredictors:
+                    message = f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values."
+                    IOFile.print_and_log(message)
+                    local_txt.append(message)
+                else:
+                    message = f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values."
+                    IOFile.print_and_log(message)
+                    local_txt.append(message)
+                return {
+                    "targetindex": targetindex,
+                    "txt": local_txt,
+                    "predictors": [],
+                    "ties": [],
+                    "predictorsties": None,
+                    "probtable": None,
+                    "h_global": 1.0
+                }
             sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
-            # if not CNMeasurements.has_variation(strainingset, is_periodic):
-            #     if targetaspredictors:
-            #         message = f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values."
-            #         IOFile.print_and_log(message)
-            #         local_txt.append(message)
-            #     else:
-            #         message = f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values."
-            #         IOFile.print_and_log(message)
-            #         local_txt.append(message)
-            #     return {
-            #         "targetindex": targetindex,
-            #         "txt": local_txt,
-            #         "predictors": [],
-            #         "ties": [],
-            #         "predictorsties": None,
-            #         "probtable": None,
-            #         "h_global": 1.0
-            #     }
             # else:
             #     # timer.start(f"running_search_algorithm-target_index_{targetindex}")
             #     if searchalgorithm == 1:
