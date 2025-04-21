@@ -8,6 +8,7 @@ REPOSITORY_PYTHON=""
 COMMAND=""
 NUMBER_OF_EXECUTIONS=3
 CUSTOM_INPUT_FILE_PATH=""
+THREADS=1  # Default to 1 thread
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -31,6 +32,10 @@ while [[ $# -gt 0 ]]; do
             CUSTOM_INPUT_FILE_PATH="$2"
             shift 2
             ;;
+        --threads)
+            THREADS="$2"
+            shift 2
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./monitor_execution.sh [OPTIONS] COMMAND
@@ -48,6 +53,7 @@ Optional Settings:
   --sleep-time <seconds>            Time between executions (default: 5)
   --number-of-executions <number>   Times to run the command (default: 3)
   --custom-input-file <path>        Path to custom input dataset
+  --threads <count>                 Number of threads to use (default: 1)
 
 Output Files Generated:
   - monitoring_plots/               Directory containing all monitoring data
@@ -67,9 +73,9 @@ Examples:
   ./monitor_execution.sh --output-dir ./output --repository-python . \
     --sleep-time 10 --number-of-executions 5 "python script.py"
 
-  # With custom input file:
+  # With custom input file and threads:
   ./monitor_execution.sh --output-dir ./output --repository-python . \
-    --custom-input-file data.csv "python script.py"
+    --custom-input-file data.csv --threads 4 "python script.py"
 EOF
             exit 0
             ;;
@@ -124,20 +130,37 @@ else
     DEFAULT_ENV_FILE=".env"
 fi
 
+# Always backup the environment file before making any changes
+echo "-----------------------------------------------"
+echo "Backing up Environment Variables"
+echo "-----------------------------------------------"
+cp "$DEFAULT_ENV_FILE" "$DEFAULT_ENV_FILE.bak"
+
+# Make all necessary changes to the environment file
+echo "-----------------------------------------------"
+echo "Updating Environment Variables"
+echo "-----------------------------------------------"
+
+# Update custom input file path if specified
 if [ -n "$CUSTOM_INPUT_FILE_PATH" ]; then
     if [ ! -f "$CUSTOM_INPUT_FILE_PATH" ]; then
         echo "Error: Custom input file does not exist."
+        rm "$DEFAULT_ENV_FILE.bak"
         exit 1
     fi
-    # Save the DEFAULT_ENV_FILE to restore it later
-    cp "$DEFAULT_ENV_FILE" "$DEFAULT_ENV_FILE.bak"
-
-    echo "-----------------------------------------------"
-    echo "Updating Environment Variables"
-    echo "-----------------------------------------------"
-    sed -i -E "s/^INPUT_FILE_PATH=.*/INPUT_FILE_PATH=$(realpath "$CUSTOM_INPUT_FILE_PATH" | sed 's/\//\\\//g')/" "$DEFAULT_ENV_FILE"
+    
+    echo "Setting INPUT_FILE_PATH=$(realpath "$CUSTOM_INPUT_FILE_PATH")"
+    sed -i -E "s|^INPUT_FILE_PATH=.*|INPUT_FILE_PATH=$(realpath "$CUSTOM_INPUT_FILE_PATH" | sed 's/\//\\\//g')|" "$DEFAULT_ENV_FILE"
 fi
 
+
+# Update the NUMBER_OF_THREADS environment variable
+echo "Setting NUMBER_OF_THREADS=$THREADS"
+if grep -q "^NUMBER_OF_THREADS=" "$DEFAULT_ENV_FILE"; then
+    sed -i -E "s/^NUMBER_OF_THREADS=.*/NUMBER_OF_THREADS=$THREADS/" "$DEFAULT_ENV_FILE"
+else
+    echo "NUMBER_OF_THREADS=$THREADS" >> "$DEFAULT_ENV_FILE"
+fi
 
 echo "-----------------------------------------------"
 echo "Saving Environment Variables"
@@ -149,6 +172,7 @@ echo "Starting System Monitoring"
 echo "==============================================="
 echo "Command to monitor: $COMMAND"
 echo "Output directory: $OUTPUT_DIR"
+echo "Thread count: $THREADS"
 echo "==============================================="
 
 # Start dstat(dool) in the background (time, cpu, load, mem)
@@ -164,13 +188,16 @@ echo "Will execute: $COMMAND"
 # Execute the command 3 times with intervals
 for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
     echo -e "\n-----------------------------------------------"
-    echo "Execution $i of $NUMBER_OF_EXECUTIONS"
+    echo "Execution $i of $NUMBER_OF_EXECUTIONS (Threads: $THREADS)"
     echo "-----------------------------------------------"
     
     # Record start time in seconds since epoch
     start_time=$(date +%s)
     start_datetime=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "$start_datetime Execution_${i}_Start" >> "$DSTAT_MARKERS_FILE"
+    echo "$start_datetime Execution_${i}_Start Threads_${THREADS}" >> "$DSTAT_MARKERS_FILE"
+    
+    # Export NUMBER_OF_THREADS directly for this execution
+    export NUMBER_OF_THREADS=$THREADS
     
     eval "$COMMAND"
     
@@ -194,7 +221,7 @@ for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
     fi
     duration_str="${duration_str}${seconds}s"
     
-    echo "$end_datetime Execution_${i}_End (Duration: $duration_str)" >> "$DSTAT_MARKERS_FILE"
+    echo "$end_datetime Execution_${i}_End Threads_${THREADS} (Duration: $duration_str)" >> "$DSTAT_MARKERS_FILE"
     
     # Wait for SLEEP_TIME between executions if not the last one
     if [ $i -lt "$NUMBER_OF_EXECUTIONS" ]; then
@@ -231,12 +258,14 @@ echo "Output directory: $PLOTS_DIR"
 # Generate plots using the Python script
 python3 "$REPOSITORY_PYTHON"/scripts/plot_dstat.py "$DSTAT_OUTPUT_File" "$PLOTS_DIR" "$DSTAT_MARKERS_FILE" "split_by:hour"
 
-# Restore the DEFAULT_ENV_FILE
+# Restore the original environment file
+echo "-----------------------------------------------"
+echo "Restoring Original Environment Variables"
+echo "-----------------------------------------------"
 if [ -f "$DEFAULT_ENV_FILE.bak" ]; then
-    echo "-----------------------------------------------"
-    echo "Restoring Environment Variables"
-    echo "-----------------------------------------------"
     mv "$DEFAULT_ENV_FILE.bak" "$DEFAULT_ENV_FILE"
+else
+    echo "Warning: Backup environment file not found!"
 fi
 
 # Move monitoring files to output directory using move_monitoring_files.sh

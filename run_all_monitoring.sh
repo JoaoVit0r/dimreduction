@@ -9,6 +9,7 @@ COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
 CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
 NUMBER_OF_EXECUTIONS=3
 PYTHON_FILES=("main_from_cli.py" "main_from_cli_ThreadPoolExecutor.py" "main_from_cli_no_performing.py")
+THREADS="1,2,4,8"  # Default thread counts
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -38,6 +39,10 @@ while [[ $# -gt 0 ]]; do
             IFS=',' read -r -a PYTHON_FILES <<< "$2"
             shift 2
             ;;
+        --threads)
+            THREADS="$2"
+            shift 2
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./run_all_monitoring.sh [OPTIONS] [COMMANDS]
@@ -54,6 +59,7 @@ Options:
   Basic Configuration:
     --sleep-time <seconds>           Time to wait between executions (default: 900)
     --number-of-executions <number>  Number of times to run each test (default: 3)
+    --threads <numbers>              Comma-separated list of thread counts (default: 1,2,4,8)
 
   File and Directory Settings:
     --repository-python <path>       Path to Python repository (default: .)
@@ -71,6 +77,9 @@ Examples:
 
   # Run specific Python files with custom sleep time:
   ./run_all_monitoring.sh --sleep-time 300 --python-files main_from_cli.py,main_from_cli_ThreadPoolExecutor.py venv_v12
+
+  # Run with specific thread counts:
+  ./run_all_monitoring.sh --threads 1,4,16 venv_v12
 
   # Run Java implementation with custom input file:
   ./run_all_monitoring.sh --custom-input-file path/to/dataset.csv java
@@ -98,6 +107,7 @@ echo "Commands: ${COMMANDS[*]}"
 echo "Python Files: ${PYTHON_FILES[*]}"
 echo "Custom Input File: $CUSTOM_INPUT_FILE_PATH"
 echo "Number of Executions: $NUMBER_OF_EXECUTIONS"
+echo "Thread Counts: $THREADS"
 echo "==============================================="
 
 # Convert paths to absolute paths
@@ -152,10 +162,11 @@ wait_between_executions() {
 run_monitoring_python() {
     local python_bin=$1
     local script=$2
+    local thread_count=$3
 
     local script_name
     script_name="$(basename "${script}")"
-    local output_dir="${BASE_DIR}/${python_bin%/bin/python}/${script_name%.py}"
+    local output_dir="${BASE_DIR}/${python_bin%/bin/python}/${script_name%.py}/threads_${thread_count}"
     mkdir -p "${output_dir}"
     
     echo -e "\n================================================================="
@@ -163,57 +174,69 @@ run_monitoring_python() {
     echo "================================================================="
     echo "Environment: ${python_bin}"
     echo "Script: ${script_name}"
+    echo "Thread Count: ${thread_count}"
     echo "Output Directory: ${output_dir}"
     echo "==============================================="
     
     cd "$REPOSITORY_PYTHON" || exit
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" "${python_bin}" "${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --threads "$thread_count" "${python_bin}" "${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
-    echo "Completed ${python_bin} with ${script_name}"
+    echo "Completed ${python_bin} with ${script_name} using ${thread_count} threads"
     echo "-----------------------------------------------"
 }
 
 run_monitoring_java() {
     local script="MainCLI"
+    local thread_count=$1
 
-    local output_dir="${BASE_DIR}/java/${script}"
+    local output_dir="${BASE_DIR}/java/${script}_threads${thread_count}"
     mkdir -p "${output_dir}"
     
     echo -e "\n================================================================="
     echo "Running Java Monitoring"
     echo "================================================================="
     echo "Script: ${script}"
+    echo "Thread Count: ${thread_count}"
     echo "Output Directory: ${output_dir}"
     echo "==============================================="
     
     cd "$REPOSITORY_JAVA" || exit
     # cp -r src/img out/production/java-dimreduction/
     # javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" "java" -cp "${JAVA_CLASSPATH}" -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --threads "$thread_count" "java" -cp "${JAVA_CLASSPATH}" -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
-    echo "Completed Java with ${script}"
+    echo "Completed Java with ${script} using ${thread_count} threads"
     echo "-----------------------------------------------"
 }
+
+# Convert thread counts string to array
+IFS=',' read -r -a THREAD_COUNTS <<< "$THREADS"
 
 # Run all combinations in sequence
 for cmd in "${COMMANDS[@]}"; do
     if [ "$cmd" == "java" ]; then
-        run_monitoring_java
-        wait_between_executions
+        for thread_count in "${THREAD_COUNTS[@]}"; do
+            run_monitoring_java "$thread_count"
+            wait_between_executions
+        done
     else
         if [ -f "$REPOSITORY_PYTHON/$cmd/bin/python" ]; then
             for python_file in "${PYTHON_FILES[@]}"; do
-                run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/$python_file"
-                wait_between_executions
+                for thread_count in "${THREAD_COUNTS[@]}"; do
+                    run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/$python_file" "$thread_count"
+                    wait_between_executions
+                done
             done
         else
             for python_file in "${PYTHON_FILES[@]}"; do
-                run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/$python_file"
-                wait_between_executions
+                for thread_count in "${THREAD_COUNTS[@]}"; do
+                    run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/$python_file" "$thread_count"
+                    wait_between_executions
+                done
             done
         fi
     fi
