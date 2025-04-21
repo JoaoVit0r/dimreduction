@@ -1071,23 +1071,24 @@ class FS:
                 self.I[-1] = f
                 # self.timer.start("MCE_COD")
                 H, probtable = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I[:], self.A[:], self.q)
-                # self.timer.end("MCE_COD")
-                if H < h_min:
-                    f_min = f
-                    h_min = H
-                    self.insert_in_result_list(self.I, H)
-                if H == 0:
-                    break
-            if h_min < self.h_global:
-                self.I[-1] = f_min
-                self.h_global = h_min
-                if self.h_global == 0:
-                    break
-            else:
-                self.I.pop()
-                break
-        if called_by_exhaustive:
-            self.itmax = len(self.I)
+        sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
+        #         # self.timer.end("MCE_COD")
+        #         if H < h_min:
+        #             f_min = f
+        #             h_min = H
+        #             self.insert_in_result_list(self.I, H)
+        #         if H == 0:
+        #             break
+        #     if h_min < self.h_global:
+        #         self.I[-1] = f_min
+        #         self.h_global = h_min
+        #         if self.h_global == 0:
+        #             break
+        #     else:
+        #         self.I.pop()
+        #         break
+        # if called_by_exhaustive:
+        #     self.itmax = len(self.I)
 
     def best_set(self, bestset, bestentropy, other, entropy):
         size = len(other)
@@ -1548,29 +1549,30 @@ class Criteria:
         no_obs = n ** len(I)
         # # Criteria.timer.start("Sort")
         RadixSort.radix_sort(A, I, n)
+        probtable = []
         # # Criteria.timer.end("Sort")
-        probtable = [[0] * int(c) for _ in range(int(no_obs))]
-        # # Criteria.timer.start("loop_MCE_COD")
-        for j in range(lines):
-            if j > 0 and not Criteria.equal_instances(j, I, A):
-                no_obs -= 1
-                position = Criteria.get_position_of_instances(j, I, A)
-                probtable[position] = pYdX[:]
-                H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
-                pYdX = [0] * int(c)
-                pX = 0
-            pYdX[int_or_ord_4_digit(A[j][-1])] += 1
-            pY[int_or_ord_4_digit(A[j][-1])] += 1
-            pX += 1
-        # # Criteria.timer.end("loop_MCE_COD")
-        position = Criteria.get_position_of_instances(lines, I, A)
-        probtable[position] = pYdX[:]
-        H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
-        no_obs -= 1
-        HY = Criteria.instance_criterion(pY, lines, "poor_obs", 0, 1, lines, 0, 0, c, q)
-        if type == "no_obs" and no_obs > 0:
-            penalization = (alpha * no_obs * HY) / (lines + alpha * (n ** len(I)))
-            H += penalization
+        # probtable = [[0] * int(c) for _ in range(int(no_obs))]
+        # # # Criteria.timer.start("loop_MCE_COD")
+        # for j in range(lines):
+        #     if j > 0 and not Criteria.equal_instances(j, I, A):
+        #         no_obs -= 1
+        #         position = Criteria.get_position_of_instances(j, I, A)
+        #         probtable[position] = pYdX[:]
+        #         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
+        #         pYdX = [0] * int(c)
+        #         pX = 0
+        #     pYdX[int_or_ord_4_digit(A[j][-1])] += 1
+        #     pY[int_or_ord_4_digit(A[j][-1])] += 1
+        #     pX += 1
+        # # # Criteria.timer.end("loop_MCE_COD")
+        # position = Criteria.get_position_of_instances(lines, I, A)
+        # probtable[position] = pYdX[:]
+        # H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
+        # no_obs -= 1
+        # HY = Criteria.instance_criterion(pY, lines, "poor_obs", 0, 1, lines, 0, 0, c, q)
+        # if type == "no_obs" and no_obs > 0:
+        #     penalization = (alpha * no_obs * HY) / (lines + alpha * (n ** len(I)))
+        #     H += penalization
         
         if q >= 0 and q <= 0.00001: # q == 0 -> COD
             return H / HY, probtable
@@ -1758,7 +1760,7 @@ class AGNRoutines:
                 if searchalgorithm == 1:
                     # IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
                     fs.run_sfs(False, maxfeatures)
-            sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
+            # sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
             #     elif searchalgorithm == 3:
             #         IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             #         fs.run_sffs(maxfeatures, targetindex, recoveredagn)
