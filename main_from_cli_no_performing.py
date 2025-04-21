@@ -1731,11 +1731,11 @@ class AGNRoutines:
                 else:
                     IOFile.print_and_log(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
                     txt.append(f"Target {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
+            else:
+                # timer.start(f"running_search_algorithm-target_index_{targetindex}")
+                if searchalgorithm == 1:
+                    fs.run_sfs(False, maxfeatures)
             sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
-            # else:
-            #     timer.start(f"running_search_algorithm-target_index_{targetindex}")
-            #     if searchalgorithm == 1:
-            #         fs.run_sfs(False, maxfeatures)
             #     elif searchalgorithm == 3:
             #         fs.run_sffs(maxfeatures, targetindex, recoveredagn)
             #     elif searchalgorithm == 4:

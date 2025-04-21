@@ -1753,12 +1753,12 @@ class AGNRoutines:
                     "probtable": None,
                     "h_global": 1.0
                 }
+            else:
+                # timer.start(f"running_search_algorithm-target_index_{targetindex}")
+                if searchalgorithm == 1:
+                    # IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    fs.run_sfs(False, maxfeatures)
             sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
-            # else:
-            #     # timer.start(f"running_search_algorithm-target_index_{targetindex}")
-            #     if searchalgorithm == 1:
-            #         IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
-            #         fs.run_sfs(False, maxfeatures)
             #     elif searchalgorithm == 3:
             #         IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             #         fs.run_sffs(maxfeatures, targetindex, recoveredagn)
