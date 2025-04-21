@@ -1450,8 +1450,8 @@ class RadixSort:
             # # RadixSort.timer.end("loop_radix_sort-restore")
             pos -= 1
         queues = None
-        # call garbage collector
-        gc.collect()
+        # # call garbage collector
+        # gc.collect()
 
     @staticmethod
     def restore(qs, v):
