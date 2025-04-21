@@ -1723,8 +1723,8 @@ class AGNRoutines:
                 strainingset = AGNRoutines.make_temporal_training_set(recoveredagn, targetindex, is_periodic)
             else:
                 strainingset = AGNRoutines.make_steady_state_training_set(recoveredagn, targetindex)
+            fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
             sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
-            # fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
             # if not CNMeasurements.has_variation(strainingset, is_periodic):
             #     if targetaspredictors:
             #         IOFile.print_and_log(f"Predictor {targetindex} name {recoveredagn.get_genes()[targetindex].get_name()}, has no variation on its values.")
