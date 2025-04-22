@@ -1069,24 +1069,23 @@ class FS:
                 self.I[-1] = f
                 # self.timer.start("MCE_COD")
                 H = Criteria.MCE_COD(self.type, self.alpha, self.beta, self.n, self.c, self.I, self.A, self.q)
-        sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
                 # self.timer.end("MCE_COD")
-        #         if H < h_min:
-        #             f_min = f
-        #             h_min = H
-        #             self.insert_in_result_list(self.I, H)
-        #         if H == 0:
-        #             break
-        #     if h_min < self.h_global:
-        #         self.I[-1] = f_min
-        #         self.h_global = h_min
-        #         if self.h_global == 0:
-        #             break
-        #     else:
-        #         self.I.pop()
-        #         break
-        # if called_by_exhaustive:
-        #     self.itmax = len(self.I)
+                if H < h_min:
+                    f_min = f
+                    h_min = H
+                    self.insert_in_result_list(self.I, H)
+                if H == 0:
+                    break
+            if h_min < self.h_global:
+                self.I[-1] = f_min
+                self.h_global = h_min
+                if self.h_global == 0:
+                    break
+            else:
+                self.I.pop()
+                break
+        if called_by_exhaustive:
+            self.itmax = len(self.I)
 
     def best_set(self, bestset, bestentropy, other, entropy):
         size = len(other)
@@ -1736,7 +1735,7 @@ class AGNRoutines:
                 # timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
                     fs.run_sfs(False, maxfeatures)
-            # sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
+            sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
             #     elif searchalgorithm == 3:
             #         fs.run_sffs(maxfeatures, targetindex, recoveredagn)
             #     elif searchalgorithm == 4:
