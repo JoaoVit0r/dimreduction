@@ -1544,12 +1544,12 @@ class Criteria:
         no_obs = n ** len(I)
         # Criteria.timer.start("Sort")
         RadixSort.radix_sort(A, I, n)
-        # # Criteria.timer.end("Sort")
-        # Criteria.probtable = [[0] * int(c) for _ in range(int(no_obs))]
-        # # Criteria.timer.start("loop_MCE_COD")
-        # for j in range(lines):
-        #     if j > 0 and not Criteria.equal_instances(j, I, A):
-        #         no_obs -= 1
+        # Criteria.timer.end("Sort")
+        Criteria.probtable = [[0] * int(c) for _ in range(int(no_obs))]
+        Criteria.timer.start("loop_MCE_COD")
+        for j in range(lines):
+            if j > 0 and not Criteria.equal_instances(j, I, A):
+                no_obs -= 1
         #         position = Criteria.get_position_of_instances(j, I, A)
         #         Criteria.probtable[position] = pYdX[:]
         #         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
