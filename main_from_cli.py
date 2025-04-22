@@ -1759,97 +1759,96 @@ class AGNRoutines:
                 if searchalgorithm == 1:
                     # IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
                     fs.run_sfs(False, maxfeatures)
-            sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
-            #     elif searchalgorithm == 3:
-            #         IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
-            #         fs.run_sffs(maxfeatures, targetindex, recoveredagn)
-            #     elif searchalgorithm == 4:
-            #         IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
-            #         fs.run_sffs_stack(maxfeatures, targetindex, recoveredagn)
-            #     elif searchalgorithm == 2:
-            #         IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
-            #         fs.run_sfs(True, maxfeatures)
-            #         s = fs.itmax
-            #         fs_prev = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
-            #         for j in range(1, s + 1):
-            #             fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
-            #             fs.itmax = j
-            #             fs.run_exhaustive(0, 0, fs.I)
-            #             if not (fs.h_global < fs_prev.h_global):
-            #                 fs = fs_prev
-            #                 break
-            #             fs_prev = fs
-            #     # timer.end(f"running_search_algorithm-target_index_{targetindex}")
+                elif searchalgorithm == 3:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    fs.run_sffs(maxfeatures, targetindex, recoveredagn)
+                elif searchalgorithm == 4:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    fs.run_sffs_stack(maxfeatures, targetindex, recoveredagn)
+                elif searchalgorithm == 2:
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    fs.run_sfs(True, maxfeatures)
+                    s = fs.itmax
+                    fs_prev = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
+                    for j in range(1, s + 1):
+                        fs = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
+                        fs.itmax = j
+                        fs.run_exhaustive(0, 0, fs.I)
+                        if not (fs.h_global < fs_prev.h_global):
+                            fs = fs_prev
+                            break
+                        fs_prev = fs
+                # timer.end(f"running_search_algorithm-target_index_{targetindex}")
                 
-            #     # Prepare text output and collect data to return
-            #     if targetaspredictors:
-            #         prefix = f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: "
-            #         local_txt.append(prefix)
-            #         IOFile.print_and_log(prefix, end=" ")
-            #     else:
-            #         prefix = f"Target: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors: "
-            #         local_txt.append(prefix)
-            #         IOFile.print_and_log(f"\n{prefix}", end=" ")
+                # Prepare text output and collect data to return
+                if targetaspredictors:
+                    prefix = f"Predictor: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nTargets: "
+                    local_txt.append(prefix)
+                    IOFile.print_and_log(prefix, end=" ")
+                else:
+                    prefix = f"Target: {targetindex} name:{recoveredagn.get_genes()[targetindex].get_name()}\nPredictors: "
+                    local_txt.append(prefix)
+                    IOFile.print_and_log(f"\n{prefix}", end=" ")
                 
-            #     target_predictors = []
-            #     for s in range(len(fs.I)):
-            #         predictor_gene = int(fs.I[s])
-            #         if predictor_gene >= targetindex:
-            #             predictor_gene += 1
-            #         if fs.h_global < threshold_entropy:
-            #             info = f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()} "
-            #             local_txt.append(info)
-            #             IOFile.print_and_log(info, end=" ")
-            #             predictors.append(predictor_gene)
-            #             target_predictors.append(predictor_gene)
-            #         else:
-            #             if targetaspredictors:
-            #                 info = f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}"
-            #                 local_txt.append(info)
-            #                 IOFile.print_and_log(info)
-            #             else:
-            #                 info = f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}"
-            #                 local_txt.append(info)
-            #                 IOFile.print_and_log(info)
+                target_predictors = []
+                for s in range(len(fs.I)):
+                    predictor_gene = int(fs.I[s])
+                    if predictor_gene >= targetindex:
+                        predictor_gene += 1
+                    if fs.h_global < threshold_entropy:
+                        info = f"{predictor_gene} name:{recoveredagn.get_genes()[predictor_gene].get_name()} "
+                        local_txt.append(info)
+                        IOFile.print_and_log(info, end=" ")
+                        predictors.append(predictor_gene)
+                        target_predictors.append(predictor_gene)
+                    else:
+                        if targetaspredictors:
+                            info = f"\ntarget {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}"
+                            local_txt.append(info)
+                            IOFile.print_and_log(info)
+                        else:
+                            info = f"\npredictor {predictor_gene} excluded by threshold. Criterion Function Value = {fs.h_global}"
+                            local_txt.append(info)
+                            IOFile.print_and_log(info)
                 
-            #     s = len(fs.I)
-            #     predictorsties = None
-            #     if (searchalgorithm == 3 or searchalgorithm == 4) and fs.ties[s] and len(fs.ties[s]) > 1 and fs.h_global < threshold_entropy:
-            #         local_txt.append("\nPredictors Ties: ")
-            #         IOFile.print_and_log("\nPredictors Ties:", end=" ")
-            #         predictorsties = [None] * len(fs.ties[s])
-            #         for j in range(len(fs.ties[s])):
-            #             predictorsties[j] = []
-            #             item = fs.ties[s][j]
-            #             tie = []
-            #             for k in range(len(item)):
-            #                 geneindex = int(item[k])
-            #                 if geneindex >= targetindex:
-            #                     geneindex += 1
-            #                 predictorsties[j].append(geneindex)
-            #                 local_txt.append(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()} ")
-            #                 IOFile.print_and_log(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()}", end=" ")
-            #                 tie.append(geneindex)
+                s = len(fs.I)
+                predictorsties = None
+                if (searchalgorithm == 3 or searchalgorithm == 4) and fs.ties[s] and len(fs.ties[s]) > 1 and fs.h_global < threshold_entropy:
+                    local_txt.append("\nPredictors Ties: ")
+                    IOFile.print_and_log("\nPredictors Ties:", end=" ")
+                    predictorsties = [None] * len(fs.ties[s])
+                    for j in range(len(fs.ties[s])):
+                        predictorsties[j] = []
+                        item = fs.ties[s][j]
+                        tie = []
+                        for k in range(len(item)):
+                            geneindex = int(item[k])
+                            if geneindex >= targetindex:
+                                geneindex += 1
+                            predictorsties[j].append(geneindex)
+                            local_txt.append(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()} ")
+                            IOFile.print_and_log(f"{geneindex} name:{recoveredagn.get_genes()[geneindex].get_name()}", end=" ")
+                            tie.append(geneindex)
                             
-            #             IOFile.print_and_log(" (" + str(fs.jointentropiesties[j]) + ") ", end="\t")
-            #             ties.append(tie)
+                        IOFile.print_and_log(" (" + str(fs.jointentropiesties[j]) + ") ", end="\t")
+                        ties.append(tie)
                 
-            #     if tiesout and originalagn:
-            #         originalpredictors = originalagn.get_genes()[targetindex].get_predictors()
-            #         IOFile.write_ties(originalagn, tiesout, targetindex, int(originalagn.get_avgedges()), originalagn.get_topology(), originalpredictors, q_entropy, predictors, ties, fs.h_global, False)
+                if tiesout and originalagn:
+                    originalpredictors = originalagn.get_genes()[targetindex].get_predictors()
+                    IOFile.write_ties(originalagn, tiesout, targetindex, int(originalagn.get_avgedges()), originalagn.get_topology(), originalpredictors, q_entropy, predictors, ties, fs.h_global, False)
                 
-            #     IOFile.print_and_log(f"\n\nCriterion Function Value: {fs.h_global}")
-            #     local_txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
+                IOFile.print_and_log(f"\n\nCriterion Function Value: {fs.h_global}")
+                local_txt.append(f"\nCriterion Function Value: {fs.h_global}\n")
                 
-            #     return {
-            #         "targetindex": targetindex,
-            #         "txt": local_txt,
-            #         "predictors": target_predictors,
-            #         "ties": ties,
-            #         "predictorsties": predictorsties,
-            #         "probtable": fs.probtable,
-            #         "h_global": fs.h_global
-            #     }
+                return {
+                    "targetindex": targetindex,
+                    "txt": local_txt,
+                    "predictors": target_predictors,
+                    "ties": ties,
+                    "predictorsties": predictorsties,
+                    "probtable": fs.probtable,
+                    "h_global": fs.h_global
+                }
 
         results = [None] * len(targets)  # Preallocate the results list with None values
 
@@ -1893,23 +1892,24 @@ class AGNRoutines:
         
         IOFile.print_and_log(f"Completed group {i//num_processes_per_thread + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
 
-        # for result in results:
-        #     targetindex = result["targetindex"]
-        #     txt.extend(result["txt"])
+        for result in results:
+            targetindex = result["targetindex"]
+            txt.extend(result["txt"])
             
-        #     # Update the AGN object with results for this target
-        #     if result["predictors"]:
-        #         for predictor in result["predictors"]:
-        #             recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
-        #             recoveredagn.get_genes()[predictor].add_target(targetindex)
+            # Update the AGN object with results for this target
+            if result["predictors"]:
+                for predictor in result["predictors"]:
+                    recoveredagn.get_genes()[targetindex].add_predictor(predictor, result["h_global"])
+                    recoveredagn.get_genes()[predictor].add_target(targetindex)
                 
-        #         if result["predictorsties"]:
-        #             recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
+                if result["predictorsties"]:
+                    recoveredagn.get_genes()[targetindex].set_predictorsties(result["predictorsties"])
                 
-        #         if result["probtable"]:
-        #             recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
+                if result["probtable"]:
+                    recoveredagn.get_genes()[targetindex].set_probtable(result["probtable"])
 
         IOFile.print_and_log(f"Completed all targets", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+        # sum_of_squares(10**int(os.getenv("COMPLEXITY", "6")))
         return "\n".join(txt)
 
 class Classifier:
