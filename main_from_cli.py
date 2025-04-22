@@ -1556,15 +1556,15 @@ class Criteria:
         for j in range(lines):
             if j > 0 and not Criteria.equal_instances(j, I, A):
                 no_obs -= 1
-        #         position = Criteria.get_position_of_instances(j, I, A)
-        #         probtable[position] = pYdX[:]
-        #         H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
-        #         pYdX = [0] * int(c)
-        #         pX = 0
-        #     pYdX[int_or_ord_4_digit(A[j][-1])] += 1
-        #     pY[int_or_ord_4_digit(A[j][-1])] += 1
-        #     pX += 1
-        # # # Criteria.timer.end("loop_MCE_COD")
+                position = Criteria.get_position_of_instances(j, I, A)
+                probtable[position] = pYdX[:]
+                H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
+                pYdX = [0] * int(c)
+                pX = 0
+            pYdX[int_or_ord_4_digit(A[j][-1])] += 1
+            pY[int_or_ord_4_digit(A[j][-1])] += 1
+            pX += 1
+        # # Criteria.timer.end("loop_MCE_COD")
         # position = Criteria.get_position_of_instances(lines, I, A)
         # probtable[position] = pYdX[:]
         # H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
