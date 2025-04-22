@@ -1564,15 +1564,15 @@ class Criteria:
             pYdX[int_or_ord_4_digit(A[j][-1])] += 1
             pY[int_or_ord_4_digit(A[j][-1])] += 1
             pX += 1
-        # # Criteria.timer.end("loop_MCE_COD")
-        # position = Criteria.get_position_of_instances(lines, I, A)
-        # probtable[position] = pYdX[:]
-        # H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
-        # no_obs -= 1
-        # HY = Criteria.instance_criterion(pY, lines, "poor_obs", 0, 1, lines, 0, 0, c, q)
-        # if type == "no_obs" and no_obs > 0:
-        #     penalization = (alpha * no_obs * HY) / (lines + alpha * (n ** len(I)))
-        #     H += penalization
+        # Criteria.timer.end("loop_MCE_COD")
+        position = Criteria.get_position_of_instances(lines, I, A)
+        probtable[position] = pYdX[:]
+        H += Criteria.instance_criterion(pYdX, pX, type, alpha, beta, lines, n, len(I), c, q)
+        no_obs -= 1
+        HY = Criteria.instance_criterion(pY, lines, "poor_obs", 0, 1, lines, 0, 0, c, q)
+        if type == "no_obs" and no_obs > 0:
+            penalization = (alpha * no_obs * HY) / (lines + alpha * (n ** len(I)))
+            H += penalization
         
         if q >= 0 and q <= 0.00001: # q == 0 -> COD
             return H / HY, probtable
