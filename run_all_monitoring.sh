@@ -8,7 +8,7 @@ REPOSITORY_JAVA="../dimreduction-java"
 COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
 CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
 NUMBER_OF_EXECUTIONS=3
-PYTHON_FILES=("main_from_cli.py" "main_from_cli_ThreadPoolExecutor.py" "main_from_cli_no_performing.py")
+PYTHON_FILES=("main_from_cli.py" "main_from_cli_no_performing.py")
 THREADS="1,2,4,8"  # Default thread counts
 
 while [[ $# -gt 0 ]]; do
@@ -66,7 +66,7 @@ Options:
     --repository-java <path>         Path to Java repository (default: ../dimreduction-java)
     --custom-input-file <path>       Path to custom input dataset
     --python-files <files>           Comma-separated list of Python files to execute
-                                    (default: main_from_cli.py,main_from_cli_ThreadPoolExecutor.py,main_from_cli_no_performing.py)
+                                    (default: main_from_cli.py,main_from_cli_no_performing.py)
 
   Help:
     --help                          Show this help message
