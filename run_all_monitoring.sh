@@ -134,6 +134,9 @@ echo -e "\nVirtual Environment: $VIRTUAL_ENV"
 
 # Check if required commands are available
 for cmd in dool python3; do
+    if [ "$SKIP_MONITORING" = true ]; then
+        break
+    fi
     if ! command -v $cmd &> /dev/null; then
         echo "Error: $cmd is required but not installed."
         exit 1
