@@ -9,6 +9,7 @@ COMMAND=""
 NUMBER_OF_EXECUTIONS=3
 CUSTOM_INPUT_FILE_PATH=""
 THREADS=1  # Default to 1 thread
+THREAD_DISTRIBUTION="spaced"  # Default to spaced distribution
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -36,6 +37,10 @@ while [[ $# -gt 0 ]]; do
             THREADS="$2"
             shift 2
             ;;
+        --thread-distribution)
+            THREAD_DISTRIBUTION="$2"
+            shift 2
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./monitor_execution.sh [OPTIONS] COMMAND
@@ -54,6 +59,8 @@ Optional Settings:
   --number-of-executions <number>   Times to run the command (default: 3)
   --custom-input-file <path>        Path to custom input dataset
   --threads <count>                 Number of threads to use (default: 1)
+  --thread-distribution <types>     Thread distribution types: values like 
+                                    "spaced,sequential" (default: spaced)
 
 Output Files Generated:
   - monitoring_plots/               Directory containing all monitoring data
@@ -76,6 +83,10 @@ Examples:
   # With custom input file and threads:
   ./monitor_execution.sh --output-dir ./output --repository-python . \
     --custom-input-file data.csv --threads 4 "python script.py"
+    
+  # With multiple thread distribution types:
+  ./monitor_execution.sh --output-dir ./output --repository-python . \
+    --thread-distribution spaced "python script.py"
 EOF
             exit 0
             ;;
@@ -160,6 +171,14 @@ if grep -q "^NUMBER_OF_THREADS=" "$DEFAULT_ENV_FILE"; then
     sed -i -E "s/^NUMBER_OF_THREADS=.*/NUMBER_OF_THREADS=$THREADS/" "$DEFAULT_ENV_FILE"
 else
     echo "NUMBER_OF_THREADS=$THREADS" >> "$DEFAULT_ENV_FILE"
+fi
+
+# Update the THREAD_DISTRIBUTION environment variable
+echo "Setting THREAD_DISTRIBUTION=$THREAD_DISTRIBUTION"
+if grep -q "^THREAD_DISTRIBUTION=" "$DEFAULT_ENV_FILE"; then
+    sed -i -E "s/^THREAD_DISTRIBUTION=.*/THREAD_DISTRIBUTION=$THREAD_DISTRIBUTION/" "$DEFAULT_ENV_FILE"
+else
+    echo "THREAD_DISTRIBUTION=$THREAD_DISTRIBUTION" >> "$DEFAULT_ENV_FILE"
 fi
 
 echo "-----------------------------------------------"

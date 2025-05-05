@@ -1710,7 +1710,7 @@ class AGNRoutines:
 
         return trainingset
     
-    def recover_network_from_temporal_expression(recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout, number_of_threads):
+    def recover_network_from_temporal_expression(recoveredagn, originalagn, datatype, is_periodic, threshold_entropy, type_entropy, alpha, beta, q_entropy, targets, maxfeatures, searchalgorithm, targetaspredictors, resultsetsize, tiesout, number_of_threads, thread_distribution):
         txt = []
         rows = len(recoveredagn.get_temporalsignalquantized())
         IOFile.print_and_log("\n\n")
@@ -1861,36 +1861,11 @@ class AGNRoutines:
             IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED at {end_time} (Duration: {end_time - start_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
             results[index] = result
             
-        def process_group(group, offet_index):
-            for i, target in enumerate(group):
-                index = offet_index + i
-                process_target_wrapper(target, index)
-
-        threads = []
-        
-        # for i in range(0, len(targets), group_size):
-        #     group = targets[i:i + group_size]
-
-        num_processes_per_thread = len(targets) // number_of_threads + (1 if len(targets) % number_of_threads > 0 else 0)
-        
-        for i in range(0, number_of_threads * num_processes_per_thread, num_processes_per_thread):
-            group = targets[i:i + num_processes_per_thread]
-            
-            IOFile.print_and_log(f"Starting group {i//num_processes_per_thread + 1} with targets: {group}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
-            
-            # for j, target in enumerate(group):
-            #     index = i + j
-            #     thread = threading.Thread(target=process_target_wrapper, args=(target, index, recoveredagn), name=f"Target-{target}-main_from_cli")
-            #     threads.append(thread)
-            #     thread.start()
-            thread = threading.Thread(target=process_group, args=(group, i), name=f"Group-{i//num_processes_per_thread + 1}-main_from_cli")
-            threads.append(thread)
-            thread.start()
-            
-        for thread in threads:
-            thread.join()
-        
-        IOFile.print_and_log(f"Completed group {i//num_processes_per_thread + 1}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+        thread_manager = ThreadManager(targets, number_of_threads, process_target_wrapper)
+        if thread_distribution == "sequential":
+            thread_manager.execute_threads_sequencial_target_groups()
+        else:
+            thread_manager.execute_threads_sequencial_target_groups_spaced()
 
         for result in results:
             targetindex = result["targetindex"]
@@ -2017,6 +1992,75 @@ class Classifier:
                     self.labels[i] = self.nearest_neighbors(test_instances[i], n, len(I), c)
         return test_instances
 
+class ThreadManager:
+    def __init__(self, targets, number_of_threads, process_target_wrapper):
+        self.targets = targets
+        self.number_of_threads = number_of_threads
+        self.process_target_wrapper = process_target_wrapper
+
+
+    # This method is called to execute the threads and process the target in groups
+    # It creates a thread for each group of targets
+    # the groups are created based on the number of threads and the original order of targets
+    # The threads are started and then joined to ensure all threads complete before returning
+    def execute_threads_sequencial_target_groups(self):
+        
+        def process_group(self, group, offset_index):
+            for i, target in enumerate(group):
+                index = offset_index + i
+                self.process_target_wrapper(target, index)
+        threads = []
+        num_processes_per_thread = len(self.targets) // self.number_of_threads + (1 if len(self.targets) % self.number_of_threads > 0 else 0)
+
+        for i in range(0, self.number_of_threads * num_processes_per_thread, num_processes_per_thread):
+            group = self.targets[i:i + num_processes_per_thread]
+            IOFile.print_and_log(f"Starting group {i//num_processes_per_thread + 1} with targets: {group}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            thread = threading.Thread(target=process_group, args=(group, i), name=f"Group-{i//num_processes_per_thread + 1}-main_from_cli")
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+            
+    # This method is called to execute the threads and process the target in groups
+    # It creates a thread for each group of targets
+    # the groups are created based on the number of threads and the original order of targets
+    # but groups are build if spaced items from the original list
+    # The threads are started and then joined to ensure all threads complete before returning
+    def execute_threads_sequencial_target_groups_spaced(self):
+        def process_group(self, group, offset_indices):
+            for target, index in zip(group, offset_indices):
+                self.process_target_wrapper(target, index)
+        
+        threads = []
+        
+        # Create groups with spaced items
+        groups = [[] for _ in range(self.number_of_threads)]
+        indices = [[] for _ in range(self.number_of_threads)]
+        
+        # Distribute targets in a round-robin fashion
+        for i, target in enumerate(self.targets):
+            thread_index = i % self.number_of_threads
+            groups[thread_index].append(target)
+            indices[thread_index].append(i)
+        
+        # Start a thread for each group
+        for i, (group, offset_indices) in enumerate(zip(groups, indices)):
+            IOFile.print_and_log(f"Starting spaced group {i+1} with targets: {group}", 
+                               path="timing/thread_execution.log", 
+                               verbosity=VERBOSE_LEVEL["TIMER"])
+            thread = threading.Thread(target=process_group, 
+                                    args=(self, group, offset_indices), 
+                                    name=f"Group-{i+1}-spaced-main_from_cli")
+            threads.append(thread)
+            thread.start()
+        
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
+    
+    
+
 def main():
     load_dotenv(override=True)
     timer = Timer()
@@ -2053,6 +2097,7 @@ def main():
     maximum_result_list_size_feature_selection = int(os.getenv("SIZE_OF_THE_RESULT_LIST_FEATURE_SELECTION", "3"))
 
     number_of_threads = int(os.getenv("NUMBER_OF_THREADS", "1"))
+    thread_distribution = os.getenv("THREAD_DISTRIBUTION", "spaced").lower()
     target_indexes = os.getenv("TARGET_INDEXES", None)
     is_targets_as_predictors = os.getenv("TARGETS_AS_PREDICTORS") == "true"
     is_time_series_data = os.getenv("TIME_SERIES_DATA") == "true"
@@ -2257,7 +2302,8 @@ def main():
             is_targets_as_predictors,
             resultsetsize,
             None,
-            number_of_threads
+            number_of_threads,
+            thread_distribution
         )
         if is_to_save_final_data:
             IOFile.write_matrix(f"{output_folder}/final_data/{prefix}-final_data.txt", AGNRoutines.create_adjacency_matrix(recoverednetwork), delimiter)

@@ -10,6 +10,7 @@ CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
 NUMBER_OF_EXECUTIONS=3
 PYTHON_FILES=("main_from_cli.py" "main_from_cli_no_performing.py")
 THREADS="1,2,4,8"  # Default thread counts
+THREAD_DISTRIBUTION="spaced"  # Default thread distribution
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -43,6 +44,10 @@ while [[ $# -gt 0 ]]; do
             THREADS="$2"
             shift 2
             ;;
+        --thread-distribution)
+            THREAD_DISTRIBUTION="$2"
+            shift 2
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./run_all_monitoring.sh [OPTIONS] [COMMANDS]
@@ -60,6 +65,8 @@ Options:
     --sleep-time <seconds>           Time to wait between executions (default: 900)
     --number-of-executions <number>  Number of times to run each test (default: 3)
     --threads <numbers>              Comma-separated list of thread counts (default: 1,2,4,8)
+    --thread-distribution <types>    Comma-separated list of thread distribution types 
+                                    (default: spaced,sequential)
 
   File and Directory Settings:
     --repository-python <path>       Path to Python repository (default: .)
@@ -163,10 +170,11 @@ run_monitoring_python() {
     local python_bin=$1
     local script=$2
     local thread_count=$3
+    local thread_distribution=$4
 
     local script_name
     script_name="$(basename "${script}")"
-    local output_dir="${BASE_DIR}/${python_bin%/bin/python}/${script_name%.py}/threads_${thread_count}"
+    local output_dir="${BASE_DIR}/${python_bin%/bin/python}/${script_name%.py}/distribution_${thread_distribution}/threads_${thread_count}"
     mkdir -p "${output_dir}"
     
     echo -e "\n================================================================="
@@ -179,7 +187,10 @@ run_monitoring_python() {
     echo "==============================================="
     
     cd "$REPOSITORY_PYTHON" || exit
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --threads "$thread_count" "${python_bin}" "${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" \
+      --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" \
+      --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --threads "$thread_count" \
+      --thread-distribution "$THREAD_DISTRIBUTION" "${python_bin}" "${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
@@ -215,27 +226,31 @@ run_monitoring_java() {
 
 # Convert thread counts string to array
 IFS=',' read -r -a THREAD_COUNTS <<< "$THREADS"
+# Convert thread distribution string to array
+IFS=',' read -r -a THREAD_DISTRIBUTION <<< "$THREAD_DISTRIBUTION"
 
 # Run all combinations in sequence
 for cmd in "${COMMANDS[@]}"; do
     if [ "$cmd" == "java" ]; then
-        for thread_count in "${THREAD_COUNTS[@]}"; do
-            run_monitoring_java "$thread_count"
-            wait_between_executions
-        done
+        run_monitoring_java "$thread_count"
+        wait_between_executions
     else
         if [ -f "$REPOSITORY_PYTHON/$cmd/bin/python" ]; then
             for python_file in "${PYTHON_FILES[@]}"; do
-                for thread_count in "${THREAD_COUNTS[@]}"; do
-                    run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/$python_file" "$thread_count"
-                    wait_between_executions
+                for thread_distribution in "${THREAD_DISTRIBUTION[@]}"; do
+                    for thread_count in "${THREAD_COUNTS[@]}"; do
+                        run_monitoring_python "$cmd/bin/python" "$REPOSITORY_PYTHON/$python_file" "$thread_count" "$thread_distribution"
+                        wait_between_executions
+                    done
                 done
             done
         else
             for python_file in "${PYTHON_FILES[@]}"; do
-                for thread_count in "${THREAD_COUNTS[@]}"; do
-                    run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/$python_file" "$thread_count"
-                    wait_between_executions
+                for thread_distribution in "${THREAD_DISTRIBUTION[@]}"; do
+                    for thread_count in "${THREAD_COUNTS[@]}"; do
+                        run_monitoring_python "$cmd" "$REPOSITORY_PYTHON/$python_file" "$thread_count" "$thread_distribution"
+                        wait_between_executions
+                    done
                 done
             done
         fi
