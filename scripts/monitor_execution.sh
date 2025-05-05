@@ -10,6 +10,7 @@ NUMBER_OF_EXECUTIONS=3
 CUSTOM_INPUT_FILE_PATH=""
 THREADS=1  # Default to 1 thread
 THREAD_DISTRIBUTION="spaced"  # Default to spaced distribution
+SKIP_MONITORING=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -41,6 +42,10 @@ while [[ $# -gt 0 ]]; do
             THREAD_DISTRIBUTION="$2"
             shift 2
             ;;
+        --skip-monitoring)
+            SKIP_MONITORING=true
+            shift
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./monitor_execution.sh [OPTIONS] COMMAND
@@ -58,6 +63,7 @@ Optional Settings:
   --sleep-time <seconds>            Time between executions (default: 5)
   --number-of-executions <number>   Times to run the command (default: 3)
   --custom-input-file <path>        Path to custom input dataset
+  --skip-monitoring                 Skip monitoring and just execute the command
   --threads <count>                 Number of threads to use (default: 1)
   --thread-distribution <types>     Thread distribution types: values like 
                                     "spaced,sequential" (default: spaced)
@@ -101,18 +107,23 @@ done
 
 # Check if required commands are available
 for cmd in dool python3; do
+    if [ "$SKIP_MONITORING" = true ]; then
+        break
+    fi
     if ! command -v $cmd &> /dev/null; then
         echo "Error: $cmd is required but not installed."
         exit 1
     fi
 done
 
-# Check if required Python packages are available
-python3 -c "import pandas, matplotlib" # 2>/dev/null
-if [ $? -ne 0 ]; then
-    echo "Error: Required Python packages (pandas, matplotlib) are not installed."
-    echo "Please install them using: pip install pandas matplotlib"
-    exit 1
+if [ "$SKIP_MONITORING" = false ]; then
+    # Check if required Python packages are available
+    python3 -c "import pandas, matplotlib" # 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "Error: Required Python packages (pandas, matplotlib) are not installed."
+        echo "Please install them using: pip install pandas matplotlib"
+        exit 1
+    fi
 fi
 
 # Check if output directory and command were provided
@@ -194,9 +205,11 @@ echo "Output directory: $OUTPUT_DIR"
 echo "Thread count: $THREADS"
 echo "==============================================="
 
-# Start dstat(dool) in the background (time, cpu, load, mem)
-dool -tclm --output "$DSTAT_OUTPUT_File" 1 &
-DSTAT_PID=$!
+if [ "$SKIP_MONITORING" = false ]; then
+    # Start dstat(dool) in the background (time, cpu, load, mem)
+    dool -tclm --output "$DSTAT_OUTPUT_File" 1 &
+    DSTAT_PID=$!
+fi
 
 # Wait for dstat to initialize
 sleep 2
@@ -265,8 +278,10 @@ else
 fi
 sleep "$SLEEP_TIME"
 
-# Gracefully stop dstat
-kill $DSTAT_PID
+if [ "$SKIP_MONITORING" = false ]; then
+    # Gracefully stop dstat
+    kill $DSTAT_PID
+fi
 
 echo -e "\n==============================================="
 echo "Generating Performance Plots"
@@ -274,8 +289,10 @@ echo "==============================================="
 echo "Input data: $DSTAT_OUTPUT_File"
 echo "Output directory: $PLOTS_DIR"
 
-# Generate plots using the Python script
-python3 "$REPOSITORY_PYTHON"/scripts/plot_dstat.py "$DSTAT_OUTPUT_File" "$PLOTS_DIR" "$DSTAT_MARKERS_FILE" "split_by:hour"
+if [ "$SKIP_MONITORING" = false ]; then
+    # Generate plots using the Python script
+    python3 "$REPOSITORY_PYTHON"/scripts/plot_dstat.py "$DSTAT_OUTPUT_File" "$PLOTS_DIR" "$DSTAT_MARKERS_FILE" "split_by:hour"
+fi
 
 # Restore the original environment file
 echo "-----------------------------------------------"
@@ -297,10 +314,12 @@ echo -e "\n==============================================="
 echo "Monitoring Completed Successfully"
 echo "==============================================="
 
-# Generate summary files
-echo -e "\nGenerating summary files..."
-python3 "$REPOSITORY_PYTHON"/scripts/generate_summary.py "$OUTPUT_DIR"
+if [ "$SKIP_MONITORING" = false ]; then
+    # Generate summary files
+    echo -e "\nGenerating summary files..."
+    python3 "$REPOSITORY_PYTHON"/scripts/generate_summary.py "$OUTPUT_DIR"
 
-echo -e "\n==============================================="
-echo "Summary Generation Completed"
-echo "==============================================="
+    echo -e "\n==============================================="
+    echo "Summary Generation Completed"
+    echo "==============================================="
+fi
