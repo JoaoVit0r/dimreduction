@@ -143,12 +143,14 @@ for cmd in dool python3; do
     fi
 done
 
-# Check if required Python packages are available
-python3 -c "import pandas, matplotlib" # 2>/dev/null
-if [ $? -ne 0 ]; then
-    echo "Error: Required Python packages (pandas, matplotlib) are not installed."
-    echo "Please install them using: pip install pandas matplotlib"
-    exit 1
+if [ "$SKIP_MONITORING" = false ]; then
+    # Check if required Python packages are available
+    python3 -c "import pandas, matplotlib" # 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "Error: Required Python packages (pandas, matplotlib) are not installed."
+        echo "Please install them using: pip install pandas matplotlib"
+        exit 1
+    fi
 fi
 
 MONITOR_SCRIPT="$REPOSITORY_PYTHON/scripts/monitor_execution.sh"
