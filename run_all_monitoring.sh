@@ -154,7 +154,7 @@ if [ "$SKIP_MONITORING" = false ]; then
 fi
 
 MONITOR_SCRIPT="$REPOSITORY_PYTHON/scripts/monitor_execution.sh"
-JAVA_CLASSPATH="./lib/*:./out/production/java-dimreduction:./lib/jgraph.jar:./lib/jgraphlayout.jar:./lib/prefuse.jar:./lib/jfreechart-1.0.9.jar:./lib/jcommon-1.0.12.jar:./lib/dotenv-java-3.0.2.jar"
+JAVA_CLASSPATH="./lib/*:./out/production/java-dimreduction"
 
 # Get current timestamp for directory organization
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -227,7 +227,7 @@ run_monitoring_java() {
     cd "$REPOSITORY_JAVA" || exit
     # cp -r src/img out/production/java-dimreduction/
     # javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --skip-monitoring "java" -cp "${JAVA_CLASSPATH}" -Xmx16384m -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit fs."${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --skip-monitoring "java" -cp "${JAVA_CLASSPATH}" fs."${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
