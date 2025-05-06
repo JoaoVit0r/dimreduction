@@ -1864,7 +1864,9 @@ class AGNRoutines:
         thread_manager = ThreadManager(targets, number_of_threads, process_target_wrapper)
         if thread_distribution == "sequential":
             thread_manager.execute_threads_sequencial_target_groups()
-        else:
+        elif thread_distribution == "demand":
+            thread_manager.execute_threads_sequencial_target_by_demand()
+        else:  # Default to "spaced"
             thread_manager.execute_threads_sequencial_target_groups_spaced()
 
         for result in results:
@@ -1998,14 +2000,9 @@ class ThreadManager:
         self.number_of_threads = number_of_threads
         self.process_target_wrapper = process_target_wrapper
 
-
-    # This method is called to execute the threads and process the target in groups
-    # It creates a thread for each group of targets
-    # the groups are created based on the number of threads and the original order of targets
-    # The threads are started and then joined to ensure all threads complete before returning
     def execute_threads_sequencial_target_groups(self):
         
-        def process_group(self, group, offset_index):
+        def process_group(group, offset_index):
             for i, target in enumerate(group):
                 index = offset_index + i
                 self.process_target_wrapper(target, index)
@@ -2022,43 +2019,62 @@ class ThreadManager:
         for thread in threads:
             thread.join()
             
-    # This method is called to execute the threads and process the target in groups
-    # It creates a thread for each group of targets
-    # the groups are created based on the number of threads and the original order of targets
-    # but groups are build if spaced items from the original list
-    # The threads are started and then joined to ensure all threads complete before returning
     def execute_threads_sequencial_target_groups_spaced(self):
-        def process_group(self, group, offset_indices):
+        def process_group(group, offset_indices):
             for target, index in zip(group, offset_indices):
                 self.process_target_wrapper(target, index)
         
         threads = []
         
-        # Create groups with spaced items
         groups = [[] for _ in range(self.number_of_threads)]
         indices = [[] for _ in range(self.number_of_threads)]
         
-        # Distribute targets in a round-robin fashion
         for i, target in enumerate(self.targets):
             thread_index = i % self.number_of_threads
             groups[thread_index].append(target)
             indices[thread_index].append(i)
         
-        # Start a thread for each group
         for i, (group, offset_indices) in enumerate(zip(groups, indices)):
             IOFile.print_and_log(f"Starting spaced group {i+1} with targets: {group}", 
                                path="timing/thread_execution.log", 
                                verbosity=VERBOSE_LEVEL["TIMER"])
             thread = threading.Thread(target=process_group, 
-                                    args=(self, group, offset_indices), 
+                                    args=(group, offset_indices), 
                                     name=f"Group-{i+1}-spaced-main_from_cli")
             threads.append(thread)
             thread.start()
         
-        # Wait for all threads to complete
         for thread in threads:
             thread.join()
-    
+            
+    def execute_threads_sequencial_target_by_demand(self):
+        lock = threading.Lock()
+        next_index = [0]
+        
+        def worker():
+            thread_id = threading.get_ident()
+            while True:
+                with lock:
+                    if next_index[0] >= len(self.targets):
+                        # No more targets to process
+                        break
+                    current_index = next_index[0]
+                    current_target = self.targets[current_index]
+                    next_index[0] += 1
+                IOFile.print_and_log(f"[THREAD {thread_id}] Acquired target {current_target} (index {current_index})", 
+                                    path="timing/thread_execution.log", 
+                                    verbosity=VERBOSE_LEVEL["TIMER"])
+                    
+                self.process_target_wrapper(current_target, current_index)
+        
+        threads = []
+        for i in range(self.number_of_threads):
+            thread = threading.Thread(target=worker, name=f"Worker-{i+1}-demand-main_from_cli")
+            threads.append(thread)
+            thread.start()
+            
+        for thread in threads:
+            thread.join()
     
 
 def main():
