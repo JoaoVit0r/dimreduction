@@ -4,7 +4,7 @@ from datetime import datetime
 
 def log_to_csv(log_file_path, output_csv_path):
     # Regular expression to extract information from log lines
-    pattern = r'monitoring_plots/\d+_\d+/(?P<environment>venv_\w+)/(?P<script>[^/]+)/distribution_(?P<distribution_type>[^/]+)/threads_(?P<thread_count>\d+)/.*\.txt:(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) Execution_(?P<execution_num>\d+)_(?P<event_type>Start|End) \w+_\d+( \(Duration: (?P<duration>\d+m \d+s)\))?'
+    pattern = r'monitoring_plots/\d+_\d+/(?P<environment>venv_\w+)/(?P<script>[^/]+)/distribution_(?P<distribution_type>[^/]+)/threads_(?P<thread_count>\d+)/.*\.txt:(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) Execution_(?P<execution_num>\d+)_(?P<event_type>Start|End) \w+_\d+( \(Duration: (?P<duration>(\d+h )?\d+m \d+s)\))?'
     
     # Map environment names to program names as in the CSV
     env_to_program = {
@@ -52,15 +52,17 @@ def log_to_csv(log_file_path, output_csv_path):
                     executions[key]['end'] = timestamp
                     if duration_str:
                         # Convert "XYm ZZs" format to H:MM:SS
-                        duration_parts = re.match(r'(\d+)m (\d+)s', duration_str)
+                        duration_parts = re.match(r'((\d+)h )?(\d+)m (\d+)s', duration_str)
                         if duration_parts:
-                            minutes = int(duration_parts.group(1))
-                            seconds = int(duration_parts.group(2))
-                            total_seconds = minutes * 60 + seconds
-                            hours = total_seconds // 3600
-                            minutes = (total_seconds % 3600) // 60
-                            seconds = total_seconds % 60
-                            executions[key]['duration'] = f"{hours}:{minutes:02d}:{seconds:02d}"
+                            # Extract hours, minutes, and seconds
+                            if duration_parts.group(2):
+                                hours = int(duration_parts.group(2))
+                            else:
+                                hours = 0
+                            minutes = int(duration_parts.group(3))
+                            seconds = int(duration_parts.group(4))
+                            # Convert to total seconds and then to HH:MM:SS
+                            executions[key]['duration'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     
     # Write to CSV
     with open(output_csv_path, 'w', newline='') as csvfile:
