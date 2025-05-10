@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SLEEP_TIME=900
-MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between executions
+MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between internal executions
 
 REPOSITORY_PYTHON="."
 REPOSITORY_JAVA="../dimreduction-java"
@@ -17,6 +17,9 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --sleep-time)
             SLEEP_TIME="$2"
+            shift 2
+            ;;
+        --sleep-time-monitor)
 	        MONITOR_SLEEP_TIME="$2"
             shift 2
             ;;
@@ -68,6 +71,7 @@ Commands:
 Options:
   Basic Configuration:
     --sleep-time <seconds>           Time to wait between executions (default: 900)
+    --sleep-time-monitor <seconds>   Time to wait between monitor script internal executions (default: 900)
     --number-of-executions <number>  Number of times to run each test (default: 3)
     --skip-monitoring                Skip monitoring for the current execution
     --threads <numbers>              Comma-separated list of thread counts (default: 1,2,4,8)
