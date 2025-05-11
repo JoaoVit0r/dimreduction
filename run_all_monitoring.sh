@@ -222,7 +222,7 @@ run_monitoring_python() {
 
     # Add perf option if enabled
     if [ "$ENABLE_PERF" = true ]; then
-        monitor_cmd+=" \"perf record -o ${output_dir}/perf_${script_name%.py}_${python_bin%/bin/python}.data --call-graph dwarf --aio --sample-cpu --mmap-pages 16M\""
+        monitor_cmd+=" \"perf record -o ${output_dir}/perf_${script_name%.py}_${python_bin%/bin/python}_dataset_${DATASET_NAME}.data --call-graph dwarf --aio --sample-cpu --mmap-pages 16M\""
         monitor_cmd+=" \"${python_bin}\" -X perf \"${script}\""
     else
         monitor_cmd+=" \"${python_bin}\" \"${script}\""
@@ -256,10 +256,22 @@ run_monitoring_java() {
     echo "Output Directory: ${output_dir}"
     echo "==============================================="
     
+    # Build command with conditional perf option
+    local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" \
+      --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
+      --thread-distribution \"none\""
+    # Add perf option if enabled
+    if [ "$ENABLE_PERF" = true ]; then
+        monitor_cmd+=" \"perf record -o ${output_dir}/perf_${script}_dataset_${DATASET_NAME}.data --call-graph dwarf --aio --sample-cpu --mmap-pages 16M\""
+        monitor_cmd+=" \"java\" -cp \"${JAVA_CLASSPATH}\" -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit -XX:+PreserveFramePointer fs.${script}"
+    else
+        monitor_cmd+=" \"java\" -cp \"${JAVA_CLASSPATH}\" fs.${script}"
+    fi
     cd "$REPOSITORY_JAVA" || exit
-    # cp -r src/img out/production/java-dimreduction/
-    # javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" "java" -cp "${JAVA_CLASSPATH}" fs."${script}"
+    javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
+    cp -r src/img out/production/java-dimreduction/
+    eval "$monitor_cmd"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
