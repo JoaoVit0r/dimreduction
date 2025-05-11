@@ -12,6 +12,7 @@ PYTHON_FILES=("main_from_cli.py" "main_from_cli_no_performing.py")
 THREADS="1,2,4,8"  # Default thread counts
 THREAD_DISTRIBUTION="spaced"  # Default thread distribution
 SKIP_MONITORING=false
+ENABLE_PERF=false # Flag to enable perf profiling
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -54,6 +55,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-monitoring)
             SKIP_MONITORING=true
+            shift
+            ;;
+        --enable-perf)
+            ENABLE_PERF=true
             shift
             ;;
         --help)
@@ -109,6 +114,11 @@ EOF
     esac
 done
 
+DATASET_NAME=$(basename "$CUSTOM_INPUT_FILE_PATH")
+DATASET_NAME="${DATASET_NAME%.csv}"
+DATASET_NAME="${DATASET_NAME#processed_dataset_}"
+DATASET_NAME="${DATASET_NAME#dream5_}"
+
 echo "==============================================="
 echo "Starting Monitoring Session"
 echo "==============================================="
@@ -122,6 +132,7 @@ fi
 echo "Commands: ${COMMANDS[*]}"
 echo "Python Files: ${PYTHON_FILES[*]}"
 echo "Custom Input File: $CUSTOM_INPUT_FILE_PATH"
+echo "Dataset: $DATASET_NAME"
 echo "Number of Executions: $NUMBER_OF_EXECUTIONS"
 echo "Thread Counts: $THREADS"
 echo "==============================================="
@@ -188,7 +199,7 @@ run_monitoring_python() {
 
     local script_name
     script_name="$(basename "${script}")"
-    local output_dir="${BASE_DIR}/${python_bin%/bin/python}/${script_name%.py}/distribution_${thread_distribution}/threads_${thread_count}"
+    local output_dir="${BASE_DIR}/dataset_${DATASET_NAME}/${python_bin%/bin/python}/${script_name%.py}/distribution_${thread_distribution}/threads_${thread_count}"
     mkdir -p "${output_dir}"
     
     echo -e "\n================================================================="
@@ -198,13 +209,31 @@ run_monitoring_python() {
     echo "Script: ${script_name}"
     echo "Thread Count: ${thread_count}"
     echo "Output Directory: ${output_dir}"
+    if [ "$ENABLE_PERF" = true ]; then
+        echo "Perf Profiling: Enabled"
+    fi
     echo "==============================================="
+
+    # Build command with conditional perf option
+    local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" \
+      --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
+      --thread-distribution \"$THREAD_DISTRIBUTION\""
+
+    # Add perf option if enabled
+    if [ "$ENABLE_PERF" = true ]; then
+        monitor_cmd+=" \"perf record -o ${output_dir}/perf_${script_name%.py}_${python_bin%/bin/python}.data --call-graph dwarf --aio --sample-cpu --mmap-pages 16M\""
+        monitor_cmd+=" \"${python_bin}\" -X perf \"${script}\""
+    else
+        monitor_cmd+=" \"${python_bin}\" \"${script}\""
+    fi
+    
+    # Add the python binary and script
+    monitor_cmd+=" \"${python_bin}\" \"${script}\""
+    
     
     cd "$REPOSITORY_PYTHON" || exit
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" \
-      --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" \
-      --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --threads "$thread_count" \
-      --thread-distribution "$THREAD_DISTRIBUTION" "${python_bin}" "${script}"
+    eval "$monitor_cmd"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
@@ -216,7 +245,7 @@ run_monitoring_java() {
     local script="MainCLI"
     local thread_count=$1
 
-    local output_dir="${BASE_DIR}/java/${script}"
+    local output_dir="${BASE_DIR}/dataset_${DATASET_NAME}/java/${script}"
     mkdir -p "${output_dir}"
     
     echo -e "\n================================================================="
