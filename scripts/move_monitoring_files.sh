@@ -41,4 +41,10 @@ if [ -f "perf.data" ]; then
     mv --backup="numbered" "perf.data" "$OUTPUT_DIR"
 fi
 
+# Move perf*.data if they exist
+if ls perf*.data 1> /dev/null 2>&1; then
+    echo "Moving perf*.data files..."
+    mv --backup="numbered" perf*.data "$OUTPUT_DIR"
+fi
+
 echo "File moving completed successfully!" 

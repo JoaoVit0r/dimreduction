@@ -73,7 +73,6 @@ Options:
     --sleep-time <seconds>           Time to wait between executions (default: 900)
     --sleep-time-monitor <seconds>   Time to wait between monitor script internal executions (default: 900)
     --number-of-executions <number>  Number of times to run each test (default: 3)
-    --skip-monitoring                Skip monitoring for the current execution
     --threads <numbers>              Comma-separated list of thread counts (default: 1,2,4,8)
     --thread-distribution <types>    Comma-separated list of thread distribution types 
                                     (default: spaced,sequential)
@@ -205,7 +204,7 @@ run_monitoring_python() {
     $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" \
       --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" \
       --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --threads "$thread_count" \
-      --thread-distribution "$THREAD_DISTRIBUTION" --skip-monitoring "${python_bin}" "${script}"
+      --thread-distribution "$THREAD_DISTRIBUTION" "${python_bin}" "${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
@@ -231,7 +230,7 @@ run_monitoring_java() {
     cd "$REPOSITORY_JAVA" || exit
     # cp -r src/img out/production/java-dimreduction/
     # javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
-    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" --skip-monitoring "java" -cp "${JAVA_CLASSPATH}" fs."${script}"
+    $MONITOR_SCRIPT --output-dir "${output_dir}" --repository-python "$REPOSITORY_PYTHON" --sleep-time "$MONITOR_SLEEP_TIME" --number-of-executions "$NUMBER_OF_EXECUTIONS" --custom-input-file "$CUSTOM_INPUT_FILE_PATH" "java" -cp "${JAVA_CLASSPATH}" fs."${script}"
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
