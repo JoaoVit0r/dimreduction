@@ -254,6 +254,9 @@ run_monitoring_java() {
     echo "Script: ${script}"
     echo "Thread Count: ${thread_count}"
     echo "Output Directory: ${output_dir}"
+    if [ "$ENABLE_PERF" = true ]; then
+        echo "Perf Profiling: Enabled"
+    fi
     echo "==============================================="
     
     # Build command with conditional perf option
