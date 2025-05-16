@@ -13,6 +13,7 @@ THREADS="1,2,4,8"  # Default thread counts
 THREAD_DISTRIBUTION="spaced"  # Default thread distribution
 SKIP_MONITORING=false
 ENABLE_PERF=false # Flag to enable perf profiling
+ENABLE_MANUAL_GC=false # Flag to enable manual garbage collection for Java
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -21,14 +22,14 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --sleep-time-monitor)
-	        MONITOR_SLEEP_TIME="$2"
+            MONITOR_SLEEP_TIME="$2"
             shift 2
             ;;
         --repository-python)
             REPOSITORY_PYTHON="${2:-.}"
             shift 2
             ;;
-    	--repository-java)
+        --repository-java)
             REPOSITORY_JAVA="${2:-../dimreduction-java}"
             shift 2
             ;;
@@ -61,6 +62,10 @@ while [[ $# -gt 0 ]]; do
             ENABLE_PERF=true
             shift
             ;;
+        --enable-manual-gc)
+            ENABLE_MANUAL_GC=true
+            shift
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./run_all_monitoring.sh [OPTIONS] [COMMANDS]
@@ -89,6 +94,11 @@ Options:
     --python-files <files>           Comma-separated list of Python files to execute
                                     (default: main_from_cli.py,main_from_cli_no_performing.py)
 
+  Performance Settings:
+    --enable-perf                    Enable perf profiling
+    --enable-manual-gc               Enable manual garbage collection for Java
+    --skip-monitoring                Skip monitoring and just execute commands
+
   Help:
     --help                          Show this help message
 
@@ -102,8 +112,8 @@ Examples:
   # Run with specific thread counts:
   ./run_all_monitoring.sh --threads 1,4,16 venv_v12
 
-  # Run Java implementation with custom input file:
-  ./run_all_monitoring.sh --custom-input-file path/to/dataset.csv java
+  # Run Java implementation with custom input file and manual GC:
+  ./run_all_monitoring.sh --custom-input-file path/to/dataset.csv --enable-manual-gc java
 EOF
             exit 0
             ;;
@@ -257,6 +267,9 @@ run_monitoring_java() {
     if [ "$ENABLE_PERF" = true ]; then
         echo "Perf Profiling: Enabled"
     fi
+    if [ "$ENABLE_MANUAL_GC" = true ]; then
+        echo "Manual GC: Enabled"
+    fi
     echo "==============================================="
     
     # Build command with conditional perf option
@@ -270,6 +283,10 @@ run_monitoring_java() {
         monitor_cmd+=" \"java\" -cp \"${JAVA_CLASSPATH}\" -XX:+UnlockDiagnosticVMOptions -XX:+DumpPerfMapAtExit -XX:+PreserveFramePointer fs.${script}"
     else
         monitor_cmd+=" \"java\" -cp \"${JAVA_CLASSPATH}\" fs.${script}"
+    fi
+    # Add manual GC option if enabled
+    if [ "$ENABLE_MANUAL_GC" = true ]; then
+        monitor_cmd+=" -XX:+ExplicitGCInvokesConcurrent"
     fi
     cd "$REPOSITORY_JAVA" || exit
     javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java

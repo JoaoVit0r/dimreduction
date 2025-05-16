@@ -11,6 +11,7 @@ CUSTOM_INPUT_FILE_PATH=""
 THREADS=1  # Default to 1 thread
 THREAD_DISTRIBUTION="spaced"  # Default to spaced distribution
 SKIP_MONITORING=false
+ENABLE_MANUAL_GC=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -46,6 +47,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_MONITORING=true
             shift
             ;;
+        --enable-manual-gc)
+            ENABLE_MANUAL_GC=true
+            shift
+            ;;
         --help)
             cat << 'EOF'
 Usage: ./monitor_execution.sh [OPTIONS] COMMAND
@@ -67,6 +72,7 @@ Optional Settings:
   --threads <count>                 Number of threads to use (default: 1)
   --thread-distribution <types>     Thread distribution types: values like 
                                     "spaced,sequential" (default: spaced)
+  --enable-manual-gc                Enable manual garbage collection for Java
 
 Output Files Generated:
   - monitoring_plots/               Directory containing all monitoring data
@@ -93,6 +99,10 @@ Examples:
   # With multiple thread distribution types:
   ./monitor_execution.sh --output-dir ./output --repository-python . \
     --thread-distribution spaced "python script.py"
+    
+  # With manual garbage collection for Java:
+  ./monitor_execution.sh --output-dir ./output --repository-python . \
+    --enable-manual-gc "java -cp lib/* fs.MainCLI"
 EOF
             exit 0
             ;;
@@ -192,6 +202,15 @@ if grep -q "^THREAD_DISTRIBUTION=" "$DEFAULT_ENV_FILE"; then
 else
     echo "" >> "$DEFAULT_ENV_FILE"
     echo "THREAD_DISTRIBUTION=$THREAD_DISTRIBUTION" >> "$DEFAULT_ENV_FILE"
+fi
+
+# Update the ENABLE_MANUAL_GC environment variable for Java
+echo "Setting ENABLE_MANUAL_GC=$ENABLE_MANUAL_GC"
+if grep -q "^ENABLE_MANUAL_GC=" "$DEFAULT_ENV_FILE"; then
+    sed -i -E "s/^ENABLE_MANUAL_GC=.*/ENABLE_MANUAL_GC=$ENABLE_MANUAL_GC/" "$DEFAULT_ENV_FILE"
+else
+    echo "" >> "$DEFAULT_ENV_FILE"
+    echo "ENABLE_MANUAL_GC=$ENABLE_MANUAL_GC" >> "$DEFAULT_ENV_FILE"
 fi
 
 echo "-----------------------------------------------"
