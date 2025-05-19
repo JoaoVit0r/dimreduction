@@ -279,6 +279,11 @@ run_monitoring_java() {
       --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
       --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
       --thread-distribution \"${thread_distribution}\""
+    # Add manual GC option if enabled
+    if [ "$ENABLE_MANUAL_GC" = true ]; then
+        monitor_cmd+=" --enable-manual-gc"
+    fi
+
     # Add perf option if enabled
     if [ "$ENABLE_PERF" = true ]; then
         monitor_cmd+=" \"perf record -o ${output_dir}/perf_${script}_dataset_${DATASET_NAME}.data --call-graph dwarf --aio --sample-cpu --mmap-pages 16M\""
@@ -286,14 +291,11 @@ run_monitoring_java() {
     else
         monitor_cmd+=" \"java\" -cp \"${JAVA_CLASSPATH}\" fs.${script}"
     fi
-    # Add manual GC option if enabled
-    if [ "$ENABLE_MANUAL_GC" = true ]; then
-        monitor_cmd+=" -XX:+ExplicitGCInvokesConcurrent"
-    fi
+
     cd "$REPOSITORY_JAVA" || exit
-    javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java
-    cp -r src/img out/production/java-dimreduction/
-    eval "$monitor_cmd"
+    javac -d out/production/java-dimreduction -cp $JAVA_CLASSPATH src/**/*.java;
+    cp -r src/img out/production/java-dimreduction/;
+    eval "$monitor_cmd";
     cd - || exit
     
     echo -e "\n-----------------------------------------------"
