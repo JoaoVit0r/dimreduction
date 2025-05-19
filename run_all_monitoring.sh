@@ -254,8 +254,9 @@ run_monitoring_python() {
 run_monitoring_java() {
     local script="MainCLI"
     local thread_count=$1
+    local thread_distribution=$2
 
-    local output_dir="${BASE_DIR}/dataset_${DATASET_NAME}/java/${script}"
+    local output_dir="${BASE_DIR}/dataset_${DATASET_NAME}/java/${script}/distribution_${thread_distribution}/threads_${thread_count}"
     mkdir -p "${output_dir}"
     
     echo -e "\n================================================================="
@@ -263,6 +264,7 @@ run_monitoring_java() {
     echo "================================================================="
     echo "Script: ${script}"
     echo "Thread Count: ${thread_count}"
+    echo "Thread Distribution: ${thread_distribution}"
     echo "Output Directory: ${output_dir}"
     if [ "$ENABLE_PERF" = true ]; then
         echo "Perf Profiling: Enabled"
@@ -276,7 +278,7 @@ run_monitoring_java() {
     local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" \
       --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
       --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
-      --thread-distribution \"none\""
+      --thread-distribution \"${thread_distribution}\""
     # Add perf option if enabled
     if [ "$ENABLE_PERF" = true ]; then
         monitor_cmd+=" \"perf record -o ${output_dir}/perf_${script}_dataset_${DATASET_NAME}.data --call-graph dwarf --aio --sample-cpu --mmap-pages 16M\""
@@ -307,8 +309,12 @@ IFS=',' read -r -a THREAD_DISTRIBUTION <<< "$THREAD_DISTRIBUTION"
 # Run all combinations in sequence
 for cmd in "${COMMANDS[@]}"; do
     if [ "$cmd" == "java" ]; then
-        run_monitoring_java "$thread_count"
-        wait_between_executions
+        for thread_distribution in "${THREAD_DISTRIBUTION[@]}"; do
+            for thread_count in "${THREAD_COUNTS[@]}"; do
+                run_monitoring_java "$thread_count" "$thread_distribution"
+                wait_between_executions
+            done
+        done
     else
         if [ -f "$REPOSITORY_PYTHON/$cmd/bin/python" ]; then
             for python_file in "${PYTHON_FILES[@]}"; do

@@ -2078,7 +2078,6 @@ class ThreadManager:
     
 
 def main():
-    gc.disable()
     load_dotenv(override=True)
     timer = Timer()
 
