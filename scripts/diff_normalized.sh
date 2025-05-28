@@ -94,7 +94,13 @@ fi
 
 # Run diff and optionally filter output
 if $HIGHLIGHT; then
-    eval $diff_cmd | grep --color=always -P "$HIGHLIGHT_PATTERN"
+    eval $diff_cmd | perl -pe '
+        s{(/main_\w+/)}{\e[1;33m$1\e[0m}g;      # yellow
+        s{(are identical)}{\e[1;32m$1\e[0m}g;    # green
+        s{(differ)}{\e[1;31m$1\e[0m}g;           # red
+        s{(full)}{\e[1;35m$1\e[0m}g;             # magenta
+        s{(threads_)}{\e[1;36m$1\e[0m}g;         # cyan
+    '
 else
     eval $diff_cmd
 fi
