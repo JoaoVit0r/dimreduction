@@ -11,17 +11,23 @@ def write_matrix(filepath, matrix):
             file.write('\t'.join(map(str, row)) + '\n')
 
 def compute_difference_matrix(matrix1, matrix2):
-    rows = min(len(matrix1), len(matrix2))
-    cols = min(len(matrix1[0]), len(matrix2[0]))
-    difference_matrix = [[0] * cols for _ in range(rows)]
+    rows = max(len(matrix1), len(matrix2))
+    cols = max(len(matrix1[0]), len(matrix2[0]))
+    difference_matrix = []
     non_zero_count = 0
-
     for i in range(rows):
+        row = []
         for j in range(cols):
-            difference_matrix[i][j] = matrix1[i][j] - matrix2[i][j]
-            if difference_matrix[i][j] != 0:
+            v1 = matrix1[i][j] if i < len(matrix1) and j < len(matrix1[0]) else None
+            v2 = matrix2[i][j] if i < len(matrix2) and j < len(matrix2[0]) else None
+            if v1 is None or v2 is None:
+                diff = None
+            else:
+                diff = v1 - v2
+            row.append(diff)
+            if diff != 0:
                 non_zero_count += 1
-
+        difference_matrix.append(row)
     return difference_matrix, non_zero_count
 
 def main():

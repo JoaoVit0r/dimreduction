@@ -97,16 +97,15 @@ else
     diff_cmd="diff --from-file $FROM_PATTERN $TO_PATTERN -sq"
 fi
 
-# Function to count matrix differences between two files
+# Function to count matrix differences between two files using diff_matriz.py
 count_matrix_diff() {
-    awk '{
-        split($0, a, " ");
-        getline bline < ARGV[2];
-        split(bline, b, " ");
-        for(i=1;i<=length(a);i++) {
-            if(a[i] != b[i]) diff++
-        }
-    } END { print diff+0 }' "$1" "$2"
+    local file1="$1"
+    local file2="$2"
+    local script_dir="$(dirname "$0")"
+    local venv_python="$(which python3)"
+    local diff_output
+    diff_output=$($venv_python "$script_dir/diff_matriz.py" "$file1" "$file2" 2>/dev/null)
+    echo "$diff_output" | grep '\[DIFF-COUNT\]' | awk -F': ' '{print $2}' | awk '{print $1}'
 }
 
 # Run diff and optionally filter output
