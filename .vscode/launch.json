@@ -15,6 +15,18 @@
     {
       "type": "bashdb",
       "request": "launch",
+      "name": "diff_normalized",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/scripts/diff_normalized.sh",
+      "args": [
+        "--normalize",
+        "../saved_files/saving_files/java_GUI_dream5_400genes/0000gui-final_data.txt",
+        "monitoring_plots/202505*/*/*/**/monitoring_plots/*fin*"
+      ],
+    },
+    {
+      "type": "bashdb",
+      "request": "launch",
       "name": "monitor JAVA",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/scripts/monitor_execution.sh",
