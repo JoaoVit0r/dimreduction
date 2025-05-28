@@ -2,6 +2,7 @@
 
 NORMALIZE=false
 HIGHLIGHT=false
+COUNT_DIFF=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -11,6 +12,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --highlight)
             HIGHLIGHT=true
+            shift
+            ;;
+        --count-diff)
+            COUNT_DIFF=true
             shift
             ;;
         *)
@@ -23,7 +28,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$COMMAND" ]; then
-    echo "Usage: $0 [--normalize] [--highlight] <command>"
+    echo "Usage: $0 [--normalize] [--highlight] [--count-diff] <command>"
     exit 1
 fi
 
@@ -92,6 +97,18 @@ else
     diff_cmd="diff --from-file $FROM_PATTERN $TO_PATTERN -sq"
 fi
 
+# Function to count matrix differences between two files
+count_matrix_diff() {
+    awk '{
+        split($0, a, " ");
+        getline bline < ARGV[2];
+        split(bline, b, " ");
+        for(i=1;i<=length(a);i++) {
+            if(a[i] != b[i]) diff++
+        }
+    } END { print diff+0 }' "$1" "$2"
+}
+
 # Run diff and optionally filter output
 if $HIGHLIGHT; then
     eval $diff_cmd | perl -pe '
@@ -103,4 +120,17 @@ if $HIGHLIGHT; then
     '
 else
     eval $diff_cmd
+fi
+
+if $COUNT_DIFF && $NORMALIZE; then
+    for i in "${!TMP_FROM[@]}"; do
+        f1="${TMP_FROM[$i]}"
+        for j in "${!TMP_TO[@]}"; do
+            f2="${TMP_TO[$j]}"
+            if [[ -f "$f1" && -f "$f2" ]]; then
+                diff_count=$(count_matrix_diff "$f1" "$f2")
+                echo "[DIFF-COUNT] $f1 vs $f2: $diff_count differing elements"
+            fi
+        done
+    done
 fi

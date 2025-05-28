@@ -1,13 +1,9 @@
+import sys
 import os
-
-def get_latest_file(folder):
-    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-    latest_file = sorted(files)[-1]
-    return os.path.join(folder, latest_file)
 
 def read_matrix(filepath):
     with open(filepath, 'r') as file:
-        return [[float(value) for value in line.strip().split('\t')] for line in file]
+        return [[float(value) for value in line.strip().split()] for line in file]
 
 def write_matrix(filepath, matrix):
     with open(filepath, 'w') as file:
@@ -29,34 +25,20 @@ def compute_difference_matrix(matrix1, matrix2):
     return difference_matrix, non_zero_count
 
 def main():
-    # folder1 = 'results/original_temporal_data'
-    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/original_temporal_data'
-    
-    # folder1 = 'results/quantized_temporal_data'
-    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/quantized_temporal_data'
-    
-    # folder1 = 'results/recovered_temporal_data'
-    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/recovered_temporal_data'
-
-    # folder1 = 'results/quantized_data'
-    # folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/quantized_data'
-    
-    folder1 = 'results'
-    folder2 = '/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/virt_machine/java-dimreduction/results/'
-    output_folder = 'results/diffs'
-
-    latest_file1 = get_latest_file(folder1)
-    latest_file2 = get_latest_file(folder2)
-
-    matrix1 = read_matrix(latest_file1)
-    matrix2 = read_matrix(latest_file2)
-
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <file1> <file2>")
+        sys.exit(1)
+    file1 = sys.argv[1]
+    file2 = sys.argv[2]
+    matrix1 = read_matrix(file1)
+    matrix2 = read_matrix(file2)
     difference_matrix, non_zero_count = compute_difference_matrix(matrix1, matrix2)
-
-    output_filename = f"{os.path.basename(latest_file1)}___{os.path.basename(latest_file2)}___{non_zero_count}.txt"
+    output_folder = os.path.dirname(file2)
+    output_filename = f"diff_{os.path.basename(file1)}___{os.path.basename(file2)}___{non_zero_count}.txt"
     output_filepath = os.path.join(output_folder, output_filename)
-
     write_matrix(output_filepath, difference_matrix)
+    print(f"[DIFF-COUNT] {file1} vs {file2}: {non_zero_count} differing elements")
+    print(f"Output written to: {output_filepath}")
 
 if __name__ == "__main__":
     main()
