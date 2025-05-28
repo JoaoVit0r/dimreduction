@@ -72,7 +72,7 @@ if $NORMALIZE; then
     TMP_FROM=()
     TMP_TO=()
     for f in $FROM_PATTERN; do
-        if [[ -f "$f" && "${f}" != *_normalized.* ]]; then
+        if [[ -f "$f" && "${f}" != *_normalized.* && "${f}" != *___* ]]; then
             normf="${f%.*}_normalized.${f##*.}"
             if [ ! -e "$normf" ]; then
                 normalize_file_sed "$f" "$normf"
