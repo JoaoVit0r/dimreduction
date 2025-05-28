@@ -32,9 +32,6 @@ if [ -z "$COMMAND" ]; then
     exit 1
 fi
 
-# Pattern to filter diff output if highlight is enabled
-HIGHLIGHT_PATTERN="(/main_\\w+/|are identical|differ|full|threads_)"
-
 # Helper function to normalize a file (remove .0 from numbers)
 normalize_file_sed() {
     local infile="$1"
@@ -108,28 +105,49 @@ count_matrix_diff() {
     echo "$diff_output" | grep '\[DIFF-COUNT\]' | awk -F': ' '{print $2}' | awk '{print $1}'
 }
 
-# Run diff and optionally filter output
-if $HIGHLIGHT; then
+# Run diff and optionally filter output, grouping DIFF-COUNT with diff result
+if $HIGHLIGHT && $COUNT_DIFF; then
+    eval $diff_cmd | while IFS= read -r line; do
+        if [[ $line =~ Files\ (.+)\ and\ (.+)\ (are\ identical|differ) ]]; then
+            f1="${BASH_REMATCH[1]}"
+            f2="${BASH_REMATCH[2]}"
+            if $COUNT_DIFF; then
+                diff_count=$(count_matrix_diff "$f1" "$f2")
+                echo -e "$line\n[DIFF-COUNT] $f1 vs $f2: $diff_count differing elements"
+            else
+                echo "$line"
+            fi
+        else
+            echo "$line"
+        fi
+    done | perl -pe '
+        s{(/main_\w+/)}{\e[1;33m$1\e[0m}g;
+        s{(are identical)}{\e[1;32m$1\e[0m}g;
+        s{(0 differing elements)}{\e[1;32m$1\e[0m}g;
+        s{\bdiffer\b}{\e[1;31m$&\e[0m}g;
+        s{(full)}{\e[1;35m$1\e[0m}g;
+        s{(threads_)}{\e[1;36m$1\e[0m}g;
+    '
+elif $HIGHLIGHT; then
+    # Run diff and optionally filter output
     eval $diff_cmd | perl -pe '
-        s{(/main_\w+/)}{\e[1;33m$1\e[0m}g;      # yellow
+        s{(/main_\w+/)}{\e[1;33m$1\e[0m}g;       # yellow
         s{(are identical)}{\e[1;32m$1\e[0m}g;    # green
         s{(differ)}{\e[1;31m$1\e[0m}g;           # red
         s{(full)}{\e[1;35m$1\e[0m}g;             # magenta
         s{(threads_)}{\e[1;36m$1\e[0m}g;         # cyan
     '
+elif $COUNT_DIFF; then
+    eval $diff_cmd | while IFS= read -r line; do
+        if [[ $line =~ Files\ (.+)\ and\ (.+)\ (are\ identical|differ) ]]; then
+            f1="${BASH_REMATCH[1]}"
+            f2="${BASH_REMATCH[2]}"
+            diff_count=$(count_matrix_diff "$f1" "$f2")
+            echo -e "$line\n[DIFF-COUNT] $f1 vs $f2: $diff_count differing elements"
+        else
+            echo "$line"
+        fi
+    done
 else
     eval $diff_cmd
-fi
-
-if $COUNT_DIFF && $NORMALIZE; then
-    for i in "${!TMP_FROM[@]}"; do
-        f1="${TMP_FROM[$i]}"
-        for j in "${!TMP_TO[@]}"; do
-            f2="${TMP_TO[$j]}"
-            if [[ -f "$f1" && -f "$f2" ]]; then
-                diff_count=$(count_matrix_diff "$f1" "$f2")
-                echo "[DIFF-COUNT] $f1 vs $f2: $diff_count differing elements"
-            fi
-        done
-    done
 fi
