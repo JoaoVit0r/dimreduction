@@ -2095,6 +2095,7 @@ def main():
     has_data_titles_columns = os.getenv("ARE_TITLES_ON_FIRST_COLUMN") == "true"
     has_transpose_matrix = os.getenv("TRANSPOSE_MATRIX") == "true"
 
+    quantization_input_file_path = os.getenv("QUANTIZATION_INPUT_FILE_PATH")
     quantization_value = int(os.getenv("QUANTIZATION_VALUE"))
     has_labels = 1 if os.getenv("HAS_LABELS_CLASSES_ON_LAST_COLUMN") == "true" else 0
     is_to_look_for_cycles = os.getenv("LOOK_FOR_CYCLES") == "true"
@@ -2330,7 +2331,28 @@ def main():
     read_data_action_performed()
     # timer.end("read_data")
 
-    if quantization_type > 0 and quantization_type <= 2:
+    SKIP_QUANTIZATION = False
+    # Check if a pre-quantized file is provided to skip quantization
+    if quantization_input_file_path and quantization_input_file_path.strip():
+        try:
+            IOFile.print_and_log(f"Loading pre-quantized data from {quantization_input_file_path}")
+            start_row = 0
+            start_column = 0
+            # if has_column_description:
+            #     start_row = 1
+            # if has_data_titles_columns:
+            #     start_column = 1
+            Md = IOFile.read_matrix(quantization_input_file_path, start_row, start_column, delimiter)
+            flag_quantization = True
+            IOFile.print_and_log(f"Pre-quantized data loaded successfully")
+            if is_to_save_quantized_data:
+                IOFile.write_matrix(f"{output_folder}/quantized_data/{prefix}-quantized_data.txt", Md, delimiter)
+            SKIP_QUANTIZATION = True
+        except Exception as e:
+            IOFile.print_and_log(f"Error loading pre-quantized data: {e}", verbosity=VERBOSE_LEVEL["ERROR"])
+            # Continue with regular quantization if loading fails
+    
+    if quantization_type > 0 and quantization_type <= 2 and not SKIP_QUANTIZATION:
         # timer.start("apply_quantization")
         apply_quantization_action(quantization_value, quantization_type)
         # timer.end("apply_quantization")
