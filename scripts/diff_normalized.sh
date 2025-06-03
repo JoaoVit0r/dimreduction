@@ -4,6 +4,18 @@ NORMALIZE=false
 HIGHLIGHT=false
 COUNT_DIFF=false
 
+help_message() {
+    echo "Usage: $0 [OPTIONS] <from-file-pattern> <to-file-pattern>"
+    echo
+    echo "Options:"
+    echo "  --normalize     Normalize files by removing .0 from numbers before comparing"
+    echo "  --highlight     Highlight differences in the output"
+    echo "  --count-diff    Count and display the number of differing elements"
+    echo "  --help          Display this help message and exit"
+    echo
+    echo "This script compares files using diff with optional normalization and highlighting."
+}
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --normalize)
@@ -17,6 +29,10 @@ while [[ $# -gt 0 ]]; do
         --count-diff)
             COUNT_DIFF=true
             shift
+            ;;
+        --help)
+            help_message
+            exit 0
             ;;
         *)
             if [ -z "$COMMAND" ]; then
