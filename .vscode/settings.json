@@ -1,0 +1,10 @@
+{
+    "java.project.sourcePaths": [
+        "dimreduction-java/src"
+    ],
+    "java.project.outputPath": "dimreduction-java/out/production/dimreduction-java",
+    "java.project.referencedLibraries": [
+        "dimreduction-java/lib/*"
+    ],
+    "java.dependency.packagePresentation": "hierarchical"
+}
