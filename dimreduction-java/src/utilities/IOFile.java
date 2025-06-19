@@ -371,6 +371,20 @@ public class IOFile {
     }
 
     /**
+     * Gets the current verbosity level for logging.
+     * 
+     * <p>
+     * This method returns the current verbosity level, which determines the types of messages
+     * that will be logged.
+     * </p>
+     * 
+     * @return The current verbosity level as an integer.
+     */
+    public static int getVerbosity() {
+        return verbosityLevel;
+    }
+
+    /**
      * Logs the given text without a newline at the end, at the DEBUG verbosity level.
      * 
      * <p>

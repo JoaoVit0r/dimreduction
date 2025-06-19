@@ -100,7 +100,7 @@ public class MathRoutines {
             int[] features) {
         int lines = Md.length;
         int collumns = Md[0].length;
-        int classes = fs.Main.maximumValue(Md, 0, lines - 1, collumns - 1,
+        int classes = maximumValue(Md, 0, lines - 1, collumns - 1,
                 collumns - 1) + 1;
         double[][] avg_values = new double[classes][features.length];
         double[] std_values = new double[classes];
@@ -343,5 +343,61 @@ public class MathRoutines {
 
         }
         return M2;
+    }
+
+    /**
+     * Finds the maximum integer value in a specified range of a float matrix.
+     * <p>
+     * This method scans a rectangular subregion of the input matrix defined by
+     * the start/end line and column parameters, and returns the maximum integer
+     * value found. This is commonly used to determine the number of discrete values
+     * in quantized data.
+     *
+     * @param M The float matrix to search.
+     * @param startLine The starting row index (inclusive).
+     * @param endLine The ending row index (inclusive).
+     * @param startCollumn The starting column index (inclusive).
+     * @param endCollumn The ending column index (inclusive).
+     * @return The maximum integer value found in the specified region.
+     */
+    public static int maximumValue(float[][] M, int startLine, int endLine, int startCollumn, int endCollumn) {
+        int i, j;
+        int maximum = 0;
+        for (i = startLine; i <= endLine; i++) {
+            for (j = startCollumn; j <= endCollumn; j++) {
+                if (M[i][j] > maximum) {
+                    maximum = (int) M[i][j];
+                }
+            }
+        }
+        return maximum;
+    }
+
+    /**
+     * Finds the maximum integer value in a specified range of a char matrix.
+     * <p>
+     * This method scans a rectangular subregion of the input matrix defined by
+     * the start/end line and column parameters, and returns the maximum integer
+     * value found. This is commonly used in feature selection to determine the
+     * number of discrete values or class labels.
+     *
+     * @param M The char matrix to search.
+     * @param startLine The starting row index (inclusive).
+     * @param endLine The ending row index (inclusive).
+     * @param startCollumn The starting column index (inclusive).
+     * @param endCollumn The ending column index (inclusive).
+     * @return The maximum integer value found in the specified region.
+     */
+    public static int maximumValue(char[][] M, int startLine, int endLine, int startCollumn, int endCollumn) {
+        int i, j;
+        int maximum = 0;
+        for (i = startLine; i <= endLine; i++) {
+            for (j = startCollumn; j <= endCollumn; j++) {
+                if (M[i][j] > maximum) {
+                    maximum = M[i][j];
+                }
+            }
+        }
+        return maximum;
     }
 }

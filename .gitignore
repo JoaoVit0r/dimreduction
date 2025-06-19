@@ -29,3 +29,4 @@ replay_pid*
 !.vscode/settings.json
 .env*
 !.env.example
+out/

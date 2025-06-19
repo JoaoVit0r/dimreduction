@@ -3,13 +3,8 @@ package fs;
 import java.io.IOException;
 import java.util.Vector;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
 
 import java.time.Instant;
-
-import org.jfree.data.category.DefaultCategoryDataset;
 
 import agn.AGN;
 import agn.AGNRoutines;
@@ -181,7 +176,7 @@ public class MainCLI {
      * Includes space, tab, newline, carriage return, form feed, and semicolon.
      */
     public static String delimiter = String.valueOf(' ') + String.valueOf('\t') + String.valueOf('\n') + String.valueOf('\r') + String.valueOf('\f') + String.valueOf(';');
-    
+
     /** Original matrix of data loaded from input file. */
     public static float[][] Mo = null;
     
@@ -225,9 +220,6 @@ public class MainCLI {
      * 0 = no labels, 1 = has labels.
      */
     private static int has_labels = 0;
-    
-    /** Help display window. */
-    private static JFrame help = null;
     
     /** Flag to enable manual garbage collection. */
     private static boolean enableManualGC;
@@ -765,10 +757,10 @@ public class MainCLI {
         // jTA_SelectedFeaturesSE.setText("");
 
         // n = quantidade de valores assumidos pelas caracteristicas.
-        int n = Main.maximumValue(Md, 0, lines - 1, 0, columns - 2) + 1;
+        int n = MathRoutines.maximumValue(Md, 0, lines - 1, 0, columns - 2) + 1;
 
         //c = numero de rotulos possiveis para as classes.
-        int c = Main.maximumValue(Md, 0, lines - 1, columns - 1, columns - 1) + 1;
+        int c = MathRoutines.maximumValue(Md, 0, lines - 1, columns - 1, columns - 1) + 1;
 
         // jProgressBarSE.setValue(5);
         Thread.yield();
@@ -1075,7 +1067,7 @@ public class MainCLI {
         //vetor com os resultados da selecao de caracteristica.
         //aqui so sera analisada a primeira resposta.
         int resultsetsize = 1;//(Integer)jS_MaxResultListSE.getValue();
-        int n = Main.maximumValue(Md, 0, Md.length - 1, 0, Md[0].length - 1) + 1;
+        int n = MathRoutines.maximumValue(Md, 0, Md.length - 1, 0, Md[0].length - 1) + 1;
         recoverednetwork = new AGN(Md.length, Md[0].length, n);
         recoverednetwork.setTemporalsignal(Mo);
         recoverednetwork.setTemporalsignalquantized(Md);
