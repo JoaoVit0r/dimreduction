@@ -12,6 +12,7 @@
 
 # Package Files #
 *.jar
+!dimreduction.jar
 *.war
 *.nar
 *.ear
@@ -26,7 +27,11 @@ replay_pid*
 # project files
 .idea/
 .vscode/*
-!.vscode/settings.json
+!.vscode/*.example.json
 .env*
 !.env.example
-out/
+
+# results files
+*/results/*
+*/log/*
+*/timing/*

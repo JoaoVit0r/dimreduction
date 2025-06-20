@@ -1,0 +1,2 @@
+Main-Class: fs.MainCLI
+Class-Path: ../../lib/dotenv-java-3.0.2.jar ../../lib/jcommon-1.0.12.jar ../../lib/jfreechart-1.0.9.jar ../../lib/jgraph.jar ../../lib/jgraphlayout.jar ../../lib/prefuse.jar

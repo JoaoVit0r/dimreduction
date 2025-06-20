@@ -252,6 +252,7 @@ public class MainCLI {
      * Each step is timed for performance analysis.
      */
     public MainCLI() {
+        timer.start("main_pipeline");
 
         // Get the configuration parameters
         initConfig();
@@ -293,6 +294,8 @@ public class MainCLI {
         networkInferenceActionPerformed();
         IOFile.PrintlnAndLog(Instant.now() + "; start network inference - end", "timing/timers.log", 0);
         timer.end("network_inference");
+
+        timer.end("main_pipeline");
     }
 
     /**
@@ -1085,7 +1088,7 @@ public class MainCLI {
         if (isTimeSeriesData) {
             datatype = 1;
         }
-        timer.start("execute_feature_selection");
+        timer.start("recoverednetwork");
         txt = AGNRoutines.RecoverNetworkfromTemporalExpression(
                 recoverednetwork,
                 null,
@@ -1106,7 +1109,7 @@ public class MainCLI {
                 null,
                 threadDistribution,
                 numberOfThreads);
-
+        timer.end("recoverednetwork");
 
         // AGNRoutines.ViewAGN(recoverednetwork);
         if (isToSaveFinalData) {

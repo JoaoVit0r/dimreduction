@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch MainCLI",
+            "request": "launch",
+            "mainClass": "fs.MainCLI",
+            "cwd": "${workspaceFolder}/dimreduction-java",
+            "args": "-cp ./lib/*:./out/production/dimreduction-java"
+        }
+    ]
+}
