@@ -245,13 +245,11 @@ class Timer:
     def set_verbosity(self, level):
         self.VERBOSITY = level
     
-    def print_and_log(self, message):
-        IOFile.print_and_log(message, path=self.PATH, verbosity=VERBOSE_LEVEL["TIMER"])
-    
+    def print_and_log(self, message, verbosity=VERBOSE_LEVEL["DEBUG"]):
+        IOFile.print_and_log(message, path=self.PATH, verbosity=verbosity)
+
     def start(self, name):
-        if True:
-            return
-        if VERBOSE_LEVEL["TIMER"] < self.VERBOSITY:
+        if self.VERBOSITY < VERBOSE_LEVEL["TIMER"]:
             return
         if name in self.timers:
             self.print_and_log(f"Timer {name} is already running.")
@@ -260,9 +258,7 @@ class Timer:
             self.print_and_log(f"Timer {name} started at {datetime.now()}")
 
     def end(self, name):
-        if True:
-            return
-        if VERBOSE_LEVEL["TIMER"] < self.VERBOSITY:
+        if self.VERBOSITY < VERBOSE_LEVEL["TIMER"]:
             return
         if name not in self.timers:
             self.print_and_log(f"Timer {name} was not started.")
@@ -271,7 +267,7 @@ class Timer:
             end_time = time.time()
             duration = end_time - start_time
             self.print_and_log(f"Timer {name} ended at {datetime.now()}")
-            self.print_and_log(f"Duration for {name}: {duration:.4f} seconds")
+            self.print_and_log(f"Duration for {name}: {duration:.4f} seconds", verbosity=VERBOSE_LEVEL["TIMER"])
 
 class Preprocessing:
     SKIP_VALUE = -999
@@ -1727,7 +1723,7 @@ class AGNRoutines:
             local_txt = []
             targetindex = int(target)
             thread_id = threading.get_ident()
-            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - generating training set", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - generating training set", path="timing/thread_execution.log")
             
             predictors = []
             ties = []
@@ -1755,18 +1751,18 @@ class AGNRoutines:
                     "h_global": 1.0
                 }
             else:
-                # timer.start(f"running_search_algorithm-target_index_{targetindex}")
+                timer.start(f"running_search_algorithm-target_index_{targetindex}")
                 if searchalgorithm == 1:
-                    # IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    # IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log")
                     fs.run_sfs(False, maxfeatures)
                 elif searchalgorithm == 3:
-                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log")
                     fs.run_sffs(maxfeatures, targetindex, recoveredagn)
                 elif searchalgorithm == 4:
-                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log")
                     fs.run_sffs_stack(maxfeatures, targetindex, recoveredagn)
                 elif searchalgorithm == 2:
-                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+                    IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} PROCESSING - running search algorithm", path="timing/thread_execution.log")
                     fs.run_sfs(True, maxfeatures)
                     s = fs.itmax
                     fs_prev = FS(strainingset, recoveredagn.get_quantization(), recoveredagn.get_quantization(), type_entropy, alpha, beta, q_entropy, resultsetsize)
@@ -1778,7 +1774,7 @@ class AGNRoutines:
                             fs = fs_prev
                             break
                         fs_prev = fs
-                # timer.end(f"running_search_algorithm-target_index_{targetindex}")
+                timer.end(f"running_search_algorithm-target_index_{targetindex}")
                 
                 # Prepare text output and collect data to return
                 if targetaspredictors:
@@ -1855,10 +1851,10 @@ class AGNRoutines:
         def process_target_wrapper(target, index):
             thread_id = threading.get_ident()
             start_time = time.time()
-            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} STARTED at {start_time}", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} STARTED at {start_time}", path="timing/thread_execution.log")
             result = process_target(target)
             end_time = time.time()
-            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED at {end_time} (Duration: {end_time - start_time:.4f}s)", path="timing/thread_execution.log", verbosity=VERBOSE_LEVEL["TIMER"])
+            IOFile.print_and_log(f"[THREAD {thread_id}] Target {target} ENDED at {end_time} (Duration: {end_time - start_time:.4f}s)", path="timing/thread_execution.log")
             results[index] = result
             
         thread_manager = ThreadManager(targets, number_of_threads, process_target_wrapper)
@@ -2062,8 +2058,7 @@ class ThreadManager:
                     current_target = self.targets[current_index]
                     next_index[0] += 1
                 IOFile.print_and_log(f"[THREAD {thread_id}] Acquired target {current_target} (index {current_index})", 
-                                    path="timing/thread_execution.log", 
-                                    verbosity=VERBOSE_LEVEL["TIMER"])
+                                    path="timing/thread_execution.log")
                     
                 self.process_target_wrapper(current_target, current_index)
         
@@ -2085,7 +2080,8 @@ def main():
     output_folder = os.getenv("OUTPUT_FOLDER")
     verbosity_level = int(os.getenv("VERBOSITY_LEVEL", ))
     IOFile.set_verbosity(verbosity_level)
-    # timer.set_verbosity(verbosity_level)
+    timer.set_verbosity(verbosity_level)
+    timer.start("main_pipeline")
     
     if output_folder is not None and output_folder != "":
         if not os.path.exists(output_folder):
@@ -2302,7 +2298,7 @@ def main():
         if not os.path.exists("timing"):
             os.makedirs("timing")
             
-        # timer.start("network_inference")
+        timer.start("recoverednetwork")
         txt = AGNRoutines.recover_network_from_temporal_expression(
             recoverednetwork,
             None,
@@ -2322,14 +2318,15 @@ def main():
             number_of_threads,
             thread_distribution
         )
+        timer.end("recoverednetwork")
         if is_to_save_final_data:
             IOFile.write_matrix(f"{output_folder}/final_data/{prefix}-final_data.txt", AGNRoutines.create_adjacency_matrix(recoverednetwork), delimiter)
         
         IOFile.print_and_log(txt)
 
-    # timer.start("read_data")
+    timer.start("read_data")
     read_data_action_performed()
-    # timer.end("read_data")
+    timer.end("read_data")
 
     SKIP_QUANTIZATION = False
     # Check if a pre-quantized file is provided to skip quantization
@@ -2353,25 +2350,27 @@ def main():
             # Continue with regular quantization if loading fails
     
     if quantization_type > 0 and quantization_type <= 2 and not SKIP_QUANTIZATION:
-        # timer.start("apply_quantization")
+        timer.start("apply_quantization")
         apply_quantization_action(quantization_value, quantization_type)
-        # timer.end("apply_quantization")
+        timer.end("apply_quantization")
 
     if is_to_look_for_cycles and Md is not None:
-        # timer.start("find_cycle")
+        timer.start("find_cycle")
         CNMeasurements.find_cycle(Md)
-        # timer.end("find_cycle")
+        timer.end("find_cycle")
 
     if is_to_execute_feature_selection:
-        # timer.start("execute_feature_selection")
+        timer.start("execute_feature_selection")
         execute_feature_selection_action_performed()
-        # timer.end("execute_feature_selection")
+        timer.end("execute_feature_selection")
 
-    # timer.start("network_inference")
-    IOFile.print_and_log(f"{datetime.now()}; start network inference - start", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
+    timer.start("network_inference")
+    # IOFile.print_and_log(f"{datetime.now()}; start network inference - start", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
     network_inference_action_performed()
-    IOFile.print_and_log(f"{datetime.now()}; start network inference - end", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
-    # timer.end("network_inference")
+    # IOFile.print_and_log(f"{datetime.now()}; start network inference - end", path="timing/timers.log", verbosity=VERBOSE_LEVEL["NONE"])
+    timer.end("network_inference")
+
+    timer.end("main_pipeline")
 
 if __name__ == "__main__":
     main()
