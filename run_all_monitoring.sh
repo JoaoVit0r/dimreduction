@@ -238,10 +238,6 @@ run_monitoring_python() {
         monitor_cmd+=" \"${python_bin}\" \"${script}\""
     fi
     
-    # Add the python binary and script
-    monitor_cmd+=" \"${python_bin}\" \"${script}\""
-    
-    
     cd "$REPOSITORY_PYTHON" || exit
     eval "$monitor_cmd"
     cd - || exit
