@@ -8,6 +8,10 @@ from datetime import datetime
 import time
 import gc
 import concurrent.futures
+import signal
+
+# ignore SIGUSR1 signal
+signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
 def sum_of_squares(n):
     print(f"sum_of_squares({n})")

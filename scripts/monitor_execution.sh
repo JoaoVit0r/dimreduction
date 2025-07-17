@@ -1,5 +1,45 @@
 #!/bin/bash
 
+# Add signal handling
+cleanup() {
+    local exit_code=$?
+    echo -e "\n==============================================="
+    echo "Received termination signal - Cleaning up..."
+    echo "==============================================="
+    
+    if [ -n "$DSTAT_PID" ] && ps -p $DSTAT_PID > /dev/null; then
+        echo "Stopping dstat monitoring..."
+        kill $DSTAT_PID 2>/dev/null
+    fi
+    
+    # Restore the original environment file
+    if [ -f "$DEFAULT_ENV_FILE.bak" ]; then
+        echo "Restoring original environment file..."
+        mv "$DEFAULT_ENV_FILE.bak" "$DEFAULT_ENV_FILE"
+    fi
+
+    # Move monitoring files even if interrupted
+    if [ -n "$MONITOR_DIR" ] && [ -d "$MONITOR_DIR" ]; then
+        echo "Moving monitoring files..."
+        "$REPOSITORY_PYTHON"/scripts/move_monitoring_files.sh "$MONITOR_DIR"
+    fi
+
+    if [ "$SKIP_MONITORING" = false ]; then
+        # Generate summary files
+        echo -e "\nGenerating summary files..."
+        python3 "$REPOSITORY_PYTHON"/scripts/generate_summary.py "$OUTPUT_DIR"
+
+        echo -e "\n==============================================="
+        echo "Summary Generation Completed"
+        echo "==============================================="
+    fi
+    
+    exit $exit_code
+}
+
+# Set up trap for SIGINT and SIGTERM
+trap cleanup SIGINT SIGTERM
+
 SLEEP_TIME=5
 
 # Parse arguments
@@ -125,6 +165,14 @@ for cmd in dool python3; do
         exit 1
     fi
 done
+
+BREAK_LOOP=false
+
+break_loop_handler() {
+    echo -e "\nReceived SIGUSR1: monitor_execution.sh will break after current execution. Command: $BASH_COMMAND"
+    BREAK_LOOP=true
+}
+trap break_loop_handler SIGUSR1
 
 if [ "$SKIP_MONITORING" = false ]; then
     # Check if required Python packages are available
@@ -285,6 +333,11 @@ for ((i=1; i <= "$NUMBER_OF_EXECUTIONS"; i++)); do
             echo "Next execution in $SLEEP_TIME seconds"
         fi
         sleep "$SLEEP_TIME"
+    fi
+    # Check if break was requested
+    if [ "$BREAK_LOOP" = true ]; then
+        echo "Breaking loop after execution $i due to SIGUSR1."
+        break
     fi
 done
 

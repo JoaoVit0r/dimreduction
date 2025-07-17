@@ -6,6 +6,10 @@ import matplotlib.dates as mdates
 import sys
 import os
 from datetime import datetime
+import signal
+
+# ignore SIGUSR1 signal
+signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
 CURRENT_YEAR = datetime.now().year
 TIME_COLUMN = 'time'

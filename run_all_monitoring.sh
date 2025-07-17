@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Add signal handling
+cleanup() {
+    local exit_code=$?
+    echo -e "\n==============================================="
+    echo "Received termination signal - Finishing current execution..."
+    echo "==============================================="
+    
+    # The child processes (monitor_execution.sh) will handle their own cleanup
+    exit $exit_code
+}
+
+# Set up trap for SIGINT and SIGTERM
+trap cleanup SIGINT SIGTERM
+
 SLEEP_TIME=900
 MONITOR_SLEEP_TIME=900  # Sleep time for the monitor script between internal executions
 
@@ -14,6 +28,13 @@ THREAD_DISTRIBUTION="spaced"  # Default thread distribution
 SKIP_MONITORING=false
 ENABLE_PERF=false # Flag to enable perf profiling
 ENABLE_MANUAL_GC=false # Flag to enable manual garbage collection for Java
+BREAK_LOOP=false
+
+break_loop_handler() {
+    echo -e "\nReceived SIGUSR1: run_all_monitoring.sh will break after current monitoring run. Command: $BASH_COMMAND"
+    BREAK_LOOP=true
+}
+trap break_loop_handler SIGUSR1
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -198,6 +219,11 @@ wait_between_executions() {
     fi
     echo "-----------------------------------------------"
     sleep "$SLEEP_TIME"
+    # Check if break was requested after sleep
+    if [ "$BREAK_LOOP" = true ]; then
+        echo "Exiting after wait due to SIGUSR1."
+        exit 0
+    fi
 }
 
 # Function to run monitoring and move files
@@ -333,6 +359,12 @@ for cmd in "${COMMANDS[@]}"; do
                 done
             done
         fi
+    fi
+
+    # At the end of each main loop iteration, check if break was requested
+    if [ "$BREAK_LOOP" = true ]; then
+        echo "Breaking main loop after command '$cmd' due to SIGUSR1."
+        break
     fi
 done
 

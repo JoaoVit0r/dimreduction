@@ -9,6 +9,10 @@ from pathlib import Path
 import re
 import matplotlib.dates as mdates
 import glob
+import signal
+
+# ignore SIGUSR1 signal
+signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
 def read_env_file(env_path):
     """Read and parse the .env file."""

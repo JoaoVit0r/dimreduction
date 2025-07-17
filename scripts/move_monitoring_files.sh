@@ -1,5 +1,10 @@
 #!/bin/bash
 
+ignore_handler() {
+    echo -e "\nReceived SIGUSR1: move_monitoring_files.sh ignored the signal.Command: $BASH_COMMAND"
+}
+trap ignore_handler SIGUSR1
+
 # Check if output directory is provided
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <output_directory>"
