@@ -276,7 +276,7 @@ echo "==============================================="
 
 if [ "$SKIP_MONITORING" = false ]; then
     # Start dstat(dool) in the background (time, cpu, load, mem)
-    dool -tclm --output "$DSTAT_OUTPUT_File" 1 &
+    setsid dool -tclm --output "$DSTAT_OUTPUT_File" 1 &
     DSTAT_PID=$!
 fi
 
