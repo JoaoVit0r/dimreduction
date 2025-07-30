@@ -38,6 +38,7 @@ fi
 if [ -d "results" ]; then
     echo "Moving results text files..."
     mv --backup="numbered" results/*/*.txt "$OUTPUT_DIR" 2>/dev/null || true
+    mv --backup="numbered" results/*/*.csv "$OUTPUT_DIR" 2>/dev/null || true
 fi
 
 # Move perf.data if it exists

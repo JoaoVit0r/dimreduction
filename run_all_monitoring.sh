@@ -23,6 +23,7 @@ COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
 CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
 NUMBER_OF_EXECUTIONS=3
 PYTHON_FILES=("main_from_cli.py")
+R_FILES=("run_clr.R")
 THREADS="1,2,4,8"  # Default thread counts
 THREAD_DISTRIBUTION="spaced"  # Default thread distribution
 SKIP_MONITORING=false
@@ -54,6 +55,10 @@ while [[ $# -gt 0 ]]; do
             REPOSITORY_JAVA="${2:-../dimreduction-java}"
             shift 2
             ;;
+        --repository-r)
+            REPOSITORY_R="${2:-../dimreduction_external_comparisons}"
+            shift 2
+            ;;
         --number-of-executions)
             NUMBER_OF_EXECUTIONS="$2"
             shift 2
@@ -65,6 +70,11 @@ while [[ $# -gt 0 ]]; do
         --python-files)
             # Convert comma-separated string to array
             IFS=',' read -r -a PYTHON_FILES <<< "$2"
+            shift 2
+            ;;
+        --r-files)
+            # Convert comma-separated string to array
+            IFS=',' read -r -a R_FILES <<< "$2"
             shift 2
             ;;
         --threads)
@@ -111,9 +121,12 @@ Options:
   File and Directory Settings:
     --repository-python <path>       Path to Python repository (default: .)
     --repository-java <path>         Path to Java repository (default: ../dimreduction-java)
+    --repository-r <path>            Path to R repository (default: ../dimreduction_external_comparisons)
     --custom-input-file <path>       Path to custom input dataset
     --python-files <files>           Comma-separated list of Python files to execute
                                     (default: main_from_cli.py)
+    --r-files <files>                Comma-separated list of R files to execute
+                                    (default: run_clr.R)
 
   Performance Settings:
     --enable-perf                    Enable perf profiling
@@ -171,6 +184,7 @@ echo "==============================================="
 # Convert paths to absolute paths
 REPOSITORY_PYTHON=$(realpath "$REPOSITORY_PYTHON")
 REPOSITORY_JAVA=$(realpath "$REPOSITORY_JAVA")
+REPOSITORY_R=$(realpath "$REPOSITORY_R")
 
 if [ -f "$REPOSITORY_PYTHON"/venv/bin/activate ]; then
     . "$REPOSITORY_PYTHON"/venv/bin/activate
@@ -325,6 +339,53 @@ run_monitoring_java() {
     echo "-----------------------------------------------"
 }
 
+# Function to run monitoring and move files
+run_monitoring_r() {
+    local r_bin=$1
+    local script=$2
+    local thread_count=$3
+    local thread_distribution="none"
+
+    local script_name
+    script_name="$(basename "${script}")"
+    local output_dir="${BASE_DIR}/dataset_${DATASET_NAME}/${r_bin}/${script_name%.R}/distribution_${thread_distribution}/threads_${thread_count}"
+    mkdir -p "${output_dir}"
+    
+    echo -e "\n================================================================="
+    echo "Running R Monitoring"
+    echo "================================================================="
+    echo "R repository: ${REPOSITORY_R}"
+    echo "Environment: ${r_bin}"
+    echo "Script: ${script_name}"
+    echo "Thread Count: ${thread_count}"
+    echo "Output Directory: ${output_dir}"
+    if [ "$ENABLE_PERF" = true ]; then
+        echo "Perf Profiling: Enabled"
+    fi
+    echo "==============================================="
+
+    # Build command with conditional perf option
+    local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" --repository-r \"$REPOSITORY_R\" \
+      --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
+      --thread-distribution \"$THREAD_DISTRIBUTION\""
+
+    # Add perf option if enabled
+    if [ "$ENABLE_PERF" = true ]; then
+        echo "Perf not supported to R executions"
+    fi
+    monitor_cmd+=" \"${r_bin}\" \"${script}\""
+    
+    echo "Running: $monitor_cmd"
+    cd "$REPOSITORY_R" || exit
+    eval "$monitor_cmd"
+    cd - || exit
+    
+    echo -e "\n-----------------------------------------------"
+    echo "Completed ${r_bin} with ${script_name} using ${thread_count} threads"
+    echo "-----------------------------------------------"
+}
+
 # Convert thread counts string to array
 IFS=',' read -r -a THREAD_COUNTS <<< "$THREADS"
 # Convert thread distribution string to array
@@ -337,6 +398,15 @@ for cmd in "${COMMANDS[@]}"; do
             for thread_count in "${THREAD_COUNTS[@]}"; do
                 run_monitoring_java "$thread_count" "$thread_distribution"
                 wait_between_executions
+            done
+        done
+    elif [ "$cmd" == "Rscript" ]; then
+        for r_file in "${R_FILES[@]}"; do
+            for thread_distribution in "${THREAD_DISTRIBUTION[@]}"; do
+                for thread_count in "${THREAD_COUNTS[@]}"; do
+                    run_monitoring_r "$cmd" "$REPOSITORY_R/$r_file" "$thread_count"
+                    wait_between_executions
+                done
             done
         done
     else

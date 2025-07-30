@@ -63,6 +63,10 @@ while [[ $# -gt 0 ]]; do
             REPOSITORY_PYTHON="$2"
             shift 2
             ;;
+        --repository-r)
+            REPOSITORY_R="$2"
+            shift 2
+            ;;
         --sleep-time)
             SLEEP_TIME="$2"
             shift 2
