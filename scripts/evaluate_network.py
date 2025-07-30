@@ -1,114 +1,104 @@
 import argparse
-import pandas as pd
 import numpy as np
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
 
-def load_matrix(path, sep=None):
+def load_adjacency_matrix(path):
     """
-    Load adjacency matrix from CSV/TSV with row and column labels.
+    Load adjacency matrix from a whitespace- or comma-separated file without header.
     """
-    return pd.read_csv(path, sep=sep or r"\s+|,", index_col=0, engine='python')
-
-
-def matrix_to_list(mat, threshold=0.0):
-    """
-    Convert adjacency matrix to edge list. Returns DataFrame with columns ['A','B','score'].
-    Only entries with score > threshold.
-    """
-    edges = []
-    for src in mat.index:
-        for tgt in mat.columns:
-            score = mat.at[src, tgt]
-            if src != tgt and score > threshold:
-                edges.append((src, tgt, score))
-    return pd.DataFrame(edges, columns=['A', 'B', 'score'])
+    return np.loadtxt(path)
 
 
-def list_to_matrix(edge_list, genes=None):
+def load_gold_list(path, n_genes):
     """
-    Convert edge list DataFrame with ['A','B','score'] to adjacency matrix.
-    If genes is provided, use that ordering; else infer.
+    Load gold standard list of edges (A, B, score) into a binary adjacency matrix.
+    Genes labeled G1...Gn in order.
     """
-    if genes is None:
-        genes = sorted(set(edge_list['A']).union(edge_list['B']))
-    mat = pd.DataFrame(0, index=genes, columns=genes, dtype=float)
-    for _, row in edge_list.iterrows():
-        mat.at[row['A'], row['B']] = row['score']
-    return mat
-
-
-def evaluate(pred_list, gold_list, genes=None):
-    """
-    Evaluate predictions against gold standard. Returns dict of metrics.
-    """
-    all_genes = genes or sorted(set(gold_list['A']).union(gold_list['B']).union(pred_list['A']).union(pred_list['B']))
-    # Create binary matrices
-    gold_mat = list_to_matrix(gold_list, genes=all_genes)
-    pred_mat = list_to_matrix(pred_list, genes=all_genes)
-    # Flatten excluding self
-    y_true = []
-    y_pred = []
-    for i in all_genes:
-        for j in all_genes:
-            if i == j:
+    gold = np.zeros((n_genes, n_genes), dtype=int)
+    with open(path) as f:
+        for line in f:
+            parts = line.strip().split()  # tab or whitespace
+            if len(parts) < 2:
                 continue
-            y_true.append(1 if gold_mat.at[i, j] > 0 else 0)
-            y_pred.append(1 if pred_mat.at[i, j] > 0 else 0)
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
-    metrics = {
-        'precision': precision_score(y_true, y_pred, zero_division=0),
-        'recall': recall_score(y_true, y_pred, zero_division=0),
-        'f1': f1_score(y_true, y_pred, zero_division=0),
-        'accuracy': accuracy_score(y_true, y_pred),
-        'true_positives': int((y_true & y_pred).sum()),
-        'false_positives': int((~y_true & y_pred).sum()),
-        'false_negatives': int((y_true & ~y_pred).sum()),
-        'true_negatives': int((~y_true & ~y_pred).sum()),
-    }
-    return metrics
+            a_label, b_label = parts[0], parts[1]
+            # Convert G1->0 index
+            i = int(a_label.lstrip('G')) - 1
+            j = int(b_label.lstrip('G')) - 1
+            if 0 <= i < n_genes and 0 <= j < n_genes and i != j:
+                gold[i, j] = 1
+    return gold
+
+
+def matrix_to_list(matrix, output_path, threshold=None):
+    """
+    Convert adjacency matrix to list of triples (A, B, score) and save to file.
+    If threshold is set, include only entries >= threshold.
+    """
+    n = matrix.shape[0]
+    with open(output_path, 'w') as out:
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                score = matrix[i, j]
+                if threshold is None or score >= threshold:
+                    out.write(f"G{i+1}\tG{j+1}\t{score}\n")
+    print(f"List written to {output_path}")
+
+
+def list_to_matrix(list_path, n_genes, output_path):
+    """
+    Convert gold list to a binary adjacency matrix and save as whitespace file.
+    """
+    mat = load_gold_list(list_path, n_genes)
+    np.savetxt(output_path, mat, fmt='%d')
+    print(f"Matrix written to {output_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Evaluate network predictions against a gold standard.')
-    parser.add_argument('--pred-matrix', help='Path to predicted adjacency matrix (CSV/TSV).',
-                        required=False)
-    parser.add_argument('--pred-list', help='Path to predicted edge list TSV.', required=False)
-    parser.add_argument('--gold-matrix', help='Path to gold adjacency matrix CSV/TSV.', required=False)
-    parser.add_argument('--gold-list', help='Path to gold edge list TSV.', required=False)
-    parser.add_argument('--threshold', type=float, default=0.0,
-                        help='Threshold to binarize matrix entries (default=0.0).')
-    parser.add_argument('--out-prefix', default='output',
-                        help='Prefix for output files.')
+    parser = argparse.ArgumentParser(description="Evaluate predicted network against gold standard list.")
+    parser.add_argument('--pred-matrix', required=True, help='Path to predicted adjacency matrix (no header)')
+    parser.add_argument('--gold-list', required=True, help='Path to gold standard list (A TAB B TAB score)')
+    parser.add_argument('--output-prefix', default='output', help='Prefix for optional outputs')
+    parser.add_argument('--threshold', type=float, help='Threshold for binarizing predicted matrix (optional)')
+    parser.add_argument('--export-matrix2list', action='store_true', help='Export predicted matrix to list')
+    parser.add_argument('--export-list2matrix', action='store_true', help='Export gold list to matrix')
     args = parser.parse_args()
 
-    # Load predictions
-    if args.pred_matrix:
-        pred_mat = load_matrix(args.pred_matrix)
-        pred_list = matrix_to_list(pred_mat, threshold=args.threshold)
-        pred_list.to_csv(f"{args.out_prefix}_pred_list.tsv", sep='\t', index=False)
-        print(f"Predicted list written to {args.out_prefix}_pred_list.tsv")
-    elif args.pred_list:
-        pred_list = pd.read_csv(args.pred_list, sep='\t')
+    # Load and binarize predictions
+    pred_mat = load_adjacency_matrix(args.pred_matrix)
+    n = pred_mat.shape[0]
+    if args.threshold is not None:
+        pred_bin = (pred_mat >= args.threshold).astype(int)
     else:
-        parser.error('Provide either --pred-matrix or --pred-list')
+        pred_bin = pred_mat.astype(int)
 
-    # Load gold
-    if args.gold_matrix:
-        gold_mat = load_matrix(args.gold_matrix)
-        gold_list = matrix_to_list(gold_mat, threshold=args.threshold)
-        gold_list.to_csv(f"{args.out_prefix}_gold_list.tsv", sep='\t', index=False)
-        print(f"Gold list written to {args.out_prefix}_gold_list.tsv")
-    elif args.gold_list:
-        gold_list = pd.read_csv(args.gold_list, sep='\t')
-    else:
-        parser.error('Provide either --gold-matrix or --gold-list')
+    # Load gold standard
+    gold_bin = load_gold_list(args.gold_list, n)
 
-    # Evaluate
-    metrics = evaluate(pred_list, gold_list)
-    print("\nEvaluation metrics:")
-    for k, v in metrics.items():
-        print(f"{k}: {v}")
+    # Flatten ignoring diagonal
+    mask = ~np.eye(n, dtype=bool)
+    y_true = gold_bin[mask].ravel()
+    y_pred = pred_bin[mask].ravel()
+
+    # Compute metrics
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0,1]).ravel()
+    acc = accuracy_score(y_true, y_pred)
+    prec = precision_score(y_true, y_pred, zero_division=0)
+    rec = recall_score(y_true, y_pred, zero_division=0)
+
+    # Print results
+    print("Confusion Matrix:")
+    print(f"TP: {tp}, FP: {fp}, FN: {fn}, TN: {tn}")
+    print(f"Accuracy: {acc:.4f}")
+    print(f"Precision: {prec:.4f}")
+    print(f"Recall: {rec:.4f}")
+
+    # Optional exports
+    if args.export_matrix2list:
+        matrix_to_list(pred_mat, f"{args.output_prefix}_pred_list.tsv", args.threshold)
+    if args.export_list2matrix:
+        list_to_matrix(args.gold_list, n, f"{args.output_prefix}_gold_matrix.txt")
 
 if __name__ == '__main__':
     main()
