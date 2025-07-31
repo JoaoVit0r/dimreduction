@@ -41,8 +41,28 @@ set -e
 # Run VM2 R
 # sed -i "s/^INPUT_FILE=.*/INPUT_FILE=..\/..\/..\/final-delivery\/dimreduction\/inputs_files\/quantized_data\/40-gui-quantized_data.txt/g" ../test_external_code/try_minet/.env;
 # ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 4 --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv --r-files run_genie3.R --repository-r ../test_external_code/try_minet Rscript
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 \
+#     --thread-distribution none --threads 1 \
+#     --repository-r ../dimreduction_external_comparisons \
+#     --custom-quantization-input-file ../../saving_files/reference/quantized_data/40-gui-quantized_data.txt \
+#     --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv \
+#     --r-files run_clr.R,run_aracne.R,run_genie3.R \
+#     Rscript
 
-# INPUT_FILE=../../saving_files/reference/quantized_data/40-gui-quantized_data.txt
-sed -i "s/^INPUT_FILE=.*/INPUT_FILE=..\/..\/..\/final-delivery\/dimreduction\/inputs_files\/quantized_data\/40-gui-quantized_data.txt/g" ../dimreduction_external_comparisons/.env;
-./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 4 --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv --r-files run_genie3.R Rscript
 
+# Run Local R
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 \
+#     --thread-distribution none --threads 4 \
+#     --repository-r ../test_external_code/try_minet \
+#     --custom-quantization-input-file ../../final-delivery/dimreduction/inputs_files/quantized_data/40-gui-quantized_data.txt \
+#     --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv \
+#     --r-files run_genie3.R \
+#     Rscript
+
+./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 \
+    --thread-distribution none --threads 4 \
+    --repository-r ../test_external_code/try_minet \
+    --custom-quantization-input-file ../../final-delivery/dimreduction/inputs_files/quantized_data/40-gui-quantized_data.txt \
+    --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv \
+    --r-files run_clr.R,run_aracne.R,run_genie3.R \
+    Rscript

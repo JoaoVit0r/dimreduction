@@ -48,6 +48,7 @@ REPOSITORY_PYTHON=""
 COMMAND=""
 NUMBER_OF_EXECUTIONS=3
 CUSTOM_INPUT_FILE_PATH=""
+CUSTOM_QUANTIZATION_INPUT_FILE_PATH=""
 THREADS=1  # Default to 1 thread
 THREAD_DISTRIBUTION="spaced"  # Default to spaced distribution
 SKIP_MONITORING=false
@@ -77,6 +78,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --custom-input-file)
             CUSTOM_INPUT_FILE_PATH="$2"
+            shift 2
+            ;;
+        --custom-quantization-input-file)
+            CUSTOM_QUANTIZATION_INPUT_FILE_PATH="$2"
             shift 2
             ;;
         --threads)
@@ -235,6 +240,17 @@ if [ -n "$CUSTOM_INPUT_FILE_PATH" ]; then
     
     echo "Setting INPUT_FILE_PATH=$(realpath "$CUSTOM_INPUT_FILE_PATH")"
     sed -i -E "s|^INPUT_FILE_PATH=.*|INPUT_FILE_PATH=$(realpath "$CUSTOM_INPUT_FILE_PATH" | sed 's/\//\\\//g')|" "$DEFAULT_ENV_FILE"
+fi
+
+if [ -n "$CUSTOM_QUANTIZATION_INPUT_FILE_PATH" ]; then
+    if [ ! -f "$CUSTOM_QUANTIZATION_INPUT_FILE_PATH" ]; then
+        echo "Error: Custom quantization input file does not exist."
+        rm "$DEFAULT_ENV_FILE.bak"
+        exit 1
+    fi
+    
+    echo "Setting QUANTIZATION_INPUT_FILE_PATH=$(realpath "$CUSTOM_QUANTIZATION_INPUT_FILE_PATH")"
+    sed -i -E "s|^QUANTIZATION_INPUT_FILE_PATH=.*|QUANTIZATION_INPUT_FILE_PATH=$(realpath "$CUSTOM_QUANTIZATION_INPUT_FILE_PATH" | sed 's/\//\\\//g')|" "$DEFAULT_ENV_FILE"
 fi
 
 

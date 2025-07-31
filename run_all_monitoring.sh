@@ -21,6 +21,7 @@ REPOSITORY_PYTHON="."
 REPOSITORY_JAVA="../dimreduction-java"
 COMMANDS=("java" "venv_v12" "venv_v13" "venv_v13-nogil")
 CUSTOM_INPUT_FILE_PATH="../writing/output/processed_dataset_dream5_40.csv"
+CUSTOM_QUANTIZATION_INPUT_FILE_PATH=""
 NUMBER_OF_EXECUTIONS=3
 PYTHON_FILES=("main_from_cli.py")
 R_FILES=("run_clr.R")
@@ -65,6 +66,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --custom-input-file)
             CUSTOM_INPUT_FILE_PATH="$2"
+            shift 2
+            ;;
+        --custom-quantization-input-file)
+            CUSTOM_QUANTIZATION_INPUT_FILE_PATH="$2"
             shift 2
             ;;
         --python-files)
@@ -267,6 +272,7 @@ run_monitoring_python() {
     # Build command with conditional perf option
     local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" \
       --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-quantization-input-file \"$CUSTOM_QUANTIZATION_INPUT_FILE_PATH\" \
       --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
       --thread-distribution \"$THREAD_DISTRIBUTION\""
 
@@ -313,6 +319,7 @@ run_monitoring_java() {
     # Build command with conditional perf option
     local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" \
       --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-quantization-input-file \"$CUSTOM_QUANTIZATION_INPUT_FILE_PATH\" \
       --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
       --thread-distribution \"${thread_distribution}\""
     # Add manual GC option if enabled
@@ -367,6 +374,7 @@ run_monitoring_r() {
     # Build command with conditional perf option
     local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" --repository-r \"$REPOSITORY_R\" \
       --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-quantization-input-file \"$CUSTOM_QUANTIZATION_INPUT_FILE_PATH\" \
       --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
       --thread-distribution \"$THREAD_DISTRIBUTION\""
 
