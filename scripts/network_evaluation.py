@@ -22,40 +22,118 @@ class NetworkEvaluator:
         
         Args:
             file_path: Path to the gold standard file (tab-separated: A \t B \t X)
-            num_genes_B: Number of genes B (if not provided, will be inferred)
+            num_genes_B: Total number of genes B in the full network (if not provided, will be inferred)
         """
         # Read the tab-separated file
         df = pd.read_csv(file_path, sep='\t', header=None, names=['Gene_A', 'Gene_B', 'Score'])
         
-        # Get unique genes
-        unique_A = df['Gene_A'].unique()
-        unique_B = df['Gene_B'].unique()
+        # Get unique genes from the gold standard
+        unique_A = sorted(df['Gene_A'].unique())
+        unique_B = sorted(df['Gene_B'].unique())
         
-        if num_genes_B is None:
-            num_genes_B = len(unique_B)
+        # The gene labels should be the unique_B genes that appear in gold standard
+        self.gene_labels = unique_B.copy()
+        
+        # If num_genes_B is provided, it means the full network has more genes than in gold standard
+        # We need to create a mapping to the full gene space
+        if num_genes_B is not None:
+            # Create full gene space (G1, G2, ..., G_num_genes_B)
+            full_gene_space = [f'G{i+1}' for i in range(num_genes_B)]
             
-        # Create gene labels (G1, G2, etc.)
-        self.gene_labels = unique_B
-        
-        # Initialize gold standard matrix (SizeA x SizeB)
-        self.gold_standard_matrix = np.zeros((len(unique_A), num_genes_B))
-        
-        # Fill the matrix
-        for _, row in df.iterrows():
-            # Assuming Gene_A and Gene_B are in format G1, G2, etc.
-            if row['Gene_A'].startswith('G') and row['Gene_B'].startswith('G'):
-                a_idx = int(row['Gene_A'][1:]) - 1  # Convert G1 -> 0, G2 -> 1, etc.
-                b_idx = int(row['Gene_B'][1:]) - 1
+            # Create mapping from gold standard genes to full gene space indices
+            gene_B_to_full_idx = {}
+            for gene in unique_B:
+                if gene in full_gene_space:
+                    gene_B_to_full_idx[gene] = full_gene_space.index(gene)
+            
+            # Initialize gold standard matrix (SizeA x num_genes_B)
+            self.gold_standard_matrix = np.zeros((len(unique_A), num_genes_B))
+            
+            # Create mapping for Gene_A to matrix row index
+            gene_A_to_idx = {gene: idx for idx, gene in enumerate(unique_A)}
+            
+            # Fill the matrix
+            for _, row in df.iterrows():
+                gene_a = row['Gene_A']
+                gene_b = row['Gene_B']
+                score = row['Score']
                 
-                if a_idx < len(unique_A) and b_idx < num_genes_B:
-                    # Find the index of Gene_A in unique_A list
-                    a_matrix_idx = np.where(unique_A == row['Gene_A'])[0][0]
-                    self.gold_standard_matrix[a_matrix_idx, b_idx] = row['Score']
-            else:
-                raise "Gold Standard invalid format"                    
+                if gene_a in gene_A_to_idx and gene_b in gene_B_to_full_idx:
+                    a_idx = gene_A_to_idx[gene_a]
+                    b_idx = gene_B_to_full_idx[gene_b]
+                    self.gold_standard_matrix[a_idx, b_idx] = score
+            
+            # Update gene_labels to reflect the full gene space
+            self.gene_labels = full_gene_space
+            
+        else:
+            # Use only genes present in gold standard
+            # Initialize gold standard matrix (SizeA x SizeB)
+            self.gold_standard_matrix = np.zeros((len(unique_A), len(unique_B)))
+            
+            # Create mappings
+            gene_A_to_idx = {gene: idx for idx, gene in enumerate(unique_A)}
+            gene_B_to_idx = {gene: idx for idx, gene in enumerate(unique_B)}
+            
+            # Fill the matrix
+            for _, row in df.iterrows():
+                gene_a = row['Gene_A']
+                gene_b = row['Gene_B']
+                score = row['Score']
+                
+                a_idx = gene_A_to_idx[gene_a]
+                b_idx = gene_B_to_idx[gene_b]
+                self.gold_standard_matrix[a_idx, b_idx] = score
         
         print(f"Gold standard matrix shape: {self.gold_standard_matrix.shape}")
+        print(f"Unique TFs (Gene A): {len(unique_A)} - {unique_A[:5]}{'...' if len(unique_A) > 5 else ''}")
+        print(f"Unique target genes (Gene B): {len(unique_B)} - {unique_B[:5]}{'...' if len(unique_B) > 5 else ''}")
+        print(f"Gene labels length: {len(self.gene_labels)}")
+        
+        # Store the TF labels for reference
+        self.tf_labels = unique_A
+        
         return self.gold_standard_matrix
+    
+    def get_gene_mapping_info(self):
+        """
+        Get information about gene mapping for debugging and verification.
+        """
+        if self.gold_standard_matrix is None:
+            print("Gold standard not loaded yet.")
+            return
+        
+        info = {
+            'gold_standard_shape': self.gold_standard_matrix.shape,
+            'num_tf_genes': len(self.tf_labels),
+            'num_target_genes': len(self.gene_labels),
+            'tf_genes': self.tf_labels,
+            'target_genes': self.gene_labels,
+            'non_zero_entries': np.count_nonzero(self.gold_standard_matrix),
+            'total_possible_entries': self.gold_standard_matrix.size,
+            'sparsity': 1 - (np.count_nonzero(self.gold_standard_matrix) / self.gold_standard_matrix.size)
+        }
+        
+        print("Gene Mapping Information:")
+        print("-" * 30)
+        print(f"Gold standard matrix shape: {info['gold_standard_shape']}")
+        print(f"Number of TF genes (rows): {info['num_tf_genes']}")
+        print(f"Number of target genes (columns): {info['num_target_genes']}")
+        print(f"Non-zero entries: {info['non_zero_entries']}")
+        print(f"Total possible entries: {info['total_possible_entries']}")
+        print(f"Sparsity: {info['sparsity']:.4f}")
+        
+        if len(self.tf_labels) <= 20:
+            print(f"TF genes: {self.tf_labels}")
+        else:
+            print(f"TF genes (first 10): {self.tf_labels[:10]}...")
+            
+        if len(self.gene_labels) <= 20:
+            print(f"Target genes: {self.gene_labels}")
+        else:
+            print(f"Target genes (first 10): {self.gene_labels[:10]}...")
+        
+        return info
     
     def load_predicted_matrix(self, matrix_path, has_variance_path=None):
         """
@@ -323,7 +401,14 @@ def run_evaluation_example():
     evaluator = NetworkEvaluator()
     
     # Example: Load gold standard (you would use your actual file path)
+    # Option 1: Let the system infer the number of genes from gold standard
+    # evaluator.load_gold_standard('gold_standard.txt')
+    
+    # Option 2: Specify total number of genes if gold standard omits some genes
     # evaluator.load_gold_standard('gold_standard.txt', num_genes_B=100)
+    
+    # Check gene mapping information
+    # evaluator.get_gene_mapping_info()
     
     # Example: Load predicted matrix (you would use your actual file paths)
     # evaluator.load_predicted_matrix('predicted_matrix.txt', 'has_variance.txt')
@@ -346,14 +431,23 @@ if __name__ == "__main__":
     print("To use this script:")
     print("1. Create a NetworkEvaluator instance")
     print("2. Load your gold standard using load_gold_standard()")
-    print("3. Load your predicted matrix using load_predicted_matrix()")
-    print("4. Run the evaluation methods")
+    print("3. Check gene mapping with get_gene_mapping_info()")
+    print("4. Load your predicted matrix using load_predicted_matrix()")
+    print("5. Run the evaluation methods")
     print("\nExample:")
     print("evaluator = NetworkEvaluator()")
-    print("evaluator.load_gold_standard('gold_standard.txt')")
+    print("evaluator.load_gold_standard('gold_standard.txt', num_genes_B=100)")
+    print("evaluator.get_gene_mapping_info()  # Check gene mapping")
     print("evaluator.load_predicted_matrix('predicted.txt', 'has_variance.txt')")
     print("evaluator.plot_confusion_matrix_heatmap()")
     print("# ... run other evaluation methods")
     
     evaluator = NetworkEvaluator()
+
     evaluator.load_gold_standard('data/DREAM5_NetworkInference_GoldStandard_Network3.tsv')
+    evaluator.get_gene_mapping_info()
+    evaluator.load_predicted_matrix('../final-delivery/dimreduction/references/final_data/full-gui-final_data.txt')
+    
+    evaluator.plot_confusion_matrix_heatmap()
+    
+    
