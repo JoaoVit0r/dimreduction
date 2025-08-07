@@ -10,6 +10,8 @@ from sklearn.preprocessing import label_binarize
 import warnings
 warnings.filterwarnings('ignore')
 
+PLOT_SHOW = False;
+
 class NetworkEvaluator:
     def __init__(self):
         self.gold_standard_matrix = None
@@ -135,6 +137,100 @@ class NetworkEvaluator:
         
         return info
     
+    def debug_gene_mapping(self):
+        """
+        Debug method to check gene name to index mapping.
+        """
+        if self.gene_labels is None:
+            print("Gene labels not loaded yet.")
+            return
+        
+        print("Gene Mapping Debug Information:")
+        print("-" * 40)
+        
+        print("\nTarget genes (first 10):")
+        for i, gene in enumerate(self.gene_labels[:10]):
+            if gene.startswith('G'):
+                try:
+                    gene_idx = int(gene[1:]) - 1
+                    print(f"  {gene} -> predicted matrix index {gene_idx}")
+                except ValueError:
+                    print(f"  {gene} -> ERROR: cannot parse index")
+        
+        if hasattr(self, 'tf_labels') and self.tf_labels is not None:
+            print("\nTF genes (first 10):")
+            for i, tf in enumerate(self.tf_labels[:10]):
+                if tf.startswith('G'):
+                    try:
+                        tf_idx = int(tf[1:]) - 1
+                        print(f"  {tf} -> predicted matrix index {tf_idx}")
+                    except ValueError:
+                        print(f"  {tf} -> ERROR: cannot parse index")
+        
+        if self.predicted_matrix is not None:
+            print(f"\nPredicted matrix dimensions: {self.predicted_matrix.shape}")
+            max_gene_idx = max([int(gene[1:]) - 1 for gene in self.gene_labels if gene.startswith('G')])
+            if hasattr(self, 'tf_labels'):
+                max_tf_idx = max([int(tf[1:]) - 1 for tf in self.tf_labels if tf.startswith('G')])
+                print(f"Max TF index needed: {max_tf_idx}")
+            print(f"Max target gene index needed: {max_gene_idx}")
+            print(f"Predicted matrix can accommodate: {self.predicted_matrix.shape[0] - 1} (0-indexed)")
+    
+    def get_evaluation_subset_info(self):
+        """
+        Get information about which subset of the predicted matrix will be used for evaluation.
+        """
+        if self.gold_standard_matrix is None:
+            print("Gold standard not loaded yet.")
+            return
+        
+        # Count how many TF->gene pairs will be evaluated
+        evaluable_pairs = 0
+        total_gold_pairs = 0
+        
+        # Create mappings
+        gene_name_to_pred_idx = {}
+        for gene in self.gene_labels:
+            if gene.startswith('G'):
+                try:
+                    gene_idx = int(gene[1:]) - 1
+                    if self.predicted_matrix is not None and 0 <= gene_idx < self.predicted_matrix.shape[0]:
+                        gene_name_to_pred_idx[gene] = gene_idx
+                except ValueError:
+                    pass
+        
+        tf_name_to_pred_idx = {}
+        if hasattr(self, 'tf_labels'):
+            for tf in self.tf_labels:
+                if tf.startswith('G'):
+                    try:
+                        tf_idx = int(tf[1:]) - 1
+                        if self.predicted_matrix is not None and 0 <= tf_idx < self.predicted_matrix.shape[0]:
+                            tf_name_to_pred_idx[tf] = tf_idx
+                    except ValueError:
+                        pass
+        
+        # Count evaluable pairs
+        for tf_idx, tf_gene in enumerate(self.tf_labels):
+            for target_idx, target_gene in enumerate(self.gene_labels):
+                total_gold_pairs += 1
+                if tf_gene in tf_name_to_pred_idx and target_gene in gene_name_to_pred_idx:
+                    evaluable_pairs += 1
+        
+        print("Evaluation Subset Information:")
+        print("-" * 30)
+        print(f"Total gold standard entries: {total_gold_pairs}")
+        print(f"Evaluable pairs (present in predicted matrix): {evaluable_pairs}")
+        print(f"Coverage: {evaluable_pairs/total_gold_pairs*100:.2f}%")
+        print(f"Predicted matrix total size: {self.predicted_matrix.size if self.predicted_matrix is not None else 'Not loaded'}")
+        print(f"Evaluation will use: {evaluable_pairs} entries")
+        
+        return {
+            'total_gold_pairs': total_gold_pairs,
+            'evaluable_pairs': evaluable_pairs,
+            'coverage_percent': evaluable_pairs/total_gold_pairs*100 if total_gold_pairs > 0 else 0
+        }
+    
     def load_predicted_matrix(self, matrix_path, has_variance_path=None):
         """
         Load predicted adjacency matrix and adjust for missing genes if needed.
@@ -181,14 +277,11 @@ class NetworkEvaluator:
     
     def prepare_for_evaluation(self):
         """
-        Prepare matrices for evaluation by ensuring compatible dimensions.
+        Prepare matrices for evaluation by filtering predicted matrix to match gold standard structure.
+        Only compares TF->gene pairs that exist in the gold standard.
         """
         if self.gold_standard_matrix is None or self.predicted_matrix is None:
             raise ValueError("Both gold standard and predicted matrices must be loaded first")
-        
-        # For evaluation, we need to compare at the same granularity
-        # If gold standard is SizeA x SizeB and predicted is SizeB x SizeB,
-        # we extract the relevant part of the predicted matrix
         
         gold_shape = self.gold_standard_matrix.shape
         pred_shape = self.predicted_matrix.shape
@@ -196,19 +289,60 @@ class NetworkEvaluator:
         print(f"Gold standard shape: {gold_shape}")
         print(f"Predicted matrix shape: {pred_shape}")
         
-        # If the predicted matrix is square and larger, extract the relevant submatrix
-        if len(gold_shape) == 2 and len(pred_shape) == 2:
-            if pred_shape[0] == pred_shape[1] and gold_shape[1] == pred_shape[1]:
-                # Extract the first SizeA rows to match gold standard
-                self.predicted_matrix_eval = self.predicted_matrix[:gold_shape[0], :]
-            else:
-                self.predicted_matrix_eval = self.predicted_matrix
-        else:
-            self.predicted_matrix_eval = self.predicted_matrix
+        # Create mappings from gene names to matrix indices
+        # Assuming gene_labels are in format G1, G2, etc. and correspond to matrix indices
+        gene_name_to_pred_idx = {}
+        for i, gene in enumerate(self.gene_labels):
+            if gene.startswith('G'):
+                try:
+                    # Extract gene number (G1 -> 0, G2 -> 1, etc.)
+                    gene_idx = int(gene[1:]) - 1
+                    if 0 <= gene_idx < pred_shape[0]:  # Ensure valid index
+                        gene_name_to_pred_idx[gene] = gene_idx
+                except ValueError:
+                    print(f"Warning: Could not parse gene index from {gene}")
         
-        print(f"Evaluation matrices - Gold: {self.gold_standard_matrix.shape}, Pred: {self.predicted_matrix_eval.shape}")
+        # Create mapping for TF genes to predicted matrix indices
+        tf_name_to_pred_idx = {}
+        for tf in self.tf_labels:
+            if tf.startswith('G'):
+                try:
+                    tf_idx = int(tf[1:]) - 1
+                    if 0 <= tf_idx < pred_shape[0]:
+                        tf_name_to_pred_idx[tf] = tf_idx
+                except ValueError:
+                    print(f"Warning: Could not parse TF index from {tf}")
         
-        return self.gold_standard_matrix.flatten(), self.predicted_matrix_eval.flatten()
+        print(f"Mapped {len(gene_name_to_pred_idx)} target genes to predicted matrix")
+        print(f"Mapped {len(tf_name_to_pred_idx)} TF genes to predicted matrix")
+        
+        # Extract only the relevant entries from both matrices
+        gold_values = []
+        pred_values = []
+        
+        # Iterate through gold standard matrix and extract corresponding predicted values
+        for tf_idx, tf_gene in enumerate(self.tf_labels):
+            for target_idx, target_gene in enumerate(self.gene_labels):
+                gold_value = self.gold_standard_matrix[tf_idx, target_idx]
+                
+                # Get predicted value if both genes are mappable
+                if tf_gene in tf_name_to_pred_idx and target_gene in gene_name_to_pred_idx:
+                    pred_tf_idx = tf_name_to_pred_idx[tf_gene]
+                    pred_target_idx = gene_name_to_pred_idx[target_gene]
+                    pred_value = self.predicted_matrix[pred_tf_idx, pred_target_idx]
+                    
+                    gold_values.append(gold_value)
+                    pred_values.append(pred_value)
+        
+        gold_values = np.array(gold_values)
+        pred_values = np.array(pred_values)
+        
+        print(f"Extracted {len(gold_values)} matching TF->gene pairs")
+        print(f"Gold standard range: [{gold_values.min():.4f}, {gold_values.max():.4f}]")
+        print(f"Predicted values range: [{pred_values.min():.4f}, {pred_values.max():.4f}]")
+        print(f"Non-zero gold standard entries: {np.count_nonzero(gold_values)}")
+        
+        return gold_values, pred_values
     
     def plot_confusion_matrix_heatmap(self, threshold=0.5, save_path='confusion_matrix.png'):
         """
@@ -233,7 +367,8 @@ class NetworkEvaluator:
         plt.ylabel('Actual')
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.show()
+        if PLOT_SHOW:
+            plt.show()
         
         return cm
     
@@ -257,7 +392,8 @@ class NetworkEvaluator:
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.show()
+        if PLOT_SHOW:
+            plt.show()
         
         return precision, recall, thresholds, avg_precision
     
@@ -282,7 +418,8 @@ class NetworkEvaluator:
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.show()
+        if PLOT_SHOW:
+            plt.show()
         
         return fpr, tpr, thresholds, roc_auc
     
@@ -310,7 +447,8 @@ class NetworkEvaluator:
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.show()
+        if PLOT_SHOW:
+            plt.show()
         
         # Find optimal threshold
         optimal_idx = np.argmax(f_scores)
@@ -350,7 +488,8 @@ class NetworkEvaluator:
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.show()
+        if PLOT_SHOW:
+            plt.show()
         
         return thresholds, precisions, recalls
     
@@ -431,14 +570,17 @@ if __name__ == "__main__":
     print("To use this script:")
     print("1. Create a NetworkEvaluator instance")
     print("2. Load your gold standard using load_gold_standard()")
-    print("3. Check gene mapping with get_gene_mapping_info()")
+    print("3. Check gene mapping with get_gene_mapping_info() and debug_gene_mapping()")
     print("4. Load your predicted matrix using load_predicted_matrix()")
-    print("5. Run the evaluation methods")
+    print("5. Check evaluation subset with get_evaluation_subset_info()")
+    print("6. Run the evaluation methods")
     print("\nExample:")
     print("evaluator = NetworkEvaluator()")
     print("evaluator.load_gold_standard('gold_standard.txt', num_genes_B=100)")
     print("evaluator.get_gene_mapping_info()  # Check gene mapping")
     print("evaluator.load_predicted_matrix('predicted.txt', 'has_variance.txt')")
+    print("evaluator.debug_gene_mapping()  # Debug gene->index mapping")
+    print("evaluator.get_evaluation_subset_info()  # Check evaluation coverage")
     print("evaluator.plot_confusion_matrix_heatmap()")
     print("# ... run other evaluation methods")
     
@@ -446,8 +588,14 @@ if __name__ == "__main__":
 
     evaluator.load_gold_standard('data/DREAM5_NetworkInference_GoldStandard_Network3.tsv')
     evaluator.get_gene_mapping_info()
+
     evaluator.load_predicted_matrix('../final-delivery/dimreduction/references/final_data/full-gui-final_data.txt')
+    evaluator.debug_gene_mapping()
+    evaluator.get_evaluation_subset_info()
     
-    evaluator.plot_confusion_matrix_heatmap()
-    
-    
+    name="full-gui-final_data"
+    evaluator.plot_confusion_matrix_heatmap(threshold=0.7, save_path=f"confusion_matrix_{name}.png")
+    evaluator.plot_precision_recall_curve(save_path = f'precision_recall_curve_{name}.png')
+    evaluator.plot_roc_curve(save_path = f'roc_curve_{name}.png')
+    evaluator.plot_precision_recall_vs_threshold(save_path = f'precision_recall_vs_threshold_{name}.png')
+    evaluator.plot_fscore_vs_threshold(save_path = f'fscore_vs_threshold_{name}.png')
