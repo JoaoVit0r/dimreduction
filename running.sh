@@ -77,9 +77,38 @@ set -e
 #     geneci;
 
 # Run VM2 GeneciGeneci
+# ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
+#     --thread-distribution none --threads 1 \
+#     --repository-geneci ../dimreduction_external_comparisons \
+#     --custom-input-file input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv \
+#     --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
+#     geneci;
+
+# run again, clr script was not pushed
 ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
     --thread-distribution none --threads 1 \
     --repository-geneci ../dimreduction_external_comparisons \
     --custom-input-file input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv \
-    --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
+    --geneci-files run_geneci_clr.sh \
     geneci;
+
+# # Run Local FIX ENV TO DREAM4
+# cd $THESIS_HOME/virt_machine/java-dimreduction
+# sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+# sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+# sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+
+# cd $THESIS_HOME/dimreduction
+# sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+# sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+# sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+
+# FORMATTED_INPUT_FILE=$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP_DimReduction/dream4_100_01_exp.csv
+
+# # Run Local JAVA DREAM4
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --repository-java $THESIS_HOME/virt_machine/java-dimreduction --custom-input-file $FORMATTED_INPUT_FILE java
+
+
+
+# # Run Local Python DREAM4
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_pypy venv_v12 venv_14t venv_13t
