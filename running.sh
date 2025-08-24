@@ -59,10 +59,27 @@ set -e
 #     --r-files run_genie3.R \
 #     Rscript
 
-./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 \
-    --thread-distribution none --threads 4 \
-    --repository-r ../test_external_code/try_minet \
-    --custom-quantization-input-file ../../final-delivery/dimreduction/inputs_files/quantized_data/40-gui-quantized_data.txt \
-    --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv \
-    --r-files run_clr.R,run_aracne.R,run_genie3.R \
-    Rscript
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 \
+#     --thread-distribution none --threads 4 \
+#     --repository-r ../test_external_code/try_minet \
+#     --custom-quantization-input-file ../../final-delivery/dimreduction/inputs_files/quantized_data/40-gui-quantized_data.txt \
+#     --custom-input-file ../../writing/output/processed_dataset_dream5_40.csv \
+#     --r-files run_clr.R,run_aracne.R,run_genie3.R \
+#     Rscript
+
+
+# Run Local Geneci
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 \
+#     --thread-distribution none --threads 1 \
+#     --repository-geneci ../test_external_code/try_minet \
+#     --custom-input-file input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv \
+#     --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
+#     geneci;
+
+# Run VM2 GeneciGeneci
+./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
+    --thread-distribution none --threads 1 \
+    --repository-geneci ../dimreduction_external_comparisons \
+    --custom-input-file input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv \
+    --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
+    geneci;

@@ -25,6 +25,7 @@ CUSTOM_QUANTIZATION_INPUT_FILE_PATH=""
 NUMBER_OF_EXECUTIONS=3
 PYTHON_FILES=("main_from_cli.py")
 R_FILES=("run_clr.R")
+GENECI_FILES=()
 THREADS="1,2,4,8"  # Default thread counts
 THREAD_DISTRIBUTION="spaced"  # Default thread distribution
 SKIP_MONITORING=false
@@ -60,6 +61,10 @@ while [[ $# -gt 0 ]]; do
             REPOSITORY_R="${2:-../dimreduction_external_comparisons}"
             shift 2
             ;;
+        --repository-geneci)
+            REPOSITORY_GENECI="${2:-../dimreduction_external_comparisons}"
+            shift 2
+            ;;
         --number-of-executions)
             NUMBER_OF_EXECUTIONS="$2"
             shift 2
@@ -80,6 +85,11 @@ while [[ $# -gt 0 ]]; do
         --r-files)
             # Convert comma-separated string to array
             IFS=',' read -r -a R_FILES <<< "$2"
+            shift 2
+            ;;
+        --geneci-files)
+            # Convert comma-separated string to array
+            IFS=',' read -r -a GENECI_FILES <<< "$2"
             shift 2
             ;;
         --threads)
@@ -190,6 +200,7 @@ echo "==============================================="
 REPOSITORY_PYTHON=$(realpath "$REPOSITORY_PYTHON")
 REPOSITORY_JAVA=$(realpath "$REPOSITORY_JAVA")
 REPOSITORY_R=$(realpath "$REPOSITORY_R")
+REPOSITORY_GENECI=$(realpath "$REPOSITORY_GENECI")
 
 if [ -f "$REPOSITORY_PYTHON"/venv/bin/activate ]; then
     . "$REPOSITORY_PYTHON"/venv/bin/activate
@@ -394,6 +405,54 @@ run_monitoring_r() {
     echo "-----------------------------------------------"
 }
 
+# Function to run monitoring and move files
+run_monitoring_bash() {
+    local command_bin=$1
+    local script=$2
+    local thread_count=$3
+    local thread_distribution="none"
+
+    local script_name
+    script_name="$(basename "${script}")"
+    local output_dir="${BASE_DIR}/dataset_${DATASET_NAME}/${command_bin}/${script_name%.sh}/distribution_${thread_distribution}/threads_${thread_count}"
+    mkdir -p "${output_dir}"
+    
+    echo -e "\n================================================================="
+    echo "Running Monitoring"
+    echo "================================================================="
+    echo "R repository: ${REPOSITORY_GENECI}"
+    echo "Environment: ${command_bin}"
+    echo "Script: ${script_name}"
+    echo "Thread Count: ${thread_count}"
+    echo "Output Directory: ${output_dir}"
+    if [ "$ENABLE_PERF" = true ]; then
+        echo "Perf Profiling: Enabled"
+    fi
+    echo "==============================================="
+
+    # Build command with conditional perf option
+    local monitor_cmd="$MONITOR_SCRIPT --output-dir \"${output_dir}\" --repository-python \"$REPOSITORY_PYTHON\" --repository-geneci \"$REPOSITORY_GENECI\" \
+      --sleep-time \"$MONITOR_SLEEP_TIME\" --number-of-executions \"$NUMBER_OF_EXECUTIONS\" \
+      --custom-quantization-input-file \"$CUSTOM_QUANTIZATION_INPUT_FILE_PATH\" \
+      --custom-input-file \"$CUSTOM_INPUT_FILE_PATH\" --threads \"$thread_count\" \
+      --thread-distribution \"$THREAD_DISTRIBUTION\""
+
+    # Add perf option if enabled
+    if [ "$ENABLE_PERF" = true ]; then
+        echo "Perf not supported to bash executions"
+    fi
+    monitor_cmd+=" \"bash\" \"${script}\""
+    
+    echo "Running: $monitor_cmd"
+    cd "$REPOSITORY_GENECI" || exit
+    eval "$monitor_cmd"
+    cd - || exit
+    
+    echo -e "\n-----------------------------------------------"
+    echo "Completed ${command_bin} with ${script_name} using ${thread_count} threads"
+    echo "-----------------------------------------------"
+}
+
 # Convert thread counts string to array
 IFS=',' read -r -a THREAD_COUNTS <<< "$THREADS"
 # Convert thread distribution string to array
@@ -413,6 +472,15 @@ for cmd in "${COMMANDS[@]}"; do
             for thread_distribution in "${THREAD_DISTRIBUTION[@]}"; do
                 for thread_count in "${THREAD_COUNTS[@]}"; do
                     run_monitoring_r "$cmd" "$REPOSITORY_R/$r_file" "$thread_count"
+                    wait_between_executions
+                done
+            done
+        done
+    elif [ "$cmd" == "geneci" ]; then
+        for r_file in "${GENECI_FILES[@]}"; do
+            for thread_distribution in "${THREAD_DISTRIBUTION[@]}"; do
+                for thread_count in "${THREAD_COUNTS[@]}"; do
+                    run_monitoring_bash "$cmd" "$REPOSITORY_GENECI/$r_file" "$thread_count"
                     wait_between_executions
                 done
             done
