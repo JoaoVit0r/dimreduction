@@ -97,6 +97,8 @@ set -e
 # sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
 # sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
 # sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+# sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
+# sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
 
 # cd $THESIS_HOME/dimreduction
 # sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
@@ -108,18 +110,20 @@ set -e
 # # Run Local JAVA DREAM4
 # ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --repository-java $THESIS_HOME/virt_machine/java-dimreduction --custom-input-file $FORMATTED_INPUT_FILE java
 
+# Run Local Python DREAM4
+./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
 
 
-# # Run Local Python DREAM4
-# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
 
 # Run VM2 FIX ENV TO DREAM4
 cd ~/workspace/dimreduction-java
 sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
 sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
 sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
-sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=false/g" .env;
+sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
 sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
+sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
+sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
 
 cd ~/workspace/dimreduction-python
 sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
@@ -128,10 +132,27 @@ sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
 
 FORMATTED_INPUT_FILE=~/workspace/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/dream4_100_01_exp.csv
 
-# Run VM2 JAVA DREAM4
-./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 --thread-distribution none --threads 1  --custom-input-file $FORMATTED_INPUT_FILE java
+for ORIGINAL_INPUT_FILE in "../dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP/dream4_100"*; do
 
+    FORMATTED_INPUT_FILE="$INPUT_ROOT_FOLDER/$PROJECT/EXP_DimReduction/"
+    FORMATTED_INPUT_FILE+=$(basename "$ORIGINAL_INPUT_FILE")
 
+    # Run VM2 JAVA DREAM4
+    ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
+        --sleep-time-monitor 5 \
+        --thread-distribution none --threads 1 \
+        --custom-input-file $FORMATTED_INPUT_FILE \
+        java;
 
-# Run VM2 Python DREAM4
-./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_pypy venv_v12 venv_14t venv_13t
+    # Run VM2 GeneciGeneci
+    ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
+        --sleep-time-monitor 5 \
+        --thread-distribution none --threads 1 \
+        --repository-geneci ../dimreduction_external_comparisons \
+        --custom-input-file $ORIGINAL_INPUT_FILE \
+        --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
+        geneci;
+
+    # # Run VM2 Python DREAM4
+    # ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_pypy venv_v12 venv_14t venv_13t
+done
