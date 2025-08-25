@@ -84,13 +84,13 @@ set -e
 #     --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
 #     geneci;
 
-# run again, clr script was not pushed
-./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
-    --thread-distribution none --threads 1 \
-    --repository-geneci ../dimreduction_external_comparisons \
-    --custom-input-file input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv \
-    --geneci-files run_geneci_clr.sh \
-    geneci;
+# # run again, clr script was not pushed
+# ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
+#     --thread-distribution none --threads 1 \
+#     --repository-geneci ../dimreduction_external_comparisons \
+#     --custom-input-file input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv \
+#     --geneci-files run_geneci_clr.sh \
+#     geneci;
 
 # # Run Local FIX ENV TO DREAM4
 # cd $THESIS_HOME/virt_machine/java-dimreduction
@@ -111,4 +111,27 @@ set -e
 
 
 # # Run Local Python DREAM4
-# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_pypy venv_v12 venv_14t venv_13t
+# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
+
+# Run VM2 FIX ENV TO DREAM4
+cd ~/workspace/dimreduction-java
+sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=false/g" .env;
+sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
+
+cd ~/workspace/dimreduction-python
+sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+
+FORMATTED_INPUT_FILE=~/workspace/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/dream4_100_01_exp.csv
+
+# Run VM2 JAVA DREAM4
+./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 --thread-distribution none --threads 1  --custom-input-file $FORMATTED_INPUT_FILE java
+
+
+
+# Run VM2 Python DREAM4
+./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_pypy venv_v12 venv_14t venv_13t
