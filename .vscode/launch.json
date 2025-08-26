@@ -69,6 +69,14 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "args": ["${command:pickArgs}"]
+    },
+    {
+      "name": "Evaluate",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/geneci_evaluate.py",
+      "console": "integratedTerminal",
+      "args": ["--monitoring-dir", "monitoring_plots/20250824_23573*", "--external-projects", "../test_external_code/try_minet"]
     }
   ]
 }
