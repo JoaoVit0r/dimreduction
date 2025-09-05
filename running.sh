@@ -151,7 +151,7 @@ FORMATTED_INPUT_FILE=~/workspace/dimreduction_external_comparisons/input_data/ge
 
 for ORIGINAL_INPUT_FILE in "../dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP/dream4_100"*; do
 
-    FORMATTED_INPUT_FILE="$INPUT_ROOT_FOLDER/$PROJECT/EXP_DimReduction/"
+    FORMATTED_INPUT_FILE="$HOME/workspace/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/"
     FORMATTED_INPUT_FILE+=$(basename "$ORIGINAL_INPUT_FILE")
 
     # Run VM2 JAVA DREAM4
