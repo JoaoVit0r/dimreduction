@@ -23,15 +23,15 @@ def load_adjacency_matrix(matrix_file, delimiter='\t', has_header=False):
     """Load adjacency matrix from delimited file with optional header."""
     try:
         if has_header:
-            with open(matrix_file) as f:
-                num_lines = sum(1 for _ in f)
-            # Skip first row if header is present
-            matrix = np.loadtxt(matrix_file, delimiter=delimiter, skiprows=1, usecols=range(1, num_lines))
-            print(f"Loaded adjacency matrix of shape: {matrix.shape} (skipped header row)")
+            # Use pandas to handle headers more robustly
+            df = pd.read_csv(matrix_file, sep=delimiter, index_col=0)
+            matrix = df.values
+            print(f"Loaded adjacency matrix of shape: {matrix.shape} (with header)")
+            return matrix
         else:
             matrix = np.loadtxt(matrix_file, delimiter=delimiter)
             print(f"Loaded adjacency matrix of shape: {matrix.shape} (no header)")
-        return matrix
+            return matrix
     except Exception as e:
         print(f"Error loading adjacency matrix: {e}")
         print(f"Make sure the file uses '{delimiter}' as delimiter and has_header={has_header}")
@@ -94,6 +94,8 @@ def adjacency_to_dream5(matrix, gene_labels, tf_list, max_predictions=100000):
     
     # Create mapping from gene names to indices
     gene_to_idx = {gene: idx for idx, gene in enumerate(gene_labels)}
+    
+    # Get indices of all transcription factors
     tf_indices = [gene_to_idx[tf] for tf in tf_list if tf in gene_to_idx]
     
     print(f"Processing {len(tf_indices)} transcription factors...")
@@ -115,7 +117,7 @@ def adjacency_to_dream5(matrix, gene_labels, tf_list, max_predictions=100000):
                 predictions.append({
                     'tf_gene': tf_gene,
                     'target_gene': target_gene,
-                    'confidence_score': abs(confidence)  # Use absolute value for confidence
+                    'confidence_score': confidence
                 })
     
     # Convert to DataFrame and sort by confidence (descending)
@@ -128,14 +130,15 @@ def adjacency_to_dream5(matrix, gene_labels, tf_list, max_predictions=100000):
     # Sort by confidence score in descending order (most confident first)
     df = df.sort_values('confidence_score', ascending=False)
     
-    # Normalize confidence scores to [0, 1] range
-    if df['confidence_score'].max() > 1 or df['confidence_score'].min() < 0:
-        min_score = df['confidence_score'].min()
-        max_score = df['confidence_score'].max()
-        if max_score > min_score:
-            df['confidence_score'] = (df['confidence_score'] - min_score) / (max_score - min_score)
-        else:
-            df['confidence_score'] = 1.0  # All scores are the same
+    # Normalize confidence scores to [0, 1] range if needed
+    min_score = df['confidence_score'].min()
+    max_score = df['confidence_score'].max()
+    
+    if min_score != max_score:  # Avoid division by zero
+        df['confidence_score'] = (df['confidence_score'] - min_score) / (max_score - min_score)
+    else:
+        # All scores are the same, set to 1.0 or keep as is
+        df['confidence_score'] = 1.0 if max_score != 0 else 0.0
     
     # Limit to maximum number of predictions
     if len(df) > max_predictions:
@@ -148,7 +151,7 @@ def adjacency_to_dream5(matrix, gene_labels, tf_list, max_predictions=100000):
 def save_dream5_format(df, output_file):
     """Save predictions in DREAM5 format."""
     try:
-        # Save as tab-separated file without index and header
+        # Save as comma-separated file without index and header
         df.to_csv(output_file, sep=',', index=False, header=False)
         print(f"Saved {len(df)} predictions to: {output_file}")
     except Exception as e:
@@ -172,14 +175,14 @@ Examples:
     python dream5_converter.py matrix.txt predictions.txt --sep " "
     
     # With custom gene labels and TF list
-    python dream5_converter.py matrix.txt predictions.txt gene_labels.txt tf_list.txt --header
+    python dream5_converter.py matrix.txt predictions.txt --gene-labels gene_labels.txt --tf-list tf_list.txt --header
         """
     )
     
     parser.add_argument('matrix_file', help='Input adjacency matrix file')
     parser.add_argument('output_file', help='Output predictions file in DREAM5 format')
-    parser.add_argument('gene_labels', nargs='?', help='Optional: file with gene labels (one per line)')
-    parser.add_argument('tf_list', nargs='?', help='Optional: file with transcription factor list (one per line)')
+    parser.add_argument('--gene-labels', help='Optional: file with gene labels (one per line)')
+    parser.add_argument('--tf-list', help='Optional: file with transcription factor list (one per line)')
     
     parser.add_argument('--separator', '--sep', default='\t', 
                         help='Column separator in matrix file (default: tab)')

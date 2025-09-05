@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to calculate additional evaluation metrics (TP, TN, FP, FN) by comparing
-a predicted network against a gold standard reference.
+a predicted network against a gold standard reference, following DREAM challenge methodology.
 """
 
 import os
@@ -11,7 +11,7 @@ import numpy as np
 from pathlib import Path
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Calculate TP, TN, FP, FN metrics for network predictions')
+    parser = argparse.ArgumentParser(description='Calculate TP, TN, FP, FN metrics for network predictions following DREAM challenge methodology')
     parser.add_argument('--prediction', required=True, help='Path to prediction file (matrix or list format)')
     parser.add_argument('--gold-standard', required=True, help='Path to gold standard file (matrix or list format)')
     parser.add_argument('--pred-format', choices=['matrix', 'list'], required=True, 
@@ -28,17 +28,27 @@ def parse_args():
                         help='Gold standard file has header row')
     parser.add_argument('--pred-sep', default=',', help='Delimiter for prediction file (default: comma)')
     parser.add_argument('--gold-sep', default=',', help='Delimiter for gold standard files (default: comma)')
+    parser.add_argument('--max-edges', type=int, default=100000,
+                        help='Maximum number of edges to consider (DREAM challenge uses 100,000)')
+    parser.add_argument('--gene-prefix', default='G', help='Prefix for gene names when matrix has no header (default: G)')
     return parser.parse_args()
 
-def read_matrix_file(file_path, has_header=False, sep=','):
+def read_matrix_file(file_path, has_header=False, sep=',', gene_prefix='G'):
     """Read a matrix file and return as DataFrame"""
     if sep == "tab":
         sep = "\t"
 
     if has_header:
-        return pd.read_csv(file_path, sep=sep, index_col=0)
+        df = pd.read_csv(file_path, sep=sep, index_col=0)
     else:
-        return pd.read_csv(file_path, sep=sep, header=None)
+        df = pd.read_csv(file_path, sep=sep, header=None)
+        # Create gene names if no header
+        n_genes = df.shape[0]
+        gene_names = [f"{gene_prefix}{i+1}" for i in range(n_genes)]
+        df.index = gene_names
+        df.columns = gene_names
+    
+    return df
 
 def read_list_file(file_path, has_header=False, sep=','):
     """Read a list file and return as DataFrame"""
@@ -53,7 +63,7 @@ def read_list_file(file_path, has_header=False, sep=','):
 def matrix_to_edges(matrix_df, threshold=0.5):
     """Convert a matrix to a set of edges with weights"""
     edges = set()
-    nodes = matrix_df.index if matrix_df.index.name else range(matrix_df.shape[0])
+    nodes = matrix_df.index
     
     for i, regulator in enumerate(nodes):
         for j, target in enumerate(nodes):
@@ -78,65 +88,105 @@ def list_to_edges(list_df, threshold=0.5):
     
     return edges
 
-def calculate_metrics(pred_edges, gold_edges):
-    """Calculate TP, TN, FP, FN metrics"""
-    # Get all possible edges from both sets
-    all_edges = set()
-    for edge in pred_edges | gold_edges:
-        all_edges.add((edge[0], edge[1]))  # Just regulator, target pairs
+def get_gold_standard_genes(gold_df, gold_format):
+    """Extract all genes present in the gold standard"""
+    genes = set()
+    
+    if gold_format == 'matrix':
+        # For matrix format, genes are row and column names
+        genes.update(gold_df.index.tolist())
+        genes.update(gold_df.columns.tolist())
+    else:
+        # For list format, genes are in regulator and target columns
+        genes.update(gold_df['regulator'].tolist())
+        genes.update(gold_df['target'].tolist())
+    
+    return genes
+
+def filter_and_truncate_predictions(pred_edges, gold_genes, max_edges=100000):
+    """Filter predictions to include only genes in gold standard and truncate to max_edges"""
+    # Filter out predictions with genes not in gold standard
+    filtered_edges = [edge for edge in pred_edges if edge[0] in gold_genes and edge[1] in gold_genes]
+    
+    # Sort by absolute weight in descending order
+    filtered_edges.sort(key=lambda x: abs(x[2]), reverse=True)
+    
+    # Truncate to max_edges
+    truncated_edges = filtered_edges[:max_edges]
+    
+    return truncated_edges
+
+def calculate_metrics_dream(pred_edges, gold_edges, gold_genes, max_edges=100000):
+    """
+    Calculate TP, TN, FP, FN metrics following DREAM challenge methodology
+    """
+    # Filter and truncate predictions
+    pred_edges_filtered = filter_and_truncate_predictions(pred_edges, gold_genes, max_edges)
+    
+    # Convert to sets for faster lookup
+    pred_set = {(edge[0], edge[1]) for edge in pred_edges_filtered}
+    gold_set = {(edge[0], edge[1]) for edge in gold_edges}
+    
+    # Get all possible edges between gold standard genes (excluding self-loops)
+    all_possible_edges = set()
+    for regulator in gold_genes:
+        for target in gold_genes:
+            if regulator != target:
+                all_possible_edges.add((regulator, target))
     
     # Initialize counts
     tp = tn = fp = fn = 0
-    missing_in_pred = []
-    missing_in_gold = []
     
-    for edge in all_edges:
-        regulator, target = edge
-        
-        # Check if edge exists in prediction and gold standard
-        pred_exists = any(e[0] == regulator and e[1] == target for e in pred_edges)
-        gold_exists = any(e[0] == regulator and e[1] == target for e in gold_edges)
-        
-        if pred_exists and gold_exists:
+    # Count true positives and false positives
+    for edge in pred_set:
+        if edge in gold_set:
             tp += 1
-        elif not pred_exists and not gold_exists:
-            tn += 1
-        elif pred_exists and not gold_exists:
+        else:
             fp += 1
-            missing_in_gold.append((regulator, target))
-        else:  # not pred_exists and gold_exists
-            fn += 1
-            missing_in_pred.append((regulator, target))
     
-    return tp, tn, fp, fn, missing_in_pred, missing_in_gold
+    # Count false negatives (edges in gold standard but not in predictions)
+    for edge in gold_set:
+        if edge not in pred_set:
+            fn += 1
+    
+    # Count true negatives (edges not in gold standard and not in predictions)
+    tn = len(all_possible_edges) - tp - fp - fn
+    
+    # Calculate precision, recall, etc.
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+    accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0
+    
+    return tp, tn, fp, fn, precision, recall, f1_score, accuracy, len(all_possible_edges)
 
 def main():
     args = parse_args()
     
-    # Read prediction file
-    if args.pred_format == 'matrix':
-        pred_df = read_matrix_file(args.prediction, args.pred_has_header, args.pred_sep)
-        pred_edges = matrix_to_edges(pred_df, args.threshold)
-    else:
-        pred_df = read_list_file(args.prediction, args.pred_has_header, args.pred_sep)
-        pred_edges = list_to_edges(pred_df, args.threshold)
-    
-    # Read gold standard file
+    # Read gold standard first to get gene names
     if args.gold_format == 'matrix':
-        gold_df = read_matrix_file(args.gold_standard, args.gold_has_header, args.gold_sep)
+        gold_df = read_matrix_file(args.gold_standard, args.gold_has_header, args.gold_sep, args.gene_prefix)
         gold_edges = matrix_to_edges(gold_df, 0.5)  # Gold standard is typically binary
     else:
         gold_df = read_list_file(args.gold_standard, args.gold_has_header, args.gold_sep)
         gold_edges = list_to_edges(gold_df, 0.5)  # Gold standard is typically binary
     
-    # Calculate metrics
-    tp, tn, fp, fn, missing_in_pred, missing_in_gold = calculate_metrics(pred_edges, gold_edges)
+    # Get all genes in gold standard
+    gold_genes = get_gold_standard_genes(gold_df, args.gold_format)
     
-    # Calculate additional metrics
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-    accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0
+    # Read prediction file
+    if args.pred_format == 'matrix':
+        # Use the same gene prefix as gold standard if available
+        pred_df = read_matrix_file(args.prediction, args.pred_has_header, args.pred_sep, args.gene_prefix)
+        pred_edges = matrix_to_edges(pred_df, args.threshold)
+    else:
+        pred_df = read_list_file(args.prediction, args.pred_has_header, args.pred_sep)
+        pred_edges = list_to_edges(pred_df, args.threshold)
+    
+    # Calculate metrics following DREAM methodology
+    tp, tn, fp, fn, precision, recall, f1_score, accuracy, total_possible = calculate_metrics_dream(
+        list(pred_edges), list(gold_edges), gold_genes, args.max_edges
+    )
     
     # Create results dictionary
     results = {
@@ -148,9 +198,9 @@ def main():
         'Recall (Sensitivity)': recall,
         'F1 Score': f1_score,
         'Accuracy': accuracy,
-        'Total Possible Edges': tp + tn + fp + fn,
-        'Edges Missing in Prediction': len(missing_in_pred),
-        'Edges Missing in Gold Standard': len(missing_in_gold)
+        'Total Possible Edges': total_possible,
+        'Edges in Prediction': tp + fp,
+        'Edges in Gold Standard': tp + fn
     }
     
     # Save results to CSV
@@ -159,30 +209,16 @@ def main():
     print(f"Evaluation metrics saved to {args.output}")
     
     # Print summary
-    print("\nEvaluation Metrics Summary:")
-    print("=" * 40)
+    print("\nEvaluation Metrics Summary (DREAM Challenge Methodology):")
+    print("=" * 60)
     for metric, value in results.items():
         if isinstance(value, float):
             print(f"{metric}: {value:.4f}")
         else:
             print(f"{metric}: {value}")
     
-    # Print information about missing edges if any
-    if missing_in_pred:
-        print(f"\nEdges present in gold standard but missing in prediction: {len(missing_in_pred)}")
-        if len(missing_in_pred) <= 10:  # Show up to 10 examples
-            for i, edge in enumerate(missing_in_pred[:10]):
-                print(f"  {i+1}. {edge[0]} -> {edge[1]}")
-        else:
-            print("  (Too many to display, see detailed output if needed)")
-    
-    if missing_in_gold:
-        print(f"\nEdges present in prediction but missing in gold standard: {len(missing_in_gold)}")
-        if len(missing_in_gold) <= 10:  # Show up to 10 examples
-            for i, edge in enumerate(missing_in_gold[:10]):
-                print(f"  {i+1}. {edge[0]} -> {edge[1]}")
-        else:
-            print("  (Too many to display, see detailed output if needed)")
+    print(f"\nNote: Predictions were truncated to {args.max_edges} edges and")
+    print("edges involving genes not in the gold standard were ignored.")
 
 if __name__ == '__main__':
     main()

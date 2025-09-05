@@ -21,10 +21,14 @@ def parse_args():
                         help='Path to external projects directory')
     parser.add_argument('--output', default='evaluation_results.csv',
                         help='Output CSV file name')
+    parser.add_argument('--output-dir', default='',
+                        help='Output  directory')
     parser.add_argument('--threshold', type=float, default=0.7,
                         help='Threshold value for binarization (default: 0.7)')
     parser.add_argument('--skip-binarize', action='store_true',
                         help='Skip the binarization step and use continuous scores for evaluation')
+    parser.add_argument('--metrics-threshold', type=float, default=0.001,
+                        help='Threshold for evaluate_metrics.py (default: 0.001)')
     return parser.parse_args()
 
 def find_network_files(monitoring_dir):
@@ -72,7 +76,6 @@ def extract_metadata_from_path(file_path):
     
     return metadata
 
-
 def get_execution_time(markers_file):
     """Parse execution time from markers file"""
     try:
@@ -106,12 +109,14 @@ def process_java_network(file_path, output_dir, threshold, skip_binarize):
     if not skip_binarize:
         sufix = str(datetime.now().timestamp()).replace(".", "_")
         binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}.txt")
+        # binary_file = os.path.join(output_dir, f"{base_name}_binary.txt")
         subprocess.run([
             'python', 'scripts/dream5_binarizer.py',
             converted_file, binary_file,
             '--method', 'threshold',
             '--threshold', str(threshold),
             '--sep', ',',
+            '--remove-zeros',
         ], check=True)
         return binary_file
     else:
@@ -123,6 +128,7 @@ def process_geneci_network(file_path, output_dir, threshold, skip_binarize):
         base_name = Path(file_path).stem
         sufix = str(datetime.now().timestamp()).replace(".", "_")
         binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}.txt")
+        # binary_file = os.path.join(output_dir, f"{base_name}_binary.txt")
         
         # Binarize predictions
         subprocess.run([
@@ -131,6 +137,7 @@ def process_geneci_network(file_path, output_dir, threshold, skip_binarize):
             '--method', 'threshold',
             '--threshold', str(threshold),
             '--sep', ',',
+            '--remove-zeros',
         ], check=True)
         
         return binary_file
@@ -157,14 +164,6 @@ def evaluate_network(file_path, metadata, external_projects_dir):
             '--confidence-list', file_path
         ], capture_output=True, text=True, check=True)
         
-        print(
-            'geneci', 'evaluate', 'dream-prediction', 'dream-list-of-links',
-            '--challenge', 'D4C2',
-            '--network-id', metadata['network_id'],
-            '--synapse-file', synapse_file,
-            '--confidence-list', file_path
-        )
-        
         # Parse evaluation results
         metrics = {}
         for line in result.stdout.split('\n'):
@@ -173,10 +172,51 @@ def evaluate_network(file_path, metadata, external_projects_dir):
             elif 'AUROC:' in line:
                 metrics['auroc'] = float(line.split(':')[1].strip())
         
-        
         return metrics
     except subprocess.CalledProcessError as e:
         print(f"Evaluation failed for {file_path}: {e}")
+        return None
+
+def evaluate_metrics(file_path, metadata, external_projects_dir, metrics_threshold):
+    """Evaluate network using evaluate_metrics.py script"""
+    # Construct gold standard file path
+    gold_standard_file = os.path.join(
+        external_projects_dir,
+        'input_data',
+        'geneci',
+        'DREAM4',
+        'GS',
+        f"dream4_{metadata['network_id'].replace('_', '_0')}_gs.csv"
+    )
+    
+    # Create temporary output file
+    temp_output = os.path.join(os.path.dirname(file_path), 'temp_metrics.csv')
+    
+    try:
+        # Run evaluate_metrics.py
+        subprocess.run([
+            'python', 'scripts/evaluate_metrics.py',
+            '--prediction', file_path,
+            '--pred-format', 'list',
+            '--threshold', str(metrics_threshold),
+            '--gold-standard', gold_standard_file,
+            '--gold-format', 'matrix',
+            '--gold-has-header',
+            '--output', temp_output
+        ], check=True)
+        
+        # Read and parse results
+        if os.path.exists(temp_output):
+            metrics_df = pd.read_csv(temp_output)
+            metrics = metrics_df.iloc[0].to_dict()
+            os.remove(temp_output)  # Clean up temporary file
+            return metrics
+        else:
+            print(f"Metrics evaluation failed for {file_path}: No output file created")
+            return None
+            
+    except subprocess.CalledProcessError as e:
+        print(f"Metrics evaluation failed for {file_path}: {e}")
         return None
 
 def main():
@@ -202,31 +242,47 @@ def main():
         
         # Process file based on type and options
         if network_file['type'] == 'java':
+            # os.path.dirname(network_file['path']),
             processed_file = process_java_network(
-                network_file['path'], 
-                os.path.dirname(network_file['path']),
+                network_file['path'],
+                os.path.dirname(args.output_dir if args.output_dir != "" else network_file['path']),
                 args.threshold,
                 args.skip_binarize
             )
         elif network_file['type'] == 'geneci':
+            # os.path.dirname(network_file['path']),
             processed_file = process_geneci_network(
-                network_file['path'], 
-                os.path.dirname(network_file['path']),
+                network_file['path'],
+                os.path.dirname(args.output_dir if args.output_dir != "" else network_file['path']),
                 args.threshold,
                 args.skip_binarize
             )
         else:
             processed_file = network_file['path']
         
-        # Evaluate network
-        evaluation = evaluate_network(
+        # Evaluate network with geneci
+        geneci_evaluation = evaluate_network(
             processed_file, 
             metadata,
             args.external_projects
         )
         
-        if evaluation:
-            metadata.update(evaluation)
+        # Evaluate network with evaluate_metrics.py
+        metrics_evaluation = evaluate_metrics(
+            processed_file,
+            metadata,
+            args.external_projects,
+            args.metrics_threshold
+        )
+        
+        # Combine results
+        if geneci_evaluation:
+            metadata.update(geneci_evaluation)
+        
+        if metrics_evaluation:
+            metadata.update(metrics_evaluation)
+        
+        if geneci_evaluation or metrics_evaluation:
             results.append(metadata)
     
     # Create results dataframe and save

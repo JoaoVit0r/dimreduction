@@ -1,0 +1,2 @@
+True Positives (TP),True Negatives (TN),False Positives (FP),False Negatives (FN),Precision,Recall (Sensitivity),F1 Score,Accuracy,Total Possible Edges,Edges Missing in Prediction,Edges Missing in Gold Standard
+18,0,247,157,0.06792452830188679,0.10285714285714286,0.08181818181818182,0.04265402843601896,422,157,247
