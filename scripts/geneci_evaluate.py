@@ -108,7 +108,7 @@ def process_java_network(file_path, output_dir, threshold, skip_binarize):
     # Binarize predictions if not skipped
     if not skip_binarize:
         sufix = str(datetime.now().timestamp()).replace(".", "_")
-        binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}.txt")
+        binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}_threshold_{threshold}.txt")
         # binary_file = os.path.join(output_dir, f"{base_name}_binary.txt")
         subprocess.run([
             'python', 'scripts/dream5_binarizer.py',
@@ -127,7 +127,7 @@ def process_geneci_network(file_path, output_dir, threshold, skip_binarize):
     if not skip_binarize:
         base_name = Path(file_path).stem
         sufix = str(datetime.now().timestamp()).replace(".", "_")
-        binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}.txt")
+        binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}_threshold_{threshold}.txt")
         # binary_file = os.path.join(output_dir, f"{base_name}_binary.txt")
         
         # Binarize predictions
