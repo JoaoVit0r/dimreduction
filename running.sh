@@ -108,28 +108,36 @@ set -e
 
 # FORMATTED_INPUT_FILE=$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP_DimReduction/dream4_100_01_exp.csv
 
-# # Run Local JAVA DREAM4
-# ./run_all_monitoring.sh \
-#     --sleep-time 5 \
-#     --sleep-time-monitor 5 \
-#     --number-of-executions 1 \
-#     --thread-distribution none \
-#     --threads 1 \
-#     --repository-java $THESIS_HOME/virt_machine/java-dimreduction \
-#     --custom-input-file $FORMATTED_INPUT_FILE java
+# files=($(ls -la "$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP/" | grep "dream4_100" | awk '{print $9}'))
+# for ORIGINAL_INPUT_FILE in "${files[@]}"; do
+# # for ORIGINAL_INPUT_FILE in "$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP/dream4_100"*; do
+#     ORIGINAL_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP/"$(basename "$ORIGINAL_INPUT_FILE")
+#     FORMATTED_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP_DimReduction/"$(basename "$ORIGINAL_INPUT_FILE")
 
-# # Run Local Geneci
-# ORIGINAL_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM4/EXP/dream4_100_01_exp.csv"
-# ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
-#     --sleep-time-monitor 5 \
-#     --thread-distribution none --threads 1 \
-#     --repository-geneci $THESIS_HOME/test_external_code/try_minet \
-#     --custom-input-file $ORIGINAL_INPUT_FILE \
-#     --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh,run_geneci_genie3-et.sh,run_geneci_genie3-rf.sh \
-#     geneci;
-# # Run Local Python DREAM4
-# ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
+#     echo FORMATTED_INPUT_FILE: $FORMATTED_INPUT_FILE
+#     echo ORIGINAL_INPUT_FILE: $ORIGINAL_INPUT_FILE
 
+#     # Run Local JAVA DREAM4
+#     ./run_all_monitoring.sh \
+#         --sleep-time 5 \
+#         --sleep-time-monitor 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution none \
+#         --threads 1 \
+#         --repository-java $THESIS_HOME/virt_machine/java-dimreduction \
+#         --custom-input-file $FORMATTED_INPUT_FILE java
+
+#     # Run Local Geneci
+#     ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
+#         --sleep-time-monitor 5 \
+#         --thread-distribution none --threads 1 \
+#         --repository-geneci $THESIS_HOME/test_external_code/try_minet \
+#         --custom-input-file $ORIGINAL_INPUT_FILE \
+#         --geneci-files run_geneci_aracne.sh,run_geneci_clr.sh \
+#         geneci;
+#     # # Run Local Python DREAM4
+#     # ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
+# done
 
 
 # Run VM2 FIX ENV TO DREAM4
@@ -147,13 +155,17 @@ sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
 sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
 sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
 
-FORMATTED_INPUT_FILE=~/workspace/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/dream4_100_01_exp.csv
+THESIS_HOME="$HOME/workspace"
+FORMATTED_INPUT_FILE=$THESIS_HOME/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/dream4_100_01_exp.csv
 
-for ORIGINAL_INPUT_FILE in "../dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP/dream4_100"*; do
+files=($(ls -la "$THESIS_HOME/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP/" | grep "dream4_100" | awk '{print $9}'))
+for ORIGINAL_INPUT_FILE in "${files[@]}"; do
+# for ORIGINAL_INPUT_FILE in "$THESIS_HOME/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP/dream4_100"*; do
+    ORIGINAL_INPUT_FILE="$THESIS_HOME/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP/"$(basename "$ORIGINAL_INPUT_FILE")
+    FORMATTED_INPUT_FILE="$THESIS_HOME/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/"$(basename "$ORIGINAL_INPUT_FILE")
 
-    FORMATTED_INPUT_FILE="$HOME/workspace/dimreduction_external_comparisons/input_data/geneci/DREAM4/EXP_DimReduction/"
-    FORMATTED_INPUT_FILE+=$(basename "$ORIGINAL_INPUT_FILE")
-
+    echo FORMATTED_INPUT_FILE: $FORMATTED_INPUT_FILE
+    echo ORIGINAL_INPUT_FILE: $ORIGINAL_INPUT_FILE
     # Run VM2 JAVA DREAM4
     ./run_all_monitoring.sh --sleep-time 5 --number-of-executions 1 \
         --sleep-time-monitor 5 \
