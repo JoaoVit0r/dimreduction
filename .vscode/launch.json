@@ -77,6 +77,22 @@
       "program": "scripts/geneci_evaluate.py",
       "console": "integratedTerminal",
       "args": ["--monitoring-dir", "monitoring_plots/20250824_23573*", "--external-projects", "../test_external_code/try_minet"]
-    }
+    },
+    // python ./scripts/evaluate_metrics.py --prediction temp-final_data.txt --gold-standard ../test_external_code/try_minet/input_data/geneci/DREAM4/GS/dream4_0100_01_gs.csv \
+    // --pred-format matrix --gold-format matrix --pred-has-header --gold-has-header --sep tab
+    {
+      "name": "Evaluate_metrics",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/evaluate_metrics.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--prediction", "temp_ARACNE.csv",
+        "--pred-format", "list",
+        "--gold-standard", "../test_external_code/try_minet/input_data/geneci/DREAM4/GS/dream4_100_01_gs.csv",
+        "--gold-has-header",
+        "--gold-format", "matrix",
+      ]
+    },
   ]
 }
