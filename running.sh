@@ -273,7 +273,6 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
     # Run VM2 JAVA DREAM4
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
-        --sleep-time-monitor 5 \
         --thread-distribution none \
         --threads 1 \
         --repository-python $HOME/workspace/dimreduction-python \
@@ -284,7 +283,6 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
     # Run VM2 GeneciGeneci
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
-        --sleep-time-monitor 5 \
         --thread-distribution none \
         --threads 1 \
         --repository-python $HOME/workspace/dimreduction-python \
@@ -296,7 +294,6 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
     # more
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
-        --sleep-time-monitor 5 \
         --thread-distribution none \
         --threads 1 \
         --repository-python $HOME/workspace/dimreduction-python \
