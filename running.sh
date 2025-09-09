@@ -273,7 +273,7 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
     # Run VM2 JAVA DREAM4
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
-        --thread-distribution none \
+        --thread-distribution demain \
         --threads 1 \
         --repository-python $HOME/workspace/dimreduction-python \
         --repository-java $HOME/workspace/dimreduction-java \
