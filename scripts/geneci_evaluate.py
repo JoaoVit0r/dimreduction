@@ -27,8 +27,10 @@ def parse_args():
                         help='Threshold value for binarization (default: 0.7)')
     parser.add_argument('--skip-binarize', action='store_true',
                         help='Skip the binarization step and use continuous scores for evaluation')
-    parser.add_argument('--metrics-threshold', type=float, default=0.001,
-                        help='Threshold for evaluate_metrics.py (default: 0.001)')
+    parser.add_argument('--metrics-threshold', type=float, default=0.000001,
+                        help='Threshold for evaluate_metrics.py (default: 0.000001)')
+    parser.add_argument('--challenge', default='DREAM5',
+                        help='Inform if it is from DREAM4 or DREAM5 challenge')
     return parser.parse_args()
 
 def find_network_files(monitoring_dir):
@@ -299,7 +301,7 @@ def evaluate_metrics_DREAM5(file_path, metadata, external_projects_dir, metrics_
         'input_data',
         'geneci',
         'DREAM5',
-        f"Network{metadata['network_id']}_transcription_factors.csv"
+        f"Network{metadata['network_id']}_transcription_factors.tsv"
     )
     
     # Create temporary output file
@@ -378,7 +380,8 @@ def main():
         geneci_evaluation = evaluate_network(
             processed_file, 
             metadata,
-            args.external_projects
+            args.external_projects,
+            args.challenge
         )
         
         # Evaluate network with evaluate_metrics.py
@@ -386,7 +389,8 @@ def main():
             processed_file,
             metadata,
             args.external_projects,
-            args.metrics_threshold
+            args.metrics_threshold,
+            args.challenge
         )
         
         # Combine results
