@@ -69,6 +69,11 @@ def extract_metadata_from_path(file_path):
         match = re.search(r'dream4_(\d+)_(\d+)_exp', metadata['dataset'])
         if match:
             metadata['network_id'] = f"{match.group(1)}_{int(match.group(2))}"
+        else:
+            match = re.search(r'net(\d+)_exp', metadata['dataset'])
+            if match:
+                metadata['network_id'] = f"{match.group(1)}"
+            
     
     # Extract execution parameters
     metadata['threads'] = next((part.replace('threads_', '') 
@@ -144,7 +149,19 @@ def process_geneci_network(file_path, output_dir, threshold, skip_binarize):
     else:
         return file_path
 
-def evaluate_network(file_path, metadata, external_projects_dir):
+def evaluate_network(file_path, metadata, external_projects_dir, challenge):
+    """Evaluate network using GENECI evaluate command"""
+    if challenge == 'DREAM4':
+        return evaluate_network_DREAM4(file_path, metadata, external_projects_dir)
+    
+    if challenge == 'DREAM5':
+        return evaluate_network_DREAM5(file_path, metadata, external_projects_dir)
+    
+    print(f"Evaluation failed for {file_path}: Unknown challenge")
+    return None
+    
+    
+def evaluate_network_DREAM4(file_path, metadata, external_projects_dir):
     """Evaluate network using GENECI evaluate command"""
     synapse_file = os.path.join(
         external_projects_dir,
@@ -176,8 +193,54 @@ def evaluate_network(file_path, metadata, external_projects_dir):
     except subprocess.CalledProcessError as e:
         print(f"Evaluation failed for {file_path}: {e}")
         return None
+    
+    
+def evaluate_network_DREAM5(file_path, metadata, external_projects_dir):
+    """Evaluate network using GENECI evaluate command"""
+    synapse_file = os.path.join(
+        external_projects_dir,
+        'input_data',
+        'geneci',
+        'DREAM5',
+        'EVAL',
+        f"DREAM5_NetworkInference_GoldStandard_Network{metadata['network_id']}.tsv"
+    )
+    
+    try:
+        result = subprocess.run([
+            'geneci', 'evaluate', 'dream-prediction', 'dream-list-of-links',
+            '--challenge', 'D5C4',
+            '--network-id', metadata['network_id'],
+            '--synapse-file', synapse_file,
+            '--confidence-list', file_path
+        ], capture_output=True, text=True, check=True)
+        
+        # Parse evaluation results
+        metrics = {}
+        for line in result.stdout.split('\n'):
+            if 'AUPR:' in line:
+                metrics['aupr'] = float(line.split(':')[1].strip())
+            elif 'AUROC:' in line:
+                metrics['auroc'] = float(line.split(':')[1].strip())
+        
+        return metrics
+    except subprocess.CalledProcessError as e:
+        print(f"Evaluation failed for {file_path}: {e}")
+        return None
 
-def evaluate_metrics(file_path, metadata, external_projects_dir, metrics_threshold):
+    
+def evaluate_metrics(file_path, metadata, external_projects_dir, metrics_threshold, challenge):
+    """Evaluate network using evaluate_metrics.py script"""
+    if challenge == 'DREAM4':
+        return evaluate_metrics_DREAM4(file_path, metadata, external_projects_dir, metrics_threshold)
+    
+    if challenge == 'DREAM5':
+        return evaluate_metrics_DREAM5(file_path, metadata, external_projects_dir, metrics_threshold)
+    
+    print(f"Metrics evaluation failed for {file_path}: Unknown challenge")
+    return None
+    
+def evaluate_metrics_DREAM4(file_path, metadata, external_projects_dir, metrics_threshold):
     """Evaluate network using evaluate_metrics.py script"""
     # Construct gold standard file path
     gold_standard_file = os.path.join(
@@ -202,6 +265,57 @@ def evaluate_metrics(file_path, metadata, external_projects_dir, metrics_thresho
             '--gold-standard', gold_standard_file,
             '--gold-format', 'matrix',
             '--gold-has-header',
+            '--output', temp_output
+        ], check=True)
+        
+        # Read and parse results
+        if os.path.exists(temp_output):
+            metrics_df = pd.read_csv(temp_output)
+            metrics = metrics_df.iloc[0].to_dict()
+            os.remove(temp_output)  # Clean up temporary file
+            return metrics
+        else:
+            print(f"Metrics evaluation failed for {file_path}: No output file created")
+            return None
+            
+    except subprocess.CalledProcessError as e:
+        print(f"Metrics evaluation failed for {file_path}: {e}")
+        return None
+    
+def evaluate_metrics_DREAM5(file_path, metadata, external_projects_dir, metrics_threshold):
+    """Evaluate network using evaluate_metrics.py script"""
+    # Construct gold standard file path
+    gold_standard_file = os.path.join(
+        external_projects_dir,
+        'input_data',
+        'geneci',
+        'DREAM5',
+        'GS',
+        f"net{metadata['network_id']}_gs.csv"
+    )
+    
+    transcription_factors_file = os.path.join(
+        external_projects_dir,
+        'input_data',
+        'geneci',
+        'DREAM5',
+        f"Network{metadata['network_id']}_transcription_factors.csv"
+    )
+    
+    # Create temporary output file
+    temp_output = os.path.join(os.path.dirname(file_path), 'temp_metrics.csv')
+    
+    try:
+        # Run evaluate_metrics.py
+        subprocess.run([
+            'python', 'scripts/evaluate_metrics.py',
+            '--prediction', file_path,
+            '--pred-format', 'list',
+            '--threshold', str(metrics_threshold),
+            '--gold-standard', gold_standard_file,
+            '--gold-format', 'matrix',
+            '--gold-has-header',
+            '--transcription-factors', transcription_factors_file,
             '--output', temp_output
         ], check=True)
         

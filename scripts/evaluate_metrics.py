@@ -31,7 +31,16 @@ def parse_args():
     parser.add_argument('--max-edges', type=int, default=100000,
                         help='Maximum number of edges to consider (DREAM challenge uses 100,000)')
     parser.add_argument('--gene-prefix', default='G', help='Prefix for gene names when matrix has no header (default: G)')
+    parser.add_argument('--transcription-factors', help='Path to transcription factors file (one gene per line)')
     return parser.parse_args()
+
+def read_tfs_file(tfs_file_path):
+    """Read transcription factors file and return as set"""
+    tfs = set()
+    with open(tfs_file_path, 'r') as f:
+        for line in f:
+            tfs.add(line.strip())
+    return tfs
 
 def read_matrix_file(file_path, has_header=False, sep=',', gene_prefix='G'):
     """Read a matrix file and return as DataFrame"""
@@ -60,12 +69,16 @@ def read_list_file(file_path, has_header=False, sep=','):
     else:
         return pd.read_csv(file_path, header=None, names=['regulator', 'target', 'weight'], sep=sep)
 
-def matrix_to_edges(matrix_df, threshold=0.5):
-    """Convert a matrix to a set of edges with weights"""
+def matrix_to_edges(matrix_df, threshold=0.5, tfs_set=None):
+    """Convert a matrix to a set of edges with weights, optionally filtering by TFs"""
     edges = set()
     nodes = matrix_df.index
     
     for i, regulator in enumerate(nodes):
+        # Skip if regulator is not in TFs set (if provided)
+        if tfs_set is not None and regulator not in tfs_set:
+            continue
+            
         for j, target in enumerate(nodes):
             if i != j:  # Skip self-loops
                 weight = matrix_df.iloc[i, j]
@@ -74,8 +87,8 @@ def matrix_to_edges(matrix_df, threshold=0.5):
     
     return edges
 
-def list_to_edges(list_df, threshold=0.5):
-    """Convert a list to a set of edges with weights"""
+def list_to_edges(list_df, threshold=0.5, tfs_set=None):
+    """Convert a list to a set of edges with weights, optionally filtering by TFs"""
     edges = set()
     
     for _, row in list_df.iterrows():
@@ -83,6 +96,10 @@ def list_to_edges(list_df, threshold=0.5):
         target = row['target']
         weight = row['weight']
         
+        # Skip if regulator is not in TFs set (if provided)
+        if tfs_set is not None and regulator not in tfs_set:
+            continue
+            
         if regulator != target and abs(weight) >= threshold:  # Skip self-loops
             edges.add((regulator, target, weight))
     
@@ -163,13 +180,19 @@ def calculate_metrics_dream(pred_edges, gold_edges, gold_genes, max_edges=100000
 def main():
     args = parse_args()
     
+    # Read transcription factors if provided
+    tfs_set = None
+    if args.transcription_factors:
+        tfs_set = read_tfs_file(args.transcription_factors)
+        print(f"Loaded {len(tfs_set)} transcription factors")
+    
     # Read gold standard first to get gene names
     if args.gold_format == 'matrix':
         gold_df = read_matrix_file(args.gold_standard, args.gold_has_header, args.gold_sep, args.gene_prefix)
-        gold_edges = matrix_to_edges(gold_df, 0.5)  # Gold standard is typically binary
+        gold_edges = matrix_to_edges(gold_df, 0.5, tfs_set)  # Gold standard is typically binary
     else:
         gold_df = read_list_file(args.gold_standard, args.gold_has_header, args.gold_sep)
-        gold_edges = list_to_edges(gold_df, 0.5)  # Gold standard is typically binary
+        gold_edges = list_to_edges(gold_df, 0.5, tfs_set)  # Gold standard is typically binary
     
     # Get all genes in gold standard
     gold_genes = get_gold_standard_genes(gold_df, args.gold_format)
@@ -178,10 +201,10 @@ def main():
     if args.pred_format == 'matrix':
         # Use the same gene prefix as gold standard if available
         pred_df = read_matrix_file(args.prediction, args.pred_has_header, args.pred_sep, args.gene_prefix)
-        pred_edges = matrix_to_edges(pred_df, args.threshold)
+        pred_edges = matrix_to_edges(pred_df, args.threshold, tfs_set)
     else:
         pred_df = read_list_file(args.prediction, args.pred_has_header, args.pred_sep)
-        pred_edges = list_to_edges(pred_df, args.threshold)
+        pred_edges = list_to_edges(pred_df, args.threshold, tfs_set)
     
     # Calculate metrics following DREAM methodology
     tp, tn, fp, fn, precision, recall, f1_score, accuracy, total_possible = calculate_metrics_dream(
@@ -219,6 +242,9 @@ def main():
     
     print(f"\nNote: Predictions were truncated to {args.max_edges} edges and")
     print("edges involving genes not in the gold standard were ignored.")
+    
+    if args.transcription_factors:
+        print("Only edges with regulators from the transcription factors list were considered.")
 
 if __name__ == '__main__':
     main()
