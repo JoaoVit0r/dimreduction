@@ -1,14 +1,16 @@
 #!/bin/bash
 
-cd test_evaluation_vm2_20250905_multi || exit 1
+FOLDER="$1"
+
+cd "${FOLDER:-not_passed}" || exit 1
 
 output_file="evaluation_results_threshold_results.csv"
 first_file=true
 
 # Process files in sorted order by their threshold value
-for file in $(ls evaluation_results_threshold_*percent.csv | sort -V); do
+for file in $(ls evaluation_results_confident-in-*.csv | sort -V); do
     # Extract threshold number from filename
-    threshold=$(echo "$file" | grep -o '[0-9]\+percent' | cut -d'p' -f1)
+    threshold=$(echo "$file" | grep -o '[0-9]\+')
     
     if [ "$first_file" = true ]; then
         # For the first file, include header with threshold as first column
