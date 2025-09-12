@@ -299,7 +299,7 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
         --repository-python $HOME/workspace/dimreduction-python \
         --repository-geneci $HOME/workspace/dimreduction_external_comparisons \
         --custom-input-file $ORIGINAL_INPUT_FILE \
-        --geneci-files dream5_scripts/run_geneci_jump3.sh,dream5_scripts/run_geneci_mrnet.sh,dream5_scripts/run_geneci_plsnet.sh,dream5_scripts/run_geneci_kboost.sh,dream5_scripts/run_geneci_narromi.sh,dream5_scripts/run_geneci_puc.sh,dream5_scripts/run_geneci_bc3net.sh,dream5_scripts/run_geneci_leap.sh,dream5_scripts/run_geneci_nonlinearodes.sh,dream5_scripts/run_geneci_rsnet.sh,dream5_scripts/run_geneci_c3net.sh,dream5_scripts/run_geneci_grnboost2.sh,dream5_scripts/run_geneci_locpcacmi.sh,dream5_scripts/run_geneci_pcacmi.sh,dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_grnvbem.sh,dream5_scripts/run_geneci_meomi.sh,dream5_scripts/run_geneci_pcit.sh,dream5_scripts/run_geneci_cmi2ni.sh,dream5_scripts/run_geneci_inferelator.sh,dream5_scripts/run_geneci_mrnetb.sh,dream5_scripts/run_geneci_pidc.sh \
+        --geneci-files dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_mrnet.sh,dream5_scripts/run_geneci_bc3net.sh,dream5_scripts/run_geneci_c3net.sh,dream5_scripts/run_geneci_kboost.sh,dream5_scripts/run_geneci_mrnetb.sh,dream5_scripts/run_geneci_pcit.sh \
         geneci;
 
     # # Run VM2 Python DREAM4
