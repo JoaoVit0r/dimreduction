@@ -308,7 +308,8 @@ set -e
 
 
 # Run VM1 FIX ENV TO DREAM5-from-geneci-data
-cd ~/workspace/dimreduction-java
+THESIS_HOME_VM1="$HOME/virt_machine"
+cd $THESIS_HOME_VM1/dimreduction-java
 sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
 sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
 sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
@@ -317,12 +318,11 @@ sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
 sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
 sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
 
-cd ~/workspace/dimreduction-python
+cd $THESIS_HOME_VM1/dimreduction-python
 sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
 sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
 sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
 
-THESIS_HOME_VM1="$HOME/virt_machine"
 FORMATTED_INPUT_FILE=$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP_DimReduction/net3_exp.csv
 
 files=($(ls -la "$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/" | grep "net3" | awk '{print $9}'))
