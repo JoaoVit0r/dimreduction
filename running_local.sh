@@ -2,26 +2,14 @@
 
 set -e
 
-THESIS_HOME_VM1="$HOME/virt_machine"
+THESIS_HOME_LOCAL="$THESIS_HOME"
 
-DIMREDUCTION_JAVA_FOLDER="$THESIS_HOME_VM1/dimreduction-java"
-DIMREDUCTION_PYTHON_FOLDER="$THESIS_HOME_VM1/dimreduction-python"
-GENECI_FOLDER="$THESIS_HOME_VM1/dimreduction_external_comparisons"
+DIMREDUCTION_JAVA_FOLDER="$THESIS_HOME_LOCAL/virt_machine/java-dimreduction"
+DIMREDUCTION_PYTHON_FOLDER="$THESIS_HOME_LOCAL/dimreduction"
+GENECI_FOLDER="$THESIS_HOME_LOCAL/test_external_code/try_minet"
 
-# VM1 get last updates
-cd "$DIMREDUCTION_JAVA_FOLDER"
-git pull
-git status
 
-cd "$GENECI_FOLDER"
-git pull
-git status
-
-cd "$DIMREDUCTION_PYTHON_FOLDER"
-git pull
-git status
-
-# Run VM1 FIX ENV TO DREAM5-from-geneci-data
+# Run LOCAL FIX ENV TO DREAM5-from-geneci-data
 cd "$DIMREDUCTION_JAVA_FOLDER"
 sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
 sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
@@ -48,36 +36,39 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
 
     echo FORMATTED_INPUT_FILE: "$FORMATTED_INPUT_FILE"
     echo ORIGINAL_INPUT_FILE: "$ORIGINAL_INPUT_FILE"
-    # Run VM1 DimReduction JAVA (DREAM5 from GENECI)
+    # Run LOCAL DimReduction JAVA (DREAM5 from GENECI)
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
+        --sleep-time-monitor 5 \
         --thread-distribution demain \
-        --threads 64 \
+        --threads 1 \
         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
         --repository-java "$DIMREDUCTION_JAVA_FOLDER" \
         --custom-input-file "$FORMATTED_INPUT_FILE" \
         java;
 
-    # Run VM1 GENECI (DREAM5 from GENECI)
+    # Run LOCAL GENECI (DREAM5 from GENECI)
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
+        --sleep-time-monitor 5 \
         --thread-distribution none \
-        --threads 64 \
+        --threads 1 \
         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
         --repository-geneci "$GENECI_FOLDER" \
         --custom-input-file "$ORIGINAL_INPUT_FILE" \
-        --geneci-files dream5_scripts/run_geneci_genie3-et.sh,dream5_scripts/run_geneci_genie3-rf.sh \
+        --geneci-files dream5_scripts/run_geneci_aracne.sh,dream5_scripts/run_geneci_clr.sh,dream5_scripts/run_geneci_genie3-et.sh,dream5_scripts/run_geneci_genie3-rf.sh \
         geneci;
 
     # more
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
+        --sleep-time-monitor 5 \
         --thread-distribution none \
-        --threads 64 \
+        --threads 1 \
         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
         --repository-geneci "$GENECI_FOLDER" \
         --custom-input-file "$ORIGINAL_INPUT_FILE" \
-        --geneci-files dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_kboost.sh \
+        --geneci-files dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_mrnet.sh,dream5_scripts/run_geneci_bc3net.sh,dream5_scripts/run_geneci_c3net.sh,dream5_scripts/run_geneci_kboost.sh,dream5_scripts/run_geneci_mrnetb.sh,dream5_scripts/run_geneci_pcit.sh \
         geneci;
 
 done
