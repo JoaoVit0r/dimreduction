@@ -91,10 +91,7 @@ def list_to_edges(list_df, threshold=0.5, tfs_set=None):
     """Convert a list to a set of edges with weights, optionally filtering by TFs"""
     edges = set()
     
-    for _, row in list_df.iterrows():
-        regulator = row['regulator']
-        target = row['target']
-        weight = row['weight']
+    for regulator, target, weight in zip(list_df.iloc[:, 0].astype(str), list_df.iloc[:, 1].astype(str), list_df.iloc[:, 2].astype(float)):
         
         # Skip if regulator is not in TFs set (if provided)
         if tfs_set is not None and regulator not in tfs_set:
@@ -107,23 +104,29 @@ def list_to_edges(list_df, threshold=0.5, tfs_set=None):
 
 def get_gold_standard_genes(gold_df, gold_format):
     """Extract all genes present in the gold standard"""
-    genes = set()
+    regulator = set()
+    target = set()
     
     if gold_format == 'matrix':
         # For matrix format, genes are row and column names
-        genes.update(gold_df.index.tolist())
-        genes.update(gold_df.columns.tolist())
+        regulator.update(gold_df.index.tolist())
+        target.update(gold_df.columns.tolist())
     else:
         # For list format, genes are in regulator and target columns
-        genes.update(gold_df['regulator'].tolist())
-        genes.update(gold_df['target'].tolist())
+        regulator.update(gold_df['regulator'].tolist())
+        target.update(gold_df['target'].tolist())
+        
+    genes = {
+        "regulator": (regulator),
+        "target": (target)
+    }
     
     return genes
 
 def filter_and_truncate_predictions(pred_edges, gold_genes, max_edges=100000):
     """Filter predictions to include only genes in gold standard and truncate to max_edges"""
     # Filter out predictions with genes not in gold standard
-    filtered_edges = [edge for edge in pred_edges if edge[0] in gold_genes and edge[1] in gold_genes]
+    filtered_edges = [edge for edge in pred_edges if edge[0] in gold_genes['regulator'] and edge[1] in gold_genes['target']]
     
     # Sort by absolute weight in descending order
     filtered_edges.sort(key=lambda x: abs(x[2]), reverse=True)
@@ -146,8 +149,8 @@ def calculate_metrics_dream(pred_edges, gold_edges, gold_genes, max_edges=100000
     
     # Get all possible edges between gold standard genes (excluding self-loops)
     all_possible_edges = set()
-    for regulator in gold_genes:
-        for target in gold_genes:
+    for regulator in gold_genes['regulator']:
+        for target in gold_genes['target']:
             if regulator != target:
                 all_possible_edges.add((regulator, target))
     

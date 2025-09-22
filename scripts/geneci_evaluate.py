@@ -292,8 +292,8 @@ def evaluate_metrics_DREAM5(file_path, metadata, external_projects_dir, metrics_
         'input_data',
         'geneci',
         'DREAM5',
-        'GS',
-        f"net{metadata['network_id']}_gs.csv"
+        'EVAL',
+        f"DREAM5_NetworkInference_GoldStandard_Network{metadata['network_id']}.tsv"
     )
     
     transcription_factors_file = os.path.join(
@@ -315,8 +315,8 @@ def evaluate_metrics_DREAM5(file_path, metadata, external_projects_dir, metrics_
             '--pred-format', 'list',
             '--threshold', str(metrics_threshold),
             '--gold-standard', gold_standard_file,
-            '--gold-format', 'matrix',
-            '--gold-has-header',
+            '--gold-format', 'list',
+            '--gold-sep', 'tab',
             '--transcription-factors', transcription_factors_file,
             '--output', temp_output
         ], check=True)
