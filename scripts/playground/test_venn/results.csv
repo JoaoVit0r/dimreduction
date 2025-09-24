@@ -1,0 +1,2 @@
+True Positives (TP),True Negatives (TN),False Positives (FP),False Negatives (FN),Precision,Recall (Sensitivity),F1 Score,Accuracy,Total Possible Edges,Edges in Prediction,Edges in Gold Standard
+1,-1,1,1,0.5,0.5,0.5,0.0,2,2,2
