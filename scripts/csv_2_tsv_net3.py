@@ -45,8 +45,8 @@ def convert_csv_to_tsv(input_file, output_file):
         sys.exit(1)
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python convert_csv_to_tsv.py <input_file.csv>")
+    if len(sys.argv) != 3:
+        print("Usage: python convert_csv_to_tsv.py <input_file.csv> <folder_output>")
         sys.exit(1)
     
     input_file = sys.argv[1]
