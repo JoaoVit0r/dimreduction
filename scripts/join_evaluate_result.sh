@@ -22,4 +22,18 @@ for file in $(ls evaluation_results_confident-in-*.csv | sort -V); do
     fi
 done
 
+python3 -c "
+import csv
+with open('evaluation_results_threshold_results.csv') as f, open('evaluation_results_threshold_results_fix_columns.csv','w',newline='') as g:
+    r = csv.reader(f)
+    w = csv.writer(g)
+    header = next(r)
+    idx = header.index('execution_time') + 1
+    new_header = header[:idx] + ['aupr','auroc'] + header[idx:]
+    w.writerow(new_header)
+    for row in r:
+        new_row = row[:idx] + ['',''] + row[idx:]
+        w.writerow(new_row)
+"
+
 cd - || exit 1
