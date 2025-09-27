@@ -180,6 +180,8 @@ Examples:
                         help='Matrix file has header row (default: no header)')
     parser.add_argument('--max-predictions', type=int, default=100000,
                         help='Maximum number of predictions to output (default: 100000)')
+    parser.add_argument('--include-no-tf-predictor', action='store_true',
+                        help='Include as predictors any genes (default: false), not only the ones in transcription factor list')
     
     args = parser.parse_args()
     
@@ -195,10 +197,15 @@ Examples:
     # Load or generate gene labels
     print("Loading gene labels...")
     gene_labels = load_gene_labels(args.gene_labels, n_genes)
-    
-    # Load transcription factor list
-    print("Loading transcription factors...")
-    tf_list = load_tf_list(args.tf_list, gene_labels)
+
+    if (args.include_no_tf_predictor):
+        print("Skipping loading transcription factors...")
+        print("Considering all genes as transcription factors")
+        tf_list = gene_labels
+    else:
+        # Load transcription factor list
+        print("Loading transcription factors...")
+        tf_list = load_tf_list(args.tf_list, gene_labels)
     
     # Convert to DREAM5 format
     print("Converting to DREAM5 format...")
