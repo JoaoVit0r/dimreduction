@@ -130,16 +130,6 @@ def adjacency_to_dream5(matrix, gene_labels, tf_list, max_predictions=100000):
     # Sort by confidence score in descending order (most confident first)
     df = df.sort_values('confidence_score', ascending=False)
     
-    # Normalize confidence scores to [0, 1] range if needed
-    min_score = df['confidence_score'].min()
-    max_score = df['confidence_score'].max()
-    
-    if min_score != max_score:  # Avoid division by zero
-        df['confidence_score'] = (df['confidence_score'] - min_score) / (max_score - min_score)
-    else:
-        # All scores are the same, set to 1.0 or keep as is
-        df['confidence_score'] = 1.0 if max_score != 0 else 0.0
-    
     # Limit to maximum number of predictions
     if len(df) > max_predictions:
         print(f"Limiting output to top {max_predictions} predictions (from {len(df)} total)")
