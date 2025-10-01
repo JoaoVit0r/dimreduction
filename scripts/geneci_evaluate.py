@@ -410,6 +410,7 @@ def main():
         
         # if geneci_evaluation or metrics_evaluation:
         #     results.append(metadata)
+        results.append(metadata)
     
     # Create results dataframe and save
     if results:
