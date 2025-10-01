@@ -19,6 +19,7 @@ class EvaluationAnalyzer:
     def setup_plotting(self):
         """Set up consistent plotting style and color scheme"""
         plt.style.use('default')
+        sns.set_palette("husl")
         # Create a color palette with at least 12 distinct colors
         self.color_palette = [
             '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b',
@@ -105,11 +106,10 @@ class EvaluationAnalyzer:
                     filename = os.path.basename(file_path)
                     technique = filename.split('_')[1]  # Assuming format: summary_<technique>_<threads>_threads.csv
                     if technique == 'GENIE3':
-                        technique = f'{technique}_{filename.split('_')[2]}'
+                        technique = f'{technique}_{filename.split("_")[2]}'
                     
                     df = pd.read_csv(file_path)
                     df['technique'] = technique
-                    # df['num_threads'] = num_threads
                     dfs.append(df)
                     
                 except Exception as e:
@@ -377,6 +377,132 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error creating Precision-Recall curve plot: {e}")
     
+    def plot_tradeoff_analysis(self, output_dir=None, show=False, metric='auroc'):
+        """
+        Generate trade-off analysis between performance metric and execution speed
+        
+        Args:
+            output_dir (str): Directory to save the plot
+            show (bool): Whether to display the plot
+            metric (str): Performance metric to use ('auroc' or 'aupr')
+        """
+        if self.combined_data is None:
+            print("No combined data available for trade-off analysis")
+            return
+        
+        try:
+            # Get unique thread counts
+            thread_counts = self.combined_data['num_threads'].unique()
+            
+            for thread_count in thread_counts:
+                # Filter data for current thread count
+                thread_data = self.combined_data[self.combined_data['num_threads'] == thread_count].copy()
+                
+                if len(thread_data) == 0:
+                    print(f"No data available for {thread_count} threads")
+                    continue
+                
+                # Calculate worst execution time
+                worst_time = thread_data['avg_execution_time_minutes'].max()
+                
+                # Calculate relative time score
+                thread_data['time_relative'] = (worst_time - thread_data['avg_execution_time_minutes']) / worst_time
+                
+                # Generate alpha values from 0 to 1
+                alpha_values = np.arange(0, 1.01, 0.01)
+                
+                plt.figure(figsize=(12, 8))
+                
+                # Calculate and plot score for each technique
+                for i, (_, row) in enumerate(thread_data.iterrows()):
+                    technique = row['technique']
+                    metric_value = row[metric]
+                    time_relative = row['time_relative']
+                    
+                    # Calculate score for each alpha
+                    scores = [alpha * metric_value + (1 - alpha) * time_relative for alpha in alpha_values]
+                    
+                    # Get color for technique
+                    color = self.color_palette[i % len(self.color_palette)]
+                    
+                    # Plot line
+                    plt.plot(alpha_values, scores, label=technique, color=color, linewidth=2)
+                
+                plt.xlabel('α (Weight of Metric)', fontsize=12)
+                plt.ylabel('Score', fontsize=12)
+                plt.title(f'Trade-off Analysis: {metric.upper()} vs Speed (Thread = {thread_count})', 
+                         fontsize=14, fontweight='bold')
+                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                plt.grid(True, alpha=0.3)
+                plt.xlim([0, 1])
+                plt.ylim([0, 1])
+                plt.tight_layout()
+                
+                if output_dir:
+                    output_path = os.path.join(output_dir, f'tradeoff_analysis_{metric}_thread_{thread_count}.png')
+                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                    print(f"Trade-off analysis plot saved to: {output_path}")
+                
+                if show:
+                    plt.show()
+                else:
+                    plt.close()
+                    
+        except Exception as e:
+            print(f"Error creating trade-off analysis plot: {e}")
+    
+    def generate_comprehensive_report(self, output_dir=None):
+        """Generate a comprehensive text report with key statistics"""
+        if self.combined_data is None:
+            print("No data available for report generation")
+            return
+        
+        try:
+            report_lines = []
+            report_lines.append("=" * 60)
+            report_lines.append("COMPREHENSIVE EVALUATION REPORT")
+            report_lines.append("=" * 60)
+            
+            # Overall statistics
+            report_lines.append(f"\nOverall Statistics:")
+            report_lines.append(f"Number of techniques: {len(self.combined_data)}")
+            report_lines.append(f"Thread configurations: {sorted(self.combined_data['num_threads'].unique())}")
+            
+            # Best performing techniques by metric
+            for metric in ['auroc', 'aupr']:
+                best_idx = self.combined_data[metric].idxmax()
+                best_tech = self.combined_data.loc[best_idx, 'technique']
+                best_value = self.combined_data.loc[best_idx, metric]
+                best_threads = self.combined_data.loc[best_idx, 'num_threads']
+                
+                report_lines.append(f"\nBest {metric.upper()}:")
+                report_lines.append(f"  Technique: {best_tech}")
+                report_lines.append(f"  Value: {best_value:.4f}")
+                report_lines.append(f"  Threads: {best_threads}")
+            
+            # Fastest technique
+            fastest_idx = self.combined_data['avg_execution_time_minutes'].idxmin()
+            fastest_tech = self.combined_data.loc[fastest_idx, 'technique']
+            fastest_time = self.combined_data.loc[fastest_idx, 'avg_execution_time_minutes']
+            fastest_threads = self.combined_data.loc[fastest_idx, 'num_threads']
+            
+            report_lines.append(f"\nFastest Technique:")
+            report_lines.append(f"  Technique: {fastest_tech}")
+            report_lines.append(f"  Execution Time: {fastest_time:.2f} minutes")
+            report_lines.append(f"  Threads: {fastest_threads}")
+            
+            # Write report to file
+            if output_dir:
+                report_path = os.path.join(output_dir, 'evaluation_report.txt')
+                with open(report_path, 'w') as f:
+                    f.write('\n'.join(report_lines))
+                print(f"Comprehensive report saved to: {report_path}")
+            
+            # Print to console
+            print('\n'.join(report_lines))
+            
+        except Exception as e:
+            print(f"Error generating comprehensive report: {e}")
 
 def main():
     """Main function to run the evaluation analysis"""
@@ -386,6 +512,7 @@ def main():
     parser.add_argument('--threads', type=int, help='Number of threads to analyze')
     parser.add_argument('--output_dir', type=str, help='Output directory for saving graphs')
     parser.add_argument('--show_plots', action='store_true', help='Show plots interactively')
+    parser.add_argument('--generate_report', action='store_true', help='Generate comprehensive report')
     
     args = parser.parse_args()
     
@@ -434,8 +561,14 @@ def main():
         analyzer.plot_execution_time(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_roc_curve(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_pr_curve(output_dir=args.output_dir, show=args.show_plots)
-        # analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
-        # analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
+        
+        # Generate trade-off analysis for both metrics
+        analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
+        analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
+        
+        # Generate comprehensive report if requested
+        if args.generate_report:
+            analyzer.generate_comprehensive_report(output_dir=args.output_dir)
         
         print("\n" + "="*50)
         print("Analysis Complete!")
