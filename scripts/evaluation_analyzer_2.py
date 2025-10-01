@@ -47,10 +47,11 @@ class EvaluationAnalyzer:
             if missing_cols:
                 raise ValueError(f"Missing required columns: {missing_cols}")
             
+            df.rename(columns={'threads': 'num_threads'}, inplace=True)
+            
             # Filter by threads
             original_count = len(df)
-            df = df[df['threads'] == num_threads]
-            filtered_count = len(df)
+            filtered_count = len(df[df['num_threads'] == num_threads])
             
             if filtered_count == 0:
                 raise ValueError(f"No data found for {num_threads} threads")
@@ -67,7 +68,7 @@ class EvaluationAnalyzer:
             df['execution_time_minutes'] = df['execution_time'] / 60.0
             
             # Calculate average execution time per technique
-            time_avg = df.groupby('technique')['execution_time_minutes'].mean().reset_index()
+            time_avg = df.groupby(['technique', 'num_threads'])['execution_time_minutes'].mean().reset_index()
             time_avg.rename(columns={'execution_time_minutes': 'avg_execution_time_minutes'}, inplace=True)
             
             self.time_data = df
@@ -103,10 +104,12 @@ class EvaluationAnalyzer:
                     # Extract technique name from filename
                     filename = os.path.basename(file_path)
                     technique = filename.split('_')[1]  # Assuming format: summary_<technique>_<threads>_threads.csv
+                    if technique == 'GENIE3':
+                        technique = f'{technique}_{filename.split('_')[2]}'
                     
                     df = pd.read_csv(file_path)
                     df['technique'] = technique
-                    df['num_threads'] = num_threads
+                    # df['num_threads'] = num_threads
                     dfs.append(df)
                     
                 except Exception as e:
@@ -126,10 +129,9 @@ class EvaluationAnalyzer:
                 df_combined = df_combined.dropna(subset=['auroc', 'aupr'])
             
             # Calculate average metrics per technique
-            summary_avg = df_combined.groupby('technique').agg({
+            summary_avg = df_combined.groupby(['technique', 'num_threads']).agg({
                 'auroc': 'mean',
-                'aupr': 'mean',
-                'num_threads': 'first'
+                'aupr': 'mean'
             }).reset_index()
             
             self.summary_data = df_combined
@@ -211,7 +213,7 @@ class EvaluationAnalyzer:
                 raise ValueError("Time or summary data not available")
             
             # Merge time and summary data on technique
-            combined = pd.merge(time_avg, summary_avg, on='technique', how='inner')
+            combined = pd.merge(time_avg, summary_avg, on=['technique', 'num_threads'], how='inner')
             
             self.combined_data = combined
             print(f"Combined data created with {len(combined)} techniques")
@@ -375,100 +377,6 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error creating Precision-Recall curve plot: {e}")
     
-    def calculate_tradeoff_score(self, metric_data, time_data, alpha):
-        """
-        Calculate trade-off score for given alpha
-        
-        Args:
-            metric_data (array-like): Performance metric values (AUROC/AUPR)
-            time_data (array-like): Execution time values
-            alpha (float): Weight parameter (0-1)
-            
-        Returns:
-            numpy.array: Calculated scores
-        """
-        metric_array = np.array(metric_data)
-        time_array = np.array(time_data)
-        
-        # Handle case where all values are the same
-        if np.ptp(metric_array) == 0:
-            metric_relative = np.ones_like(metric_array)
-        else:
-            metric_relative = (metric_array - np.min(metric_array)) / (np.max(metric_array) - np.min(metric_array))
-        
-        if np.ptp(time_array) == 0:
-            time_relative = np.ones_like(time_array)
-        else:
-            time_relative = (np.max(time_array) - time_array) / (np.max(time_array) - np.min(time_array))
-        
-        score = (alpha * metric_relative) + ((1 - alpha) * time_relative)
-        return score
-    
-    def plot_tradeoff_analysis(self, output_dir=None, show=False, metric='auroc'):
-        """
-        Generate trade-off analysis visualization
-        
-        Args:
-            output_dir (str): Output directory for saving plot
-            show (bool): Whether to display plot
-            metric (str): Metric to use ('auroc' or 'aupr')
-        """
-        if self.combined_data is None:
-            print("No combined data available for trade-off analysis")
-            return
-        
-        try:
-            # Get unique thread counts
-            thread_counts = self.combined_data['num_threads'].unique()
-            
-            for thread_count in thread_counts:
-                plt.figure(figsize=(12, 8))
-                
-                # Filter data for current thread count
-                thread_data = self.combined_data[self.combined_data['num_threads'] == thread_count]
-                
-                if thread_data.empty:
-                    print(f"No data for thread count {thread_count}")
-                    continue
-                
-                techniques = thread_data['technique'].tolist()
-                metric_values = thread_data[metric].tolist()
-                time_values = thread_data['avg_execution_time_minutes'].tolist()
-                
-                # Generate alpha values from 0 to 1
-                alpha_values = np.arange(0, 1.01, 0.01)
-                
-                # Calculate scores for each technique across alpha values
-                for i, technique in enumerate(techniques):
-                    scores = []
-                    for alpha in alpha_values:
-                        score = self.calculate_tradeoff_score([metric_values[i]], [time_values[i]], alpha)
-                        scores.append(score[0])
-                    
-                    color = self.color_palette[i % len(self.color_palette)]
-                    plt.plot(alpha_values, scores, label=technique, color=color, linewidth=2)
-                
-                plt.xlabel('α (Weight of Metric)', fontsize=12)
-                plt.ylabel('Score', fontsize=12)
-                plt.title(f'Trade-off Analysis: {metric.upper()} vs Speed (Thread = {thread_count})', 
-                         fontsize=14, fontweight='bold')
-                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-                plt.grid(True, alpha=0.3)
-                plt.xlim([0, 1])
-                plt.tight_layout()
-                
-                if output_dir:
-                    output_path = os.path.join(output_dir, f'tradeoff_analysis_thread_{thread_count}_{metric}.png')
-                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                    print(f"Trade-off analysis plot saved to: {output_path}")
-                
-                if show:
-                    plt.show()
-                else:
-                    plt.close()
-                    
-        except Exception as e:
-            print(f"Error creating trade-off analysis plot: {e}")
 
 def main():
     """Main function to run the evaluation analysis"""
@@ -526,8 +434,8 @@ def main():
         analyzer.plot_execution_time(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_roc_curve(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_pr_curve(output_dir=args.output_dir, show=args.show_plots)
-        analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
-        analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
+        # analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
+        # analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
         
         print("\n" + "="*50)
         print("Analysis Complete!")
