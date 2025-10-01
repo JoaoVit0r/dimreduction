@@ -376,32 +376,34 @@ def main():
         else:
             processed_file = network_file['path']
         
-        # Evaluate network with geneci
-        geneci_evaluation = evaluate_network(
-            processed_file, 
-            metadata,
-            args.external_projects,
-            args.challenge
-        )
+        network_file['processed_file'] = processed_file
         
-        # Evaluate network with evaluate_metrics.py
-        metrics_evaluation = evaluate_metrics(
-            processed_file,
-            metadata,
-            args.external_projects,
-            args.metrics_threshold,
-            args.challenge
-        )
+        # # Evaluate network with geneci
+        # geneci_evaluation = evaluate_network(
+        #     processed_file, 
+        #     metadata,
+        #     args.external_projects,
+        #     args.challenge
+        # )
         
-        # Combine results
-        if geneci_evaluation:
-            metadata.update(geneci_evaluation)
+        # # Evaluate network with evaluate_metrics.py
+        # metrics_evaluation = evaluate_metrics(
+        #     processed_file,
+        #     metadata,
+        #     args.external_projects,
+        #     args.metrics_threshold,
+        #     args.challenge
+        # )
         
-        if metrics_evaluation:
-            metadata.update(metrics_evaluation)
+        # # Combine results
+        # if geneci_evaluation:
+        #     metadata.update(geneci_evaluation)
         
-        if geneci_evaluation or metrics_evaluation:
-            results.append(metadata)
+        # if metrics_evaluation:
+        #     metadata.update(metrics_evaluation)
+        
+        # if geneci_evaluation or metrics_evaluation:
+        #     results.append(metadata)
     
     # Create results dataframe and save
     if results:

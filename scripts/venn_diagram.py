@@ -16,9 +16,13 @@ def get_technique_name(filename):
         return 'DimReduction'
     elif filename.startswith('GRN_'):
         # Extract technique name after GRN_ and before next underscore
-        match = re.match(r'GRN_([^_]+)', filename)
+        match = re.match(r'GRN_([^_]+)_([^_]+)', filename)
         if match:
-            return match.group(1)
+            name = match.group(1)
+            if name == "GENIE3":
+                name = f"{name}_{match.group(2)}"
+                
+            return name
     return os.path.splitext(filename)[0]  # Fallback to filename without extension
 
 def read_edges(filepath, gold_standard):
