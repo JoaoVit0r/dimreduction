@@ -12,6 +12,7 @@ import subprocess
 from datetime import datetime
 import pandas as pd
 from pathlib import Path
+import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Process and evaluate network inference results')
@@ -130,12 +131,11 @@ def process_java_network(file_path, output_dir, threshold, skip_binarize):
         return converted_file
 
 def process_geneci_network(file_path, output_dir, threshold, skip_binarize):
-    """Process geneci network file using optionally binarizer"""
+    """Process geneci network file using optionally binarizer or copying the file"""
     if not skip_binarize:
         base_name = Path(file_path).stem
         sufix = str(datetime.now().timestamp()).replace(".", "_")
         binary_file = os.path.join(output_dir, f"{base_name}_binary_{sufix}_threshold_{threshold}.txt")
-        # binary_file = os.path.join(output_dir, f"{base_name}_binary.txt")
         
         # Binarize predictions
         subprocess.run([
@@ -149,7 +149,13 @@ def process_geneci_network(file_path, output_dir, threshold, skip_binarize):
         
         return binary_file
     else:
-        return file_path
+        # Copy the original file to output directory
+        base_name = Path(file_path).stem
+        sufix = str(datetime.now().timestamp()).replace(".", "_")
+        copied_file = os.path.join(output_dir, f"{base_name}_copy_{sufix}.txt")
+        
+        shutil.copy2(file_path, copied_file)
+        return copied_file
 
 def evaluate_network(file_path, metadata, external_projects_dir, challenge):
     """Evaluate network using GENECI evaluate command"""
