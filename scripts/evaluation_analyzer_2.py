@@ -376,7 +376,6 @@ class EvaluationAnalyzer:
                 
         except Exception as e:
             print(f"Error creating Precision-Recall curve plot: {e}")
-    
     def plot_tradeoff_analysis(self, output_dir=None, show=False, metric='auroc'):
         """
         Generate trade-off analysis between performance metric and execution speed
@@ -413,6 +412,9 @@ class EvaluationAnalyzer:
                 
                 plt.figure(figsize=(12, 8))
                 
+                # Store AUC values for each technique
+                auc_values = {}
+                
                 # Calculate and plot score for each technique
                 for i, (_, row) in enumerate(thread_data.iterrows()):
                     technique = row['technique']
@@ -422,21 +424,35 @@ class EvaluationAnalyzer:
                     # Calculate score for each alpha
                     scores = [alpha * metric_value + (1 - alpha) * time_relative for alpha in alpha_values]
                     
+                    # Calculate AUC using trapezoidal rule
+                    auc = np.trapezoid(scores, alpha_values)
+                    auc_values[technique] = auc
+                    
                     # Get color for technique
                     color = self.color_palette[i % len(self.color_palette)]
                     
+                    # Create label with AUC information
+                    label = f'{technique} (AUC: {auc:.3f})'
+                    
                     # Plot line
-                    plt.plot(alpha_values, scores, label=technique, color=color, linewidth=2)
+                    plt.plot(alpha_values, scores, label=label, color=color, linewidth=2)
                 
                 plt.xlabel('α (Weight of Metric)', fontsize=12)
                 plt.ylabel('Score', fontsize=12)
                 plt.title(f'Trade-off Analysis: {metric.upper()} vs Speed (Thread = {thread_count})', 
-                         fontsize=14, fontweight='bold')
+                        fontsize=14, fontweight='bold')
                 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
                 plt.grid(True, alpha=0.3)
                 plt.xlim([0, 1])
                 plt.ylim([0, 1])
                 plt.tight_layout()
+                
+                # Print AUC summary to console
+                print(f"\nTrade-off Analysis AUC Summary (Thread = {thread_count}, Metric = {metric.upper()}):")
+                print("-" * 60)
+                sorted_auc = sorted(auc_values.items(), key=lambda x: x[1], reverse=True)
+                for technique, auc in sorted_auc:
+                    print(f"  {technique}: {auc:.4f}")
                 
                 if output_dir:
                     output_path = os.path.join(output_dir, f'tradeoff_analysis_{metric}_thread_{thread_count}.png')
@@ -503,6 +519,177 @@ class EvaluationAnalyzer:
             
         except Exception as e:
             print(f"Error generating comprehensive report: {e}")
+            
+    def export_tradeoff_rank_tables(self, output_dir=None):
+        """
+        Export CSV tables showing ordered rank of technique trade-off performance
+        at fixed weight values for both AUROC and AUPR metrics.
+        """
+        if self.combined_data is None:
+            print("No combined data available for trade-off rank tables")
+            return
+        
+        try:
+            # Get unique thread counts
+            thread_counts = self.combined_data['num_threads'].unique()
+            
+            for thread_count in thread_counts:
+                # Filter data for current thread count
+                thread_data = self.combined_data[self.combined_data['num_threads'] == thread_count].copy()
+                
+                if len(thread_data) == 0:
+                    continue
+                
+                # Calculate worst execution time
+                worst_time = thread_data['avg_execution_time_minutes'].max()
+                thread_data['time_relative'] = (worst_time - thread_data['avg_execution_time_minutes']) / worst_time
+                
+                # Fixed weight values (converted to decimal)
+                fixed_weights_auroc = [0.0, 0.25, 0.5, 0.75, 1.0]
+                fixed_weights_aupr = [0.0, 0.25, 0.5, 0.75, 1.0]
+                
+                # Prepare data for AUROC trade-off ranking
+                auroc_rank_data = []
+                for weight in fixed_weights_auroc:
+                    # Calculate scores for this weight
+                    scores = []
+                    for _, row in thread_data.iterrows():
+                        score = weight * row['auroc'] + (1 - weight) * row['time_relative']
+                        scores.append((row['technique'], score))
+                    
+                    # Sort by score descending
+                    scores.sort(key=lambda x: x[1], reverse=True)
+                    
+                    # Add to rank data
+                    rank_entry = {'Weight': f"{int(weight*100)}"}
+                    for rank, (technique, score) in enumerate(scores, 1):
+                        rank_entry[f'Rank_{rank}'] = f"{score:.3f} {technique} (threads={thread_count})"
+                    auroc_rank_data.append(rank_entry)
+                
+                # Prepare data for AUPR trade-off ranking
+                aupr_rank_data = []
+                for weight in fixed_weights_aupr:
+                    # Calculate scores for this weight
+                    scores = []
+                    for _, row in thread_data.iterrows():
+                        score = weight * row['aupr'] + (1 - weight) * row['time_relative']
+                        scores.append((row['technique'], score))
+                    
+                    # Sort by score descending
+                    scores.sort(key=lambda x: x[1], reverse=True)
+                    
+                    # Add to rank data
+                    rank_entry = {'Weight': f"{int(weight*100)}"}
+                    for rank, (technique, score) in enumerate(scores, 1):
+                        rank_entry[f'Rank_{rank}'] = f"{score:.3f} {technique} (threads={thread_count})"
+                    aupr_rank_data.append(rank_entry)
+                
+                # Convert to DataFrames
+                df_auroc_ranks = pd.DataFrame(auroc_rank_data).T
+                df_aupr_ranks = pd.DataFrame(aupr_rank_data).T
+                
+                # Save to CSV files
+                if output_dir:
+                    auroc_filename = f"tradeoff_auroc_ranks_thread_{thread_count}.csv"
+                    aupr_filename = f"tradeoff_aupr_ranks_thread_{thread_count}.csv"
+                    
+                    auroc_path = os.path.join(output_dir, auroc_filename)
+                    aupr_path = os.path.join(output_dir, aupr_filename)
+                    
+                    df_auroc_ranks.to_csv(auroc_path, index=False, header=False)
+                    df_aupr_ranks.to_csv(aupr_path, index=False, header=False)
+                    
+                    print(f"AUROC trade-off ranks saved to: {auroc_path}")
+                    print(f"AUPR trade-off ranks saved to: {aupr_path}")
+            
+        except Exception as e:
+            print(f"Error exporting trade-off rank tables: {e}")
+
+    def export_auc_rank_tables(self, output_dir=None):
+        """
+        Export CSV tables showing ordered rank of technique AUC values
+        for trade-off performance of both AUROC and AUPR.
+        """
+        if self.combined_data is None:
+            print("No combined data available for AUC rank tables")
+            return
+        
+        try:
+            # Get unique thread counts
+            thread_counts = self.combined_data['num_threads'].unique()
+            
+            for thread_count in thread_counts:
+                # Filter data for current thread count
+                thread_data = self.combined_data[self.combined_data['num_threads'] == thread_count].copy()
+                
+                if len(thread_data) == 0:
+                    continue
+                
+                # Calculate worst execution time
+                worst_time = thread_data['avg_execution_time_minutes'].max()
+                thread_data['time_relative'] = (worst_time - thread_data['avg_execution_time_minutes']) / worst_time
+                
+                # Generate alpha values from 0 to 1
+                alpha_values = np.arange(0, 1.01, 0.01)
+                
+                # Calculate AUC values for AUROC trade-off
+                auroc_auc_data = []
+                for _, row in thread_data.iterrows():
+                    technique = row['technique']
+                    scores = [alpha * row['auroc'] + (1 - alpha) * row['time_relative'] for alpha in alpha_values]
+                    auc = np.trapezoid(scores, alpha_values)
+                    auroc_auc_data.append((technique, auc))
+                
+                # Calculate AUC values for AUPR trade-off
+                aupr_auc_data = []
+                for _, row in thread_data.iterrows():
+                    technique = row['technique']
+                    scores = [alpha * row['aupr'] + (1 - alpha) * row['time_relative'] for alpha in alpha_values]
+                    auc = np.trapezoid(scores, alpha_values)
+                    aupr_auc_data.append((technique, auc))
+                
+                # Sort by AUC descending
+                auroc_auc_data.sort(key=lambda x: x[1], reverse=True)
+                aupr_auc_data.sort(key=lambda x: x[1], reverse=True)
+                
+                # Prepare rank tables
+                auroc_rank_table = []
+                aupr_rank_table = []
+                
+                # AUROC AUC ranks
+                for rank, (technique, auc) in enumerate(auroc_auc_data, 1):
+                    auroc_rank_table.append({
+                        'Rank': rank,
+                        'Technique_AUC': f"{auc:.3f} {technique} (threads={thread_count})"
+                    })
+                
+                # AUPR AUC ranks
+                for rank, (technique, auc) in enumerate(aupr_auc_data, 1):
+                    aupr_rank_table.append({
+                        'Rank': rank,
+                        'Technique_AUC': f"{auc:.3f} {technique} (threads={thread_count})"
+                    })
+                
+                # Convert to DataFrames
+                df_auroc_auc_ranks = pd.DataFrame(auroc_rank_table)
+                df_aupr_auc_ranks = pd.DataFrame(aupr_rank_table)
+                
+                # Save to CSV files
+                if output_dir:
+                    auroc_filename = f"auc_tradeoff_auroc_ranks_thread_{thread_count}.csv"
+                    aupr_filename = f"auc_tradeoff_aupr_ranks_thread_{thread_count}.csv"
+                    
+                    auroc_path = os.path.join(output_dir, auroc_filename)
+                    aupr_path = os.path.join(output_dir, aupr_filename)
+                    
+                    df_auroc_auc_ranks.to_csv(auroc_path, index=False)
+                    df_aupr_auc_ranks.to_csv(aupr_path, index=False)
+                    
+                    print(f"AUROC AUC trade-off ranks saved to: {auroc_path}")
+                    print(f"AUPR AUC trade-off ranks saved to: {aupr_path}")
+            
+        except Exception as e:
+            print(f"Error exporting AUC rank tables: {e}")
 
 def main():
     """Main function to run the evaluation analysis"""
@@ -565,6 +752,11 @@ def main():
         # Generate trade-off analysis for both metrics
         analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
         analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
+        
+        # Generate trade-off rank tables
+        print("\nGenerating trade-off rank tables...")
+        analyzer.export_tradeoff_rank_tables(output_dir=args.output_dir)
+        analyzer.export_auc_rank_tables(output_dir=args.output_dir)
         
         # Generate comprehensive report if requested
         if args.generate_report:
