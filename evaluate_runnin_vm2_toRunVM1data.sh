@@ -54,10 +54,8 @@ mkdir -p $MONITORING_FOLDER/matlab/results
 #     $MONITORING_FOLDER/matlab/
 # # already executed - END
 
-echo manual edit the go_my to use this path to predictions!!!
-exit;
-
-sudo matlab -nodesktop -nosplash -r "go_my('DimReduction', 64); exit;" && \
+# echo manual edit the go_my to use this path to predictions!!!
+# exit;
 
 # List of methods
 methods=("GENIE3_ET" "GENIE3_RF" "KBOOST")
@@ -69,11 +67,19 @@ for method in "${methods[@]}"; do
         "$MONITORING_FOLDER/matlab/"
 done
 
+MATLAB_PREDICTIONS_FULL_PATH=$(realpath $MONITORING_FOLDER/matlab/)
+
+cd /home/a62924/workspace/matlab/evaluation_scripts/matlab || exit 1;
+
+sudo matlab -nodesktop -nosplash -r "go_my('DimReduction', 64, '${MATLAB_PREDICTIONS_FULL_PATH}'); exit;" && \
+
 for method in "${methods[@]}"; do
-    sudo matlab -nodesktop -nosplash -r "go_my('${method}', 64); exit;"
+    sudo matlab -nodesktop -nosplash -r "go_my('${method}', 64, '${MATLAB_PREDICTIONS_FULL_PATH}'); exit;"
 done
 
-cp results/* $MONITORING_FOLDER/matlab/results
+cp results/* $MATLAB_PREDICTIONS_FULL_PATH/results
+
+cd - || exit 1;
 
 mkdir -p $MONITORING_FOLDER/graphs
 python scripts/evaluation_analyzer_2.py \
