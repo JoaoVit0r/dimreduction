@@ -26,13 +26,14 @@ git status
 MONITORING_FOLDER="monitoring_plots/20250914_mutiples_runs_VM1"
 mkdir -p $MONITORING_FOLDER/matlab/results
 
-python scripts/geneci_evaluate.py \
-    --monitoring-dir "$MONITORING_FOLDER" \
-    --external-projects "$GENECI_FOLDER" \
-    --threshold 0.000000001 \
-    --output $MONITORING_FOLDER/evaluation_results_confident-in-0.csv \
-    --output-dir $MONITORING_FOLDER/ \
-    --skip-binarize
+# # already executed 
+# python scripts/geneci_evaluate.py \
+#     --monitoring-dir "$MONITORING_FOLDER" \
+#     --external-projects "$GENECI_FOLDER" \
+#     --threshold 0.000000001 \
+#     --output $MONITORING_FOLDER/evaluation_results_confident-in-0.csv \
+#     --output-dir $MONITORING_FOLDER/ \
+#     --skip-binarize
 
 ref_file=$(find $MONITORING_FOLDER -name "*-final_weight_data.txt" -type f | head -1)
 
@@ -42,7 +43,7 @@ if [[ -z "$ref_file" ]]; then
     exit 1
 fi
 dir_path=$(dirname "$ref_file")
-base_name=$(basename "$ref_file" "-final_weight_data.txt")
+base_name=$(basename "$ref_file" ".txt")
 DimReduction_list_file="$dir_path/${base_name}_list_with_nonTFpred.txt"
 python scripts/dream5_converter.py \
     "$ref_file" \
