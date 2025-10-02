@@ -299,8 +299,10 @@ class EvaluationAnalyzer:
                     fpr = tech_data['fpr']
                     tpr = tech_data['tpr']
                 
+                auc = np.trapezoid(tpr, fpr)
                 color = self.color_palette[i % len(self.color_palette)]
-                plt.plot(fpr, tpr, label=technique, color=color, linewidth=2)
+                label = f'{technique} (AUC: {auc:.3f})'
+                plt.plot(fpr, tpr, label=label, color=color, linewidth=2)
             
             # Plot diagonal reference line
             plt.plot([0, 1], [0, 1], 'k--', alpha=0.5, label='Random Classifier')
@@ -354,8 +356,10 @@ class EvaluationAnalyzer:
                     recall = tech_data['recall']
                     precision = tech_data['precision']
                 
+                auc = np.trapezoid(precision, recall)
                 color = self.color_palette[i % len(self.color_palette)]
-                plt.plot(recall, precision, label=technique, color=color, linewidth=2)
+                label = f'{technique} (AUC: {auc:.3f})'
+                plt.plot(recall, precision, label=label, color=color, linewidth=2)
             
             plt.xlabel('Recall', fontsize=12)
             plt.ylabel('Precision', fontsize=12)

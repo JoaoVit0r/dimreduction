@@ -1,0 +1,12 @@
+0,25,50,75,100
+1.000 CLR (threads=1),0.897 CLR (threads=1),0.795 MRNET (threads=1),0.695 MRNET (threads=1),0.670 GENIE3_ET (threads=1)
+0.999 C3NET (threads=1),0.896 MRNET (threads=1),0.794 CLR (threads=1),0.695 MRNETB (threads=1),0.653 GENIE3_RF (threads=1)
+0.998 ARACNE (threads=1),0.894 MRNETB (threads=1),0.794 MRNETB (threads=1),0.692 CLR (threads=1),0.595 MRNETB (threads=1)
+0.996 MRNET (threads=1),0.879 KBOOST (threads=1),0.772 KBOOST (threads=1),0.666 PCIT (threads=1),0.594 MRNET (threads=1)
+0.994 MRNETB (threads=1),0.877 ARACNE (threads=1),0.758 PCIT (threads=1),0.664 KBOOST (threads=1),0.589 CLR (threads=1)
+0.986 KBOOST (threads=1),0.876 C3NET (threads=1),0.756 ARACNE (threads=1),0.653 GENIE3_ET (threads=1),0.575 PCIT (threads=1)
+0.972 DimReduction (threads=1),0.855 DimReduction (threads=1),0.753 C3NET (threads=1),0.634 ARACNE (threads=1),0.557 KBOOST (threads=1)
+0.940 PCIT (threads=1),0.849 PCIT (threads=1),0.737 DimReduction (threads=1),0.630 C3NET (threads=1),0.515 BC3NET (threads=1)
+0.800 BC3NET (threads=1),0.729 BC3NET (threads=1),0.658 BC3NET (threads=1),0.620 DimReduction (threads=1),0.513 ARACNE (threads=1)
+0.603 GENIE3_ET (threads=1),0.619 GENIE3_ET (threads=1),0.636 GENIE3_ET (threads=1),0.586 BC3NET (threads=1),0.507 C3NET (threads=1)
+0.000 GENIE3_RF (threads=1),0.163 GENIE3_RF (threads=1),0.327 GENIE3_RF (threads=1),0.490 GENIE3_RF (threads=1),0.503 DimReduction (threads=1)

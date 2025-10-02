@@ -1,0 +1,22 @@
+============================================================
+COMPREHENSIVE EVALUATION REPORT
+============================================================
+
+Overall Statistics:
+Number of techniques: 11
+Thread configurations: [np.int64(1)]
+
+Best AUROC:
+  Technique: GENIE3_ET
+  Value: 0.6700
+  Threads: 1
+
+Best AUPR:
+  Technique: GENIE3_ET
+  Value: 0.0855
+  Threads: 1
+
+Fastest Technique:
+  Technique: CLR
+  Execution Time: 0.57 minutes
+  Threads: 1
