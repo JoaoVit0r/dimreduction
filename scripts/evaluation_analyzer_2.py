@@ -167,6 +167,8 @@ class EvaluationAnalyzer:
                     # Extract technique name from filename
                     filename = os.path.basename(file_path)
                     technique = filename.split('_')[2]  # Assuming format: curve_data_<technique>_<threads>_threads.csv
+                    if technique == 'GENIE3':
+                        technique = f'{technique}_{filename.split("_")[3]}'
                     
                     df = pd.read_csv(file_path)
                     df['technique'] = technique
