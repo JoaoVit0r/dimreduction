@@ -26,7 +26,7 @@ git status
 MONITORING_FOLDER="monitoring_plots/20250914_mutiples_runs_VM1"
 mkdir -p $MONITORING_FOLDER/matlab/results
 
-# # already executed 
+# # already executed - START
 # python scripts/geneci_evaluate.py \
 #     --monitoring-dir "$MONITORING_FOLDER" \
 #     --external-projects "$GENECI_FOLDER" \
@@ -35,24 +35,24 @@ mkdir -p $MONITORING_FOLDER/matlab/results
 #     --output-dir $MONITORING_FOLDER/ \
 #     --skip-binarize
 
-ref_file=$(find $MONITORING_FOLDER -name "*-final_weight_data.txt" -type f | head -1)
+# ref_file=$(find $MONITORING_FOLDER -name "*-final_weight_data.txt" -type f | head -1)
+# # Check if file was found
+# if [[ -z "$ref_file" ]]; then
+#     echo "Error: No file found matching the pattern"
+#     exit 1
+# fi
+# dir_path=$(dirname "$ref_file")
+# base_name=$(basename "$ref_file" ".txt")
+# DimReduction_list_file="$dir_path/${base_name}_list_with_nonTFpred.txt"
+# python scripts/dream5_converter.py \
+#     "$ref_file" \
+#     "$DimReduction_list_file" \
+#     --max-predictions 21000000
 
-# Check if file was found
-if [[ -z "$ref_file" ]]; then
-    echo "Error: No file found matching the pattern"
-    exit 1
-fi
-dir_path=$(dirname "$ref_file")
-base_name=$(basename "$ref_file" ".txt")
-DimReduction_list_file="$dir_path/${base_name}_list_with_nonTFpred.txt"
-python scripts/dream5_converter.py \
-    "$ref_file" \
-    "$DimReduction_list_file" \
-    --max-predictions 21000000
-
-python scripts/csv_2_tsv_net3.py \
-    "$DimReduction_list_file" \
-    $MONITORING_FOLDER/matlab/
+# python scripts/csv_2_tsv_net3.py \
+#     "$DimReduction_list_file" \
+#     $MONITORING_FOLDER/matlab/
+# # already executed - END
 
 echo manual edit the go_my to use this path to predictions!!!
 exit;
