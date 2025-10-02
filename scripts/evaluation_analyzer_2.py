@@ -472,60 +472,7 @@ class EvaluationAnalyzer:
                     
         except Exception as e:
             print(f"Error creating trade-off analysis plot: {e}")
-    
-    def generate_comprehensive_report(self, output_dir=None):
-        """Generate a comprehensive text report with key statistics"""
-        if self.combined_data is None:
-            print("No data available for report generation")
-            return
-        
-        try:
-            report_lines = []
-            report_lines.append("=" * 60)
-            report_lines.append("COMPREHENSIVE EVALUATION REPORT")
-            report_lines.append("=" * 60)
-            
-            # Overall statistics
-            report_lines.append(f"\nOverall Statistics:")
-            report_lines.append(f"Number of techniques: {len(self.combined_data)}")
-            report_lines.append(f"Thread configurations: {sorted(self.combined_data['num_threads'].unique())}")
-            
-            # Best performing techniques by metric
-            for metric in ['auroc', 'aupr']:
-                best_idx = self.combined_data[metric].idxmax()
-                best_tech = self.combined_data.loc[best_idx, 'technique']
-                best_value = self.combined_data.loc[best_idx, metric]
-                best_threads = self.combined_data.loc[best_idx, 'num_threads']
                 
-                report_lines.append(f"\nBest {metric.upper()}:")
-                report_lines.append(f"  Technique: {best_tech}")
-                report_lines.append(f"  Value: {best_value:.4f}")
-                report_lines.append(f"  Threads: {best_threads}")
-            
-            # Fastest technique
-            fastest_idx = self.combined_data['avg_execution_time_minutes'].idxmin()
-            fastest_tech = self.combined_data.loc[fastest_idx, 'technique']
-            fastest_time = self.combined_data.loc[fastest_idx, 'avg_execution_time_minutes']
-            fastest_threads = self.combined_data.loc[fastest_idx, 'num_threads']
-            
-            report_lines.append(f"\nFastest Technique:")
-            report_lines.append(f"  Technique: {fastest_tech}")
-            report_lines.append(f"  Execution Time: {fastest_time:.2f} minutes")
-            report_lines.append(f"  Threads: {fastest_threads}")
-            
-            # Write report to file
-            if output_dir:
-                report_path = os.path.join(output_dir, 'evaluation_report.txt')
-                with open(report_path, 'w') as f:
-                    f.write('\n'.join(report_lines))
-                print(f"Comprehensive report saved to: {report_path}")
-            
-            # Print to console
-            print('\n'.join(report_lines))
-            
-        except Exception as e:
-            print(f"Error generating comprehensive report: {e}")
-            
     def export_tradeoff_rank_tables(self, output_dir=None):
         """
         Export CSV tables showing ordered rank of technique trade-off performance
@@ -705,7 +652,6 @@ def main():
     parser.add_argument('--threads', type=int, help='Number of threads to analyze')
     parser.add_argument('--output_dir', type=str, help='Output directory for saving graphs')
     parser.add_argument('--show_plots', action='store_true', help='Show plots interactively')
-    parser.add_argument('--generate_report', action='store_true', help='Generate comprehensive report')
     
     args = parser.parse_args()
     
@@ -763,10 +709,6 @@ def main():
         print("\nGenerating trade-off rank tables...")
         analyzer.export_tradeoff_rank_tables(output_dir=args.output_dir)
         analyzer.export_auc_rank_tables(output_dir=args.output_dir)
-        
-        # Generate comprehensive report if requested
-        if args.generate_report:
-            analyzer.generate_comprehensive_report(output_dir=args.output_dir)
         
         print("\n" + "="*50)
         print("Analysis Complete!")
