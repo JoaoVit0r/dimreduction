@@ -676,6 +676,138 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error exporting AUC rank tables: {e}")
 
+    def export_performance_rank_tables(self, output_dir=None):
+        """
+        Export CSV tables showing ordered rank of technique performance
+        for both AUROC and AUPR metrics based on summary data only.
+        """
+        if self.summary_data is None:
+            print("No summary data available for performance rank tables")
+            return
+        
+        try:
+            # Get unique thread counts
+            thread_counts = self.summary_data['num_threads'].unique()
+            
+            for thread_count in thread_counts:
+                # Filter data for current thread count
+                thread_data = self.summary_data[self.summary_data['num_threads'] == thread_count].copy()
+                
+                if len(thread_data) == 0:
+                    continue
+                
+                # Calculate average performance metrics per technique
+                performance_avg = thread_data.groupby('technique').agg({
+                    'auroc': 'mean',
+                    'aupr': 'mean'
+                }).reset_index()
+                
+                # Sort by AUROC descending
+                auroc_ranked = performance_avg.sort_values('auroc', ascending=False)
+                
+                # Sort by AUPR descending
+                aupr_ranked = performance_avg.sort_values('aupr', ascending=False)
+                
+                # Prepare rank tables
+                auroc_rank_table = []
+                aupr_rank_table = []
+                
+                # AUROC ranks
+                for rank, (_, row) in enumerate(auroc_ranked.iterrows(), 1):
+                    auroc_rank_table.append({
+                        'Rank': rank,
+                        'Technique_AUROC': f"{row['auroc']:.3f} {row['technique']} (threads={thread_count})"
+                    })
+                
+                # AUPR ranks
+                for rank, (_, row) in enumerate(aupr_ranked.iterrows(), 1):
+                    aupr_rank_table.append({
+                        'Rank': rank,
+                        'Technique_AUPR': f"{row['aupr']:.3f} {row['technique']} (threads={thread_count})"
+                    })
+                
+                # Convert to DataFrames
+                df_auroc_ranks = pd.DataFrame(auroc_rank_table)
+                df_aupr_ranks = pd.DataFrame(aupr_rank_table)
+                
+                # Save to CSV files
+                if output_dir:
+                    auroc_filename = f"auroc_ranks_thread_{thread_count}.csv"
+                    aupr_filename = f"aupr_ranks_thread_{thread_count}.csv"
+                    
+                    auroc_path = os.path.join(output_dir, auroc_filename)
+                    aupr_path = os.path.join(output_dir, aupr_filename)
+                    
+                    df_auroc_ranks.to_csv(auroc_path, index=False)
+                    df_aupr_ranks.to_csv(aupr_path, index=False)
+                    
+                    print(f"AUROC performance ranks saved to: {auroc_path}")
+                    print(f"AUPR performance ranks saved to: {aupr_path}")
+            
+        except Exception as e:
+            print(f"Error exporting performance rank tables: {e}")
+
+    def export_performance_rank_tables_all_threads(self, output_dir=None):
+        """
+        Export CSV tables showing ordered rank of technique performance
+        for both AUROC and AUPR metrics including all thread configurations.
+        """
+        if self.summary_data is None:
+            print("No summary data available for performance rank tables")
+            return
+        
+        try:
+            # Calculate average performance metrics per technique and thread count
+            performance_avg = self.summary_data.groupby(['technique', 'num_threads']).agg({
+                'auroc': 'mean',
+                'aupr': 'mean'
+            }).reset_index()
+            
+            # Sort by AUROC descending (all thread counts together)
+            auroc_ranked = performance_avg.sort_values('auroc', ascending=False)
+            
+            # Sort by AUPR descending (all thread counts together)
+            aupr_ranked = performance_avg.sort_values('aupr', ascending=False)
+            
+            # Prepare rank tables
+            auroc_rank_table = []
+            aupr_rank_table = []
+            
+            # AUROC ranks (all thread counts together)
+            for rank, (_, row) in enumerate(auroc_ranked.iterrows(), 1):
+                auroc_rank_table.append({
+                    'Rank': rank,
+                    'Technique_AUROC': f"{row['auroc']:.3f} {row['technique']} (threads={row['num_threads']})"
+                })
+            
+            # AUPR ranks (all thread counts together)
+            for rank, (_, row) in enumerate(aupr_ranked.iterrows(), 1):
+                aupr_rank_table.append({
+                    'Rank': rank,
+                    'Technique_AUPR': f"{row['aupr']:.3f} {row['technique']} (threads={row['num_threads']})"
+                })
+            
+            # Convert to DataFrames
+            df_auroc_ranks = pd.DataFrame(auroc_rank_table)
+            df_aupr_ranks = pd.DataFrame(aupr_rank_table)
+            
+            # Save to CSV files
+            if output_dir:
+                auroc_filename = "auroc_ranks_all_threads.csv"
+                aupr_filename = "aupr_ranks_all_threads.csv"
+                
+                auroc_path = os.path.join(output_dir, auroc_filename)
+                aupr_path = os.path.join(output_dir, aupr_filename)
+                
+                df_auroc_ranks.to_csv(auroc_path, index=False)
+                df_aupr_ranks.to_csv(aupr_path, index=False)
+                
+                print(f"AUROC performance ranks (all threads) saved to: {auroc_path}")
+                print(f"AUPR performance ranks (all threads) saved to: {aupr_path}")
+        
+        except Exception as e:
+            print(f"Error exporting performance rank tables for all threads: {e}")
+
     def plot_tradeoff_analysis_all_threads(self, output_dir=None, show=False, metric='auroc'):
         """
         Generate trade-off analysis between performance metric and execution speed
@@ -1006,6 +1138,11 @@ def main():
         analyzer.export_auc_rank_tables(output_dir=args.output_dir)
         analyzer.export_tradeoff_rank_tables_all_threads(output_dir=args.output_dir)
         analyzer.export_auc_rank_tables_all_threads(output_dir=args.output_dir)
+        
+        # Generate performance rank tables
+        print("\nGenerating performance rank tables...")
+        analyzer.export_performance_rank_tables(output_dir=args.output_dir)
+        analyzer.export_performance_rank_tables_all_threads(output_dir=args.output_dir)
         
         print("\n" + "="*50)
         print("Analysis Complete!")
