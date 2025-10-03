@@ -1,0 +1,5 @@
+Rank,Technique_AUC
+1,0.732 DimReduction (threads=64)
+2,0.501 GENIE3_ET (threads=64)
+3,0.479 KBOOST (threads=64)
+4,0.327 GENIE3_RF (threads=64)

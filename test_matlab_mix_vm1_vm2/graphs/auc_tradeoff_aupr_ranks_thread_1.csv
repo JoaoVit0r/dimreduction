@@ -1,0 +1,12 @@
+Rank,Technique_AUC
+1,0.532 MRNETB (threads=1)
+2,0.530 CLR (threads=1)
+3,0.526 MRNET (threads=1)
+4,0.515 KBOOST (threads=1)
+5,0.514 ARACNE (threads=1)
+6,0.512 C3NET (threads=1)
+7,0.501 PCIT (threads=1)
+8,0.493 DimReduction (threads=1)
+9,0.413 BC3NET (threads=1)
+10,0.344 GENIE3_ET (threads=1)
+11,0.042 GENIE3_RF (threads=1)
