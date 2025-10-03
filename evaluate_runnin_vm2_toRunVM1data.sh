@@ -23,6 +23,7 @@ git status
 
 
 # Run VM1 Geneci (+ metrics)
+MONITORING_FOLDER_VM2="monitoring_plots/20250912_mutiples_runs"
 MONITORING_FOLDER="monitoring_plots/20250914_mutiples_runs_VM1"
 mkdir -p $MONITORING_FOLDER/matlab/results
 
@@ -34,6 +35,14 @@ mkdir -p $MONITORING_FOLDER/matlab/results
 #     --output $MONITORING_FOLDER/evaluation_results_confident-in-0.csv \
 #     --output-dir $MONITORING_FOLDER/ \
 #     --skip-binarize
+
+python scripts/geneci_evaluate.py \
+    --monitoring-dir "$MONITORING_FOLDER_VM2" \
+    --external-projects "$GENECI_FOLDER" \
+    --threshold 0.000000001 \
+    --output $MONITORING_FOLDER_VM2/evaluation_results_confident-in-0.csv \
+    --output-dir $MONITORING_FOLDER_VM2/ \
+    --skip-binarize
 
 # ref_file=$(find $MONITORING_FOLDER -name "*-final_weight_data.txt" -type f | head -1)
 # # Check if file was found
@@ -79,12 +88,12 @@ mkdir -p $MONITORING_FOLDER/matlab/results
 
 # cp results/* $MATLAB_PREDICTIONS_FULL_PATH/results
 
-cd - || exit 1;
+# cd - || exit 1;
 
 mkdir -p $MONITORING_FOLDER/graphs
 python scripts/evaluation_analyzer_2.py \
-    --time_file $MONITORING_FOLDER/evaluation_results_confident-in-0.csv \
-    --data_folder $MONITORING_FOLDER/matlab/results \
-    --threads 64 \
+    --time_file $MONITORING_FOLDER_VM2/evaluation_results_confident-in-0.csv $MONITORING_FOLDER/evaluation_results_confident-in-0.csv \
+    --data_folder $MONITORING_FOLDER_VM2/matlab/results $MONITORING_FOLDER/matlab/results \
+    --threads 1 64 \
     --output_dir $MONITORING_FOLDER/graphs
     
