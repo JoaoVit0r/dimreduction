@@ -27,96 +27,118 @@ class EvaluationAnalyzer:
             '#98df8a', '#ff9896', '#c5b0d5', '#c49c94', '#f7b6d2', '#c7c7c7'
         ]
         
-    def load_time_data(self, file_path, num_threads):
+    def load_time_data(self, file_paths, num_threads_list):
         """
-        Load and preprocess time data from CSV file
+        Load and preprocess time data from multiple CSV files
         
         Args:
-            file_path (str): Path to the time data CSV file
-            num_threads (int): Number of threads to filter by
+            file_paths (list): List of paths to time data CSV files
+            num_threads_list (list): List of thread counts corresponding to each file
             
         Returns:
             pandas.DataFrame: Processed time data
         """
         try:
-            print(f"Loading time data from: {file_path}")
-            df = pd.read_csv(file_path)
+            if len(file_paths) != len(num_threads_list):
+                raise ValueError("Number of time files must match number of thread counts")
             
-            # Check required columns
-            required_cols = ['technique', 'execution_time', 'threads']
-            missing_cols = [col for col in required_cols if col not in df.columns]
-            if missing_cols:
-                raise ValueError(f"Missing required columns: {missing_cols}")
+            print("Loading time data from multiple files:")
+            dfs = []
             
-            df.rename(columns={'threads': 'num_threads'}, inplace=True)
-            
-            # Filter by threads
-            original_count = len(df)
-            filtered_count = len(df[df['num_threads'] == num_threads])
-            
-            if filtered_count == 0:
-                raise ValueError(f"No data found for {num_threads} threads")
+            for file_path, num_threads in zip(file_paths, num_threads_list):
+                print(f"  - {file_path} (threads: {num_threads})")
+                df = pd.read_csv(file_path)
                 
-            print(f"Filtered data: {filtered_count} rows (from {original_count} total)")
+                # Check required columns
+                required_cols = ['technique', 'execution_time', 'threads']
+                missing_cols = [col for col in required_cols if col not in df.columns]
+                if missing_cols:
+                    raise ValueError(f"Missing required columns in {file_path}: {missing_cols}")
+                
+                df.rename(columns={'threads': 'num_threads'}, inplace=True)
+                
+                # Filter by threads
+                original_count = len(df)
+                filtered_df = df[df['num_threads'] == num_threads]
+                
+                if len(filtered_df) == 0:
+                    print(f"Warning: No data found for {num_threads} threads in {file_path}")
+                    continue
+                
+                print(f"    Filtered data: {len(filtered_df)} rows (from {original_count} total)")
+                
+                # Handle missing execution times
+                missing_time = filtered_df['execution_time'].isna().sum()
+                if missing_time > 0:
+                    print(f"    Warning: Ignoring {missing_time} entries with missing execution time")
+                    filtered_df = filtered_df.dropna(subset=['execution_time'])
+                
+                # Convert execution time to minutes
+                filtered_df['execution_time_minutes'] = filtered_df['execution_time'] / 60.0
+                dfs.append(filtered_df)
             
-            # Handle missing execution times
-            missing_time = df['execution_time'].isna().sum()
-            if missing_time > 0:
-                print(f"Warning: Ignoring {missing_time} entries with missing execution time")
-                df = df.dropna(subset=['execution_time'])
+            if not dfs:
+                raise ValueError("No valid time data could be loaded from any file")
             
-            # Convert execution time to minutes
-            df['execution_time_minutes'] = df['execution_time'] / 60.0
+            df_combined = pd.concat(dfs, ignore_index=True)
             
-            # Calculate average execution time per technique
-            time_avg = df.groupby(['technique', 'num_threads'])['execution_time_minutes'].mean().reset_index()
+            # Calculate average execution time per technique and thread count
+            time_avg = df_combined.groupby(['technique', 'num_threads'])['execution_time_minutes'].mean().reset_index()
             time_avg.rename(columns={'execution_time_minutes': 'avg_execution_time_minutes'}, inplace=True)
             
-            self.time_data = df
-            print(f"Successfully loaded time data for {len(df)} entries")
+            self.time_data = df_combined
+            print(f"Successfully loaded time data for {len(df_combined)} entries across {len(time_avg)} technique-thread combinations")
             return time_avg
             
         except Exception as e:
             print(f"Error loading time data: {e}")
             return None
     
-    def load_summary_data(self, folder_path, num_threads):
+    def load_summary_data(self, folder_paths, num_threads_list):
         """
-        Load and preprocess summary data from CSV files
+        Load and preprocess summary data from multiple folders
         
         Args:
-            folder_path (str): Path to folder containing summary CSV files
-            num_threads (int): Number of threads to filter by
+            folder_paths (list): List of paths to folders containing summary CSV files
+            num_threads_list (list): List of thread counts corresponding to each folder
             
         Returns:
             pandas.DataFrame: Processed summary data
         """
         try:
-            print(f"Loading summary data from: {folder_path}")
-            pattern = os.path.join(folder_path, f"summary_*_{num_threads}_threads.csv")
-            files = glob.glob(pattern)
+            if len(folder_paths) != len(num_threads_list):
+                raise ValueError("Number of data folders must match number of thread counts")
             
-            if not files:
-                raise ValueError(f"No summary files found for {num_threads} threads")
-            
+            print("Loading summary data from multiple folders:")
             dfs = []
-            for file_path in files:
-                try:
-                    # Extract technique name from filename
-                    filename = os.path.basename(file_path)
-                    technique = filename.split('_')[1]  # Assuming format: summary_<technique>_<threads>_threads.csv
-                    if technique == 'GENIE3':
-                        technique = f'{technique}_{filename.split("_")[2]}'
-                    
-                    df = pd.read_csv(file_path)
-                    df['technique'] = technique
-                    dfs.append(df)
-                    
-                except Exception as e:
-                    print(f"Warning: Could not load {file_path}: {e}")
+            
+            for folder_path, num_threads in zip(folder_paths, num_threads_list):
+                print(f"  - {folder_path} (threads: {num_threads})")
+                pattern = os.path.join(folder_path, f"summary_*_{num_threads}_threads.csv")
+                files = glob.glob(pattern)
+                
+                if not files:
+                    print(f"    Warning: No summary files found for {num_threads} threads in {folder_path}")
+                    continue
+                
+                for file_path in files:
+                    try:
+                        # Extract technique name from filename
+                        filename = os.path.basename(file_path)
+                        technique = filename.split('_')[1]  # Assuming format: summary_<technique>_<threads>_threads.csv
+                        if technique == 'GENIE3':
+                            technique = f'{technique}_{filename.split("_")[2]}'
+                        
+                        df = pd.read_csv(file_path)
+                        df['technique'] = technique
+                        df['num_threads'] = num_threads
+                        dfs.append(df)
+                        
+                    except Exception as e:
+                        print(f"    Warning: Could not load {file_path}: {e}")
             
             if not dfs:
-                raise ValueError("No valid summary files could be loaded")
+                raise ValueError("No valid summary files could be loaded from any folder")
             
             df_combined = pd.concat(dfs, ignore_index=True)
             
@@ -128,57 +150,65 @@ class EvaluationAnalyzer:
                 print(f"Warning: Ignoring {max(missing_auroc, missing_aupr)} entries with missing AUROC/AUPR")
                 df_combined = df_combined.dropna(subset=['auroc', 'aupr'])
             
-            # Calculate average metrics per technique
+            # Calculate average metrics per technique and thread count
             summary_avg = df_combined.groupby(['technique', 'num_threads']).agg({
                 'auroc': 'mean',
                 'aupr': 'mean'
             }).reset_index()
             
             self.summary_data = df_combined
-            print(f"Successfully loaded summary data for {len(df_combined)} entries")
+            print(f"Successfully loaded summary data for {len(df_combined)} entries across {len(summary_avg)} technique-thread combinations")
             return summary_avg
             
         except Exception as e:
             print(f"Error loading summary data: {e}")
             return None
     
-    def load_curve_data(self, folder_path, num_threads):
+    def load_curve_data(self, folder_paths, num_threads_list):
         """
-        Load and preprocess curve data from CSV files
+        Load and preprocess curve data from multiple folders
         
         Args:
-            folder_path (str): Path to folder containing curve CSV files
-            num_threads (int): Number of threads to filter by
+            folder_paths (list): List of paths to folders containing curve CSV files
+            num_threads_list (list): List of thread counts corresponding to each folder
             
         Returns:
             pandas.DataFrame: Processed curve data
         """
         try:
-            print(f"Loading curve data from: {folder_path}")
-            pattern = os.path.join(folder_path, f"curve_data_*_{num_threads}_threads.csv")
-            files = glob.glob(pattern)
+            if len(folder_paths) != len(num_threads_list):
+                raise ValueError("Number of data folders must match number of thread counts")
             
-            if not files:
-                raise ValueError(f"No curve data files found for {num_threads} threads")
-            
+            print("Loading curve data from multiple folders:")
             dfs = []
-            for file_path in files:
-                try:
-                    # Extract technique name from filename
-                    filename = os.path.basename(file_path)
-                    technique = filename.split('_')[2]  # Assuming format: curve_data_<technique>_<threads>_threads.csv
-                    if technique == 'GENIE3':
-                        technique = f'{technique}_{filename.split("_")[3]}'
-                    
-                    df = pd.read_csv(file_path)
-                    df['technique'] = technique
-                    dfs.append(df)
-                    
-                except Exception as e:
-                    print(f"Warning: Could not load {file_path}: {e}")
+            
+            for folder_path, num_threads in zip(folder_paths, num_threads_list):
+                print(f"  - {folder_path} (threads: {num_threads})")
+                pattern = os.path.join(folder_path, f"curve_data_*_{num_threads}_threads.csv")
+                files = glob.glob(pattern)
+                
+                if not files:
+                    print(f"    Warning: No curve data files found for {num_threads} threads in {folder_path}")
+                    continue
+                
+                for file_path in files:
+                    try:
+                        # Extract technique name from filename
+                        filename = os.path.basename(file_path)
+                        technique = filename.split('_')[2]  # Assuming format: curve_data_<technique>_<threads>_threads.csv
+                        if technique == 'GENIE3':
+                            technique = f'{technique}_{filename.split("_")[3]}'
+                        
+                        df = pd.read_csv(file_path)
+                        df['technique'] = technique
+                        df['num_threads'] = num_threads
+                        dfs.append(df)
+                        
+                    except Exception as e:
+                        print(f"    Warning: Could not load {file_path}: {e}")
             
             if not dfs:
-                raise ValueError("No valid curve data files could be loaded")
+                raise ValueError("No valid curve data files could be loaded from any folder")
             
             df_combined = pd.concat(dfs, ignore_index=True)
             
@@ -192,7 +222,7 @@ class EvaluationAnalyzer:
                 df_combined = df_combined.dropna(subset=available_cols)
             
             self.curve_data = df_combined
-            print(f"Successfully loaded curve data for {len(df_combined)} entries")
+            print(f"Successfully loaded curve data for {len(df_combined)} entries across thread counts: {sorted(df_combined['num_threads'].unique())}")
             return df_combined
             
         except Exception as e:
@@ -214,11 +244,12 @@ class EvaluationAnalyzer:
             if time_avg is None or summary_avg is None:
                 raise ValueError("Time or summary data not available")
             
-            # Merge time and summary data on technique
+            # Merge time and summary data on technique and thread count
             combined = pd.merge(time_avg, summary_avg, on=['technique', 'num_threads'], how='inner')
             
             self.combined_data = combined
-            print(f"Combined data created with {len(combined)} techniques")
+            print(f"Combined data created with {len(combined)} technique-thread combinations")
+            print(f"Thread counts in combined data: {sorted(combined['num_threads'].unique())}")
             return combined
             
         except Exception as e:
@@ -234,7 +265,7 @@ class EvaluationAnalyzer:
         try:
             plt.figure(figsize=(12, 8))
             
-            # Calculate average execution time per technique
+            # Calculate average execution time per technique across all thread counts
             time_avg = self.time_data.groupby('technique')['execution_time_minutes'].mean().sort_values()
             
             # Create color mapping
@@ -247,7 +278,7 @@ class EvaluationAnalyzer:
             
             plt.xlabel('Technique', fontsize=12)
             plt.ylabel('Average Execution Time (minutes)', fontsize=12)
-            plt.title('Average Execution Time by Technique', fontsize=14, fontweight='bold')
+            plt.title('Average Execution Time by Technique (All Thread Counts)', fontsize=14, fontweight='bold')
             plt.xticks(range(len(techniques)), techniques, rotation=45, ha='right')
             
             # Add value labels on bars
@@ -382,6 +413,7 @@ class EvaluationAnalyzer:
                 
         except Exception as e:
             print(f"Error creating Precision-Recall curve plot: {e}")
+
     def plot_tradeoff_analysis(self, output_dir=None, show=False, metric='auroc'):
         """
         Generate trade-off analysis between performance metric and execution speed
@@ -908,35 +940,26 @@ class EvaluationAnalyzer:
         
         except Exception as e:
             print(f"Error exporting AUC rank tables: {e}")
+
 def main():
     """Main function to run the evaluation analysis"""
     parser = argparse.ArgumentParser(description='Evaluate and visualize performance metrics')
-    parser.add_argument('--time_file', type=str, help='Path to time data CSV file')
-    parser.add_argument('--data_folder', type=str, help='Path to folder containing summary and curve data')
-    parser.add_argument('--threads', type=int, help='Number of threads to analyze')
-    parser.add_argument('--output_dir', type=str, help='Output directory for saving graphs')
+    parser.add_argument('--time_file', type=str, nargs='+', required=True, help='Paths to time data CSV files')
+    parser.add_argument('--data_folder', type=str, nargs='+', required=True, help='Paths to folders containing summary and curve data')
+    parser.add_argument('--threads', type=int, nargs='+', required=True, help='Thread counts corresponding to each time file and data folder')
+    parser.add_argument('--output_dir', type=str, required=True, help='Output directory for saving graphs')
     parser.add_argument('--show_plots', action='store_true', help='Show plots interactively')
-
+    parser.add_argument('--generate_report', action='store_true', help='Generate comprehensive report')
+    
     args = parser.parse_args()
     
-    # Get user input if not provided via command line
-    if not args.time_file:
-        args.time_file = input("Enter path to time data CSV file: ").strip()
-    
-    if not args.data_folder:
-        args.data_folder = input("Enter path to data folder (summary and curve data): ").strip()
-    
-    if not args.threads:
-        try:
-            args.threads = int(input("Enter number of threads to analyze: ").strip())
-        except ValueError:
-            print("Invalid thread count. Using default: 1")
-            args.threads = 1
-    
-    if not args.output_dir:
-        args.output_dir = input("Enter output directory for graphs (press Enter for current directory): ").strip()
-        if not args.output_dir:
-            args.output_dir = "."
+    # Validate input lengths
+    if len(args.time_file) != len(args.threads) or len(args.data_folder) != len(args.threads):
+        print("Error: Number of time files, data folders, and thread counts must be the same")
+        print(f"  Time files: {len(args.time_file)}")
+        print(f"  Data folders: {len(args.data_folder)}")
+        print(f"  Thread counts: {len(args.threads)}")
+        sys.exit(1)
     
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
@@ -948,8 +971,12 @@ def main():
     print("\n" + "="*50)
     print("Starting Evaluation Analysis")
     print("="*50)
+    print(f"Time files: {args.time_file}")
+    print(f"Data folders: {args.data_folder}")
+    print(f"Thread counts: {args.threads}")
+    print(f"Output directory: {args.output_dir}")
     
-    # Load data
+    # Load data for all specified thread configurations
     time_avg = analyzer.load_time_data(args.time_file, args.threads)
     summary_avg = analyzer.load_summary_data(args.data_folder, args.threads)
     curve_data = analyzer.load_curve_data(args.data_folder, args.threads)
@@ -965,22 +992,18 @@ def main():
         analyzer.plot_roc_curve(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_pr_curve(output_dir=args.output_dir, show=args.show_plots)
         
-        # Generate trade-off analysis for both metrics
+        # Generate trade-off analysis for both metrics (individual thread plots)
         analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
         analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
         
-        # Generate trade-off rank tables
-        print("\nGenerating trade-off rank tables...")
-        analyzer.export_tradeoff_rank_tables(output_dir=args.output_dir)
-        analyzer.export_auc_rank_tables(output_dir=args.output_dir)
-        
-        # for more threads
-        # Generate trade-off analysis for both metrics
+        # Generate trade-off analysis for both metrics (all threads together)
         analyzer.plot_tradeoff_analysis_all_threads(output_dir=args.output_dir, show=args.show_plots, metric='auroc')
         analyzer.plot_tradeoff_analysis_all_threads(output_dir=args.output_dir, show=args.show_plots, metric='aupr')
         
         # Generate trade-off rank tables
         print("\nGenerating trade-off rank tables...")
+        analyzer.export_tradeoff_rank_tables(output_dir=args.output_dir)
+        analyzer.export_auc_rank_tables(output_dir=args.output_dir)
         analyzer.export_tradeoff_rank_tables_all_threads(output_dir=args.output_dir)
         analyzer.export_auc_rank_tables_all_threads(output_dir=args.output_dir)
         
