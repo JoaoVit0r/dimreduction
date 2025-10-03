@@ -36,13 +36,13 @@ mkdir -p $MONITORING_FOLDER/matlab/results
 #     --output-dir $MONITORING_FOLDER/ \
 #     --skip-binarize
 
-python scripts/geneci_evaluate.py \
-    --monitoring-dir "$MONITORING_FOLDER_VM2" \
-    --external-projects "$GENECI_FOLDER" \
-    --threshold 0.000000001 \
-    --output $MONITORING_FOLDER_VM2/evaluation_results_confident-in-0.csv \
-    --output-dir $MONITORING_FOLDER_VM2/ \
-    --skip-binarize
+# python scripts/geneci_evaluate.py \
+#     --monitoring-dir "$MONITORING_FOLDER_VM2" \
+#     --external-projects "$GENECI_FOLDER" \
+#     --threshold 0.000000001 \
+#     --output $MONITORING_FOLDER_VM2/evaluation_results_confident-in-0.csv \
+#     --output-dir $MONITORING_FOLDER_VM2/ \
+#     --skip-binarize
 
 # ref_file=$(find $MONITORING_FOLDER -name "*-final_weight_data.txt" -type f | head -1)
 # # Check if file was found
