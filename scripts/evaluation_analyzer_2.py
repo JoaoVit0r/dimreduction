@@ -266,7 +266,7 @@ class EvaluationAnalyzer:
             plt.figure(figsize=(12, 8))
             
             # Calculate average execution time per technique across all thread counts
-            time_avg = self.time_data.groupby('technique')['execution_time_minutes'].mean().sort_values()
+            time_avg = self.time_data.groupby(['technique', 'num_threads'])['execution_time_minutes'].mean().sort_values()
             
             # Create color mapping
             techniques = time_avg.index.tolist()
