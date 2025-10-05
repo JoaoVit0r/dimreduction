@@ -269,7 +269,7 @@ class EvaluationAnalyzer:
             time_avg = self.time_data.groupby(['technique', 'num_threads'])['execution_time_minutes'].mean().sort_values()
             
             # Create color mapping
-            techniques = time_avg.index.tolist()
+            techniques = [f'{tech} (threads={num_thread})' for tech, num_thread in time_avg.index.tolist()]
             colors = [self.color_palette[i % len(self.color_palette)] for i in range(len(techniques))]
             self.technique_colors.update(dict(zip(techniques, colors)))
             
@@ -1073,6 +1073,310 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error exporting AUC rank tables: {e}")
 
+    def plot_performance_metrics_bar(self, output_dir=None, show=False):
+        """
+        Generate bar charts for performance metrics: AUPR, AUROC, and AUC of Trade-off for both AUPR and AUROC
+        
+        Args:
+            output_dir (str): Directory to save the plots
+            show (bool): Whether to display the plots
+        """
+        if self.combined_data is None or self.summary_data is None:
+            print("No combined or summary data available for performance metrics bar chart")
+            return
+        
+        try:
+            # Get unique thread counts for trade-off AUC
+            thread_counts = self.combined_data['num_threads'].unique()
+            
+            # Calculate average AUROC and AUPR per technique (mean across all threads)
+            performance_avg = self.summary_data.groupby('technique').agg({
+                'auroc': 'mean',
+                'aupr': 'mean'
+            }).reset_index()
+            
+            # Sort techniques by AUROC for consistent ordering
+            performance_avg = performance_avg.sort_values('auroc', ascending=False)
+            techniques = performance_avg['technique'].tolist()
+            
+            # Create color mapping for techniques
+            colors = [self.color_palette[i % len(self.color_palette)] for i in range(len(techniques))]
+            
+            # Plot 1: AUROC Bar Chart
+            plt.figure(figsize=(12, 8))
+            bars = plt.bar(range(len(techniques)), performance_avg['auroc'], color=colors, alpha=0.7)
+            plt.xlabel('Technique', fontsize=12)
+            plt.ylabel('AUROC', fontsize=12)
+            plt.title('Average AUROC by Technique (Mean Across All Threads)', fontsize=14, fontweight='bold')
+            plt.xticks(range(len(techniques)), techniques, rotation=45, ha='right')
+            plt.ylim(0, 1)
+            
+            # Add value labels on bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:.3f}',
+                        ha='center', va='bottom', fontsize=9)
+            
+            plt.tight_layout()
+            
+            if output_dir:
+                output_path = os.path.join(output_dir, 'auroc_performance_bar.png')
+                plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                print(f"AUROC performance bar chart saved to: {output_path}")
+            
+            if show:
+                plt.show()
+            else:
+                plt.close()
+            
+            # Plot 2: AUPR Bar Chart
+            plt.figure(figsize=(12, 8))
+            bars = plt.bar(range(len(techniques)), performance_avg['aupr'], color=colors, alpha=0.7)
+            plt.xlabel('Technique', fontsize=12)
+            plt.ylabel('AUPR', fontsize=12)
+            plt.title('Average AUPR by Technique (Mean Across All Threads)', fontsize=14, fontweight='bold')
+            plt.xticks(range(len(techniques)), techniques, rotation=45, ha='right')
+            plt.ylim(0, 1)
+            
+            # Add value labels on bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:.3f}',
+                        ha='center', va='bottom', fontsize=9)
+            
+            plt.tight_layout()
+            
+            if output_dir:
+                output_path = os.path.join(output_dir, 'aupr_performance_bar.png')
+                plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                print(f"AUPR performance bar chart saved to: {output_path}")
+            
+            if show:
+                plt.show()
+            else:
+                plt.close()
+            
+            # Plot 3: Trade-off AUC for AUROC (per thread count)
+            for thread_count in thread_counts:
+                # Filter data for current thread count
+                thread_data = self.combined_data[self.combined_data['num_threads'] == thread_count].copy()
+                
+                if len(thread_data) == 0:
+                    continue
+                
+                # Calculate worst execution time
+                worst_time = thread_data['avg_execution_time_minutes'].max()
+                thread_data['time_relative'] = (worst_time - thread_data['avg_execution_time_minutes']) / worst_time
+                
+                # Generate alpha values from 0 to 1
+                alpha_values = np.arange(0, 1.01, 0.01)
+                
+                # Calculate AUC values for AUROC trade-off
+                auroc_auc_data = []
+                for _, row in thread_data.iterrows():
+                    technique = row['technique']
+                    scores = [alpha * row['auroc'] + (1 - alpha) * row['time_relative'] for alpha in alpha_values]
+                    auc = np.trapezoid(scores, alpha_values)
+                    auroc_auc_data.append((technique, auc))
+                
+                # Sort by technique to match the order from performance_avg
+                auroc_auc_df = pd.DataFrame(auroc_auc_data, columns=['technique', 'tradeoff_auc'])
+                auroc_auc_df = auroc_auc_df.set_index('technique').reindex(techniques).reset_index()
+                auroc_auc_df = auroc_auc_df.dropna()
+                
+                if len(auroc_auc_df) == 0:
+                    continue
+                
+                plt.figure(figsize=(12, 8))
+                bars = plt.bar(range(len(auroc_auc_df)), auroc_auc_df['tradeoff_auc'], color=colors[:len(auroc_auc_df)], alpha=0.7)
+                plt.xlabel('Technique', fontsize=12)
+                plt.ylabel('Trade-off AUC (AUROC)', fontsize=12)
+                plt.title(f'Trade-off AUC for AUROC by Technique (Thread = {thread_count})', fontsize=14, fontweight='bold')
+                plt.xticks(range(len(auroc_auc_df)), auroc_auc_df['technique'], rotation=45, ha='right')
+                plt.ylim(0, 1)
+                
+                # Add value labels on bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width()/2., height,
+                            f'{height:.3f}',
+                            ha='center', va='bottom', fontsize=9)
+                
+                plt.tight_layout()
+                
+                if output_dir:
+                    output_path = os.path.join(output_dir, f'tradeoff_auroc_auc_bar_thread_{thread_count}.png')
+                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                    print(f"Trade-off AUROC AUC bar chart saved to: {output_path}")
+                
+                if show:
+                    plt.show()
+                else:
+                    plt.close()
+            
+            # Plot 4: Trade-off AUC for AUPR (per thread count)
+            for thread_count in thread_counts:
+                # Filter data for current thread count
+                thread_data = self.combined_data[self.combined_data['num_threads'] == thread_count].copy()
+                
+                if len(thread_data) == 0:
+                    continue
+                
+                # Calculate worst execution time
+                worst_time = thread_data['avg_execution_time_minutes'].max()
+                thread_data['time_relative'] = (worst_time - thread_data['avg_execution_time_minutes']) / worst_time
+                
+                # Generate alpha values from 0 to 1
+                alpha_values = np.arange(0, 1.01, 0.01)
+                
+                # Calculate AUC values for AUPR trade-off
+                aupr_auc_data = []
+                for _, row in thread_data.iterrows():
+                    technique = row['technique']
+                    scores = [alpha * row['aupr'] + (1 - alpha) * row['time_relative'] for alpha in alpha_values]
+                    auc = np.trapezoid(scores, alpha_values)
+                    aupr_auc_data.append((technique, auc))
+                
+                # Sort by technique to match the order from performance_avg
+                aupr_auc_df = pd.DataFrame(aupr_auc_data, columns=['technique', 'tradeoff_auc'])
+                aupr_auc_df = aupr_auc_df.set_index('technique').reindex(techniques).reset_index()
+                aupr_auc_df = aupr_auc_df.dropna()
+                
+                if len(aupr_auc_df) == 0:
+                    continue
+                
+                plt.figure(figsize=(12, 8))
+                bars = plt.bar(range(len(aupr_auc_df)), aupr_auc_df['tradeoff_auc'], color=colors[:len(aupr_auc_df)], alpha=0.7)
+                plt.xlabel('Technique', fontsize=12)
+                plt.ylabel('Trade-off AUC (AUPR)', fontsize=12)
+                plt.title(f'Trade-off AUC for AUPR by Technique (Thread = {thread_count})', fontsize=14, fontweight='bold')
+                plt.xticks(range(len(aupr_auc_df)), aupr_auc_df['technique'], rotation=45, ha='right')
+                plt.ylim(0, 1)
+                
+                # Add value labels on bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width()/2., height,
+                            f'{height:.3f}',
+                            ha='center', va='bottom', fontsize=9)
+                
+                plt.tight_layout()
+                
+                if output_dir:
+                    output_path = os.path.join(output_dir, f'tradeoff_aupr_auc_bar_thread_{thread_count}.png')
+                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                    print(f"Trade-off AUPR AUC bar chart saved to: {output_path}")
+                
+                if show:
+                    plt.show()
+                else:
+                    plt.close()
+            
+            # Plot 5: Trade-off AUC for AUROC (all threads)
+            # Calculate worst execution time across all data
+            worst_time = self.combined_data['avg_execution_time_minutes'].max()
+            combined_data = self.combined_data.copy()
+            combined_data['time_relative'] = (worst_time - combined_data['avg_execution_time_minutes']) / worst_time
+            
+            # Generate alpha values from 0 to 1
+            alpha_values = np.arange(0, 1.01, 0.01)
+            
+            # Calculate AUC values for AUROC trade-off (all technique-thread combinations)
+            auroc_auc_data = []
+            for _, row in combined_data.iterrows():
+                technique = row['technique']
+                thread_count = row['num_threads']
+                scores = [alpha * row['auroc'] + (1 - alpha) * row['time_relative'] for alpha in alpha_values]
+                auc = np.trapezoid(scores, alpha_values)
+                auroc_auc_data.append((technique, auc))
+            
+            # Create DataFrame and calculate mean per technique
+            auroc_auc_df = pd.DataFrame(auroc_auc_data, columns=['technique', 'tradeoff_auc'])
+            auroc_auc_avg = auroc_auc_df.groupby('technique')['tradeoff_auc'].mean().reset_index()
+            
+            # Sort by technique to match the order from performance_avg
+            auroc_auc_avg = auroc_auc_avg.set_index('technique').reindex(techniques).reset_index()
+            auroc_auc_avg = auroc_auc_avg.dropna()
+            
+            if len(auroc_auc_avg) > 0:
+                plt.figure(figsize=(12, 8))
+                bars = plt.bar(range(len(auroc_auc_avg)), auroc_auc_avg['tradeoff_auc'], color=colors[:len(auroc_auc_avg)], alpha=0.7)
+                plt.xlabel('Technique', fontsize=12)
+                plt.ylabel('Trade-off AUC (AUROC)', fontsize=12)
+                plt.title('Trade-off AUC for AUROC by Technique (All Threads - Mean)', fontsize=14, fontweight='bold')
+                plt.xticks(range(len(auroc_auc_avg)), auroc_auc_avg['technique'], rotation=45, ha='right')
+                plt.ylim(0, 1)
+                
+                # Add value labels on bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width()/2., height,
+                            f'{height:.3f}',
+                            ha='center', va='bottom', fontsize=9)
+                
+                plt.tight_layout()
+                
+                if output_dir:
+                    output_path = os.path.join(output_dir, 'tradeoff_auroc_auc_bar_all_threads.png')
+                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                    print(f"Trade-off AUROC AUC bar chart (all threads) saved to: {output_path}")
+                
+                if show:
+                    plt.show()
+                else:
+                    plt.close()
+            
+            # Plot 6: Trade-off AUC for AUPR (all threads)
+            # Calculate AUC values for AUPR trade-off (all technique-thread combinations)
+            aupr_auc_data = []
+            for _, row in combined_data.iterrows():
+                technique = row['technique']
+                thread_count = row['num_threads']
+                scores = [alpha * row['aupr'] + (1 - alpha) * row['time_relative'] for alpha in alpha_values]
+                auc = np.trapezoid(scores, alpha_values)
+                aupr_auc_data.append((technique, auc))
+            
+            # Create DataFrame and calculate mean per technique
+            aupr_auc_df = pd.DataFrame(aupr_auc_data, columns=['technique', 'tradeoff_auc'])
+            aupr_auc_avg = aupr_auc_df.groupby('technique')['tradeoff_auc'].mean().reset_index()
+            
+            # Sort by technique to match the order from performance_avg
+            aupr_auc_avg = aupr_auc_avg.set_index('technique').reindex(techniques).reset_index()
+            aupr_auc_avg = aupr_auc_avg.dropna()
+            
+            if len(aupr_auc_avg) > 0:
+                plt.figure(figsize=(12, 8))
+                bars = plt.bar(range(len(aupr_auc_avg)), aupr_auc_avg['tradeoff_auc'], color=colors[:len(aupr_auc_avg)], alpha=0.7)
+                plt.xlabel('Technique', fontsize=12)
+                plt.ylabel('Trade-off AUC (AUPR)', fontsize=12)
+                plt.title('Trade-off AUC for AUPR by Technique (All Threads - Mean)', fontsize=14, fontweight='bold')
+                plt.xticks(range(len(aupr_auc_avg)), aupr_auc_avg['technique'], rotation=45, ha='right')
+                plt.ylim(0, 1)
+                
+                # Add value labels on bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width()/2., height,
+                            f'{height:.3f}',
+                            ha='center', va='bottom', fontsize=9)
+                
+                plt.tight_layout()
+                
+                if output_dir:
+                    output_path = os.path.join(output_dir, 'tradeoff_aupr_auc_bar_all_threads.png')
+                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                    print(f"Trade-off AUPR AUC bar chart (all threads) saved to: {output_path}")
+                
+                if show:
+                    plt.show()
+                else:
+                    plt.close()
+                    
+        except Exception as e:
+            print(f"Error creating performance metrics bar charts: {e}")
+
 def main():
     """Main function to run the evaluation analysis"""
     parser = argparse.ArgumentParser(description='Evaluate and visualize performance metrics')
@@ -1123,6 +1427,9 @@ def main():
         analyzer.plot_execution_time(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_roc_curve(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_pr_curve(output_dir=args.output_dir, show=args.show_plots)
+        
+        # Generate performance metrics bar charts
+        analyzer.plot_performance_metrics_bar(output_dir=args.output_dir, show=args.show_plots)
         
         # Generate trade-off analysis for both metrics (individual thread plots)
         analyzer.plot_tradeoff_analysis(output_dir=args.output_dir, show=args.show_plots, metric='auroc')

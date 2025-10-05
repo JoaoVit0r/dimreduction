@@ -1,0 +1,5 @@
+Rank,Technique_AUPR
+1,0.087 GENIE3_ET (threads=64)
+2,0.081 GENIE3_RF (threads=64)
+3,0.045 KBOOST (threads=64)
+4,0.015 DimReduction (threads=64)

@@ -1,0 +1,5 @@
+Rank,Technique_AUROC
+1,0.666 GENIE3_ET (threads=64)
+2,0.655 GENIE3_RF (threads=64)
+3,0.557 KBOOST (threads=64)
+4,0.503 DimReduction (threads=64)
