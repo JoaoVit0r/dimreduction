@@ -7,6 +7,7 @@ THESIS_HOME_VM2="$HOME/workspace"
 DIMREDUCTION_JAVA_FOLDER="$THESIS_HOME_VM2/dimreduction-java"
 DIMREDUCTION_PYTHON_FOLDER="$THESIS_HOME_VM2/dimreduction-python"
 GENECI_FOLDER="$THESIS_HOME_VM2/dimreduction_external_comparisons"
+EVALUATION_FOLDER="$THESIS_HOME_VM2/matlab/evaluation_scripts"
 
 # VM2 get last updates
 cd "$DIMREDUCTION_JAVA_FOLDER"
@@ -28,6 +29,7 @@ MONITORING_FOLDER="monitoring_plots/20250912_mutiples_runs"
 # cp -r -t $MONITORING_FOLDER monitoring_plots/20250912_190348 monitoring_plots/20250912_200940
 mkdir -p $MONITORING_FOLDER/matlab/results
 
+# execute Once - START
 python scripts/geneci_evaluate.py \
     --monitoring-dir "$MONITORING_FOLDER/2025*" \
     --external-projects "$GENECI_FOLDER" \
@@ -83,6 +85,7 @@ python scripts/dream5_converter.py \
 python scripts/csv_2_tsv_net3.py \
     "$DimReduction_list_file" \
     $MONITORING_FOLDER/matlab/
+# execute Once - END
 
 sudo matlab -nodesktop -nosplash -r "go_my('DimReduction'); exit;" && \
 
@@ -131,6 +134,8 @@ sudo matlab -nodesktop -nosplash -r "go_my('DimReduction'); exit;" && \
 # List of methods
 methods=("ARACNE" "CLR" "GENIE3_ET" "GENIE3_RF" "BC3NET" "C3NET" "KBOOST" "MRNETB" "MRNET" "PCIT")
 
+cd $EVALUATION_FOLDER/matlab || exit 1;
+
 for method in "${methods[@]}"; do
     method_lower=$(echo "$method" | tr '[:upper:]' '[:lower:]')
     python scripts/csv_2_tsv_net3.py \
@@ -143,6 +148,7 @@ for method in "${methods[@]}"; do
 done
 
 cp results/* $MONITORING_FOLDER/matlab/results
+cd - || exit 1;
 
 mkdir -p $MONITORING_FOLDER/graphs
 python scripts/evaluation_analyzer_2.py \

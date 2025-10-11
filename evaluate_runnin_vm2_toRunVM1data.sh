@@ -7,6 +7,7 @@ THESIS_HOME_VM2="$HOME/workspace"
 DIMREDUCTION_JAVA_FOLDER="$THESIS_HOME_VM2/dimreduction-java"
 DIMREDUCTION_PYTHON_FOLDER="$THESIS_HOME_VM2/dimreduction-python"
 GENECI_FOLDER="$THESIS_HOME_VM2/dimreduction_external_comparisons"
+EVALUATION_FOLDER="$THESIS_HOME_VM2/matlab/evaluation_scripts"
 
 # VM2 get last updates
 cd "$DIMREDUCTION_JAVA_FOLDER"
@@ -78,7 +79,7 @@ mkdir -p $MONITORING_FOLDER/matlab/results
 
 # MATLAB_PREDICTIONS_FULL_PATH=$(realpath $MONITORING_FOLDER/matlab/)
 
-# cd /home/a62924/workspace/matlab/evaluation_scripts/matlab || exit 1;
+# cd $EVALUATION_FOLDER/matlab || exit 1;
 
 # sudo matlab -nodesktop -nosplash -r "go_my('DimReduction', 64, '${MATLAB_PREDICTIONS_FULL_PATH}'); exit;" && \
 
