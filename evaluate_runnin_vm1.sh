@@ -51,7 +51,7 @@ methods=("GENIE3_ET" "GENIE3_RF" "KBOOST")
 
 for method in "${methods[@]}"; do
     # method_lower=$(echo "$method" | tr '[:upper:]' '[:lower:]')
-    printf -v first_file '%s' $MONITORING_FOLDER/GRN_$method*.csv || exit 1;
+    printf -v first_file '%s' $MONITORING_FOLDER/GRN_$method* || exit 1;
     python scripts/csv_2_tsv_net3.py \
         "$first_file" \
         "$MONITORING_FOLDER/matlab/"
