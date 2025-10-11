@@ -37,37 +37,10 @@ python scripts/geneci_evaluate.py \
     --output-dir $MONITORING_FOLDER/ \
     --skip-binarize
 
-# python scripts/geneci_evaluate.py \
-#     --monitoring-dir "$MONITORING_FOLDER" \
-#     --external-projects "$GENECI_FOLDER" \
-#     --threshold 0.7 \
-#     --output $MONITORING_FOLDER/evaluation_results_confident-in-70.csv \
-#     --output-dir $MONITORING_FOLDER/
-
-# python scripts/geneci_evaluate.py \
-#     --monitoring-dir "$MONITORING_FOLDER" \
-#     --external-projects "$GENECI_FOLDER" \
-#     --threshold 0.4 \
-#     --output $MONITORING_FOLDER/evaluation_results_confident-in-40.csv \
-#     --output-dir $MONITORING_FOLDER/
-
-# python scripts/geneci_evaluate.py \
-#     --monitoring-dir "$MONITORING_FOLDER" \
-#     --external-projects "$GENECI_FOLDER" \
-#     --threshold 0.3 \
-#     --output $MONITORING_FOLDER/evaluation_results_confident-in-30.csv \
-#     --output-dir $MONITORING_FOLDER/
-
-# python scripts/geneci_evaluate.py \
-#     --monitoring-dir "$MONITORING_FOLDER" \
-#     --external-projects "$GENECI_FOLDER" \
-#     --threshold 1.0 \
-#     --output $MONITORING_FOLDER/evaluation_results_confident-in-100.csv \
-#     --output-dir $MONITORING_FOLDER/
-
 # CSV list to TSV list (DimReduction)
+printf -v first_file '%s' $MONITORING_FOLDER/*-final_weight_data_converted.txt || exit 1;
 python scripts/csv_2_tsv_net3.py \
-    "$MONITORING_FOLDER/*-final_weight_data_converted.txt" \
+    "$first_file" \
     $MONITORING_FOLDER/matlab/
 # already executed - END
 
@@ -78,8 +51,9 @@ methods=("GENIE3_ET" "GENIE3_RF" "KBOOST")
 
 for method in "${methods[@]}"; do
     # method_lower=$(echo "$method" | tr '[:upper:]' '[:lower:]')
+    printf -v first_file '%s' $MONITORING_FOLDER/GRN_$method*.csv || exit 1;
     python scripts/csv_2_tsv_net3.py \
-        $MONITORING_FOLDER/GRN_$method*.csv \
+        "$first_file" \
         "$MONITORING_FOLDER/matlab/"
 done
 
