@@ -124,10 +124,10 @@ if [ "$SKIP_CSV_2_TSV_DIMREDUCTION_VM1" = false ]; then
         $MONITORING_FOLDER_VM1_64threads/matlab/
 fi
 
+methods_VM1=("GENIE3_ET" "GENIE3_RF" "KBOOST")
 # CSV list to TSV list (Geneci)
 if [ "$SKIP_CSV_2_TSV_GENECI_VM1" = false ]; then
-    methods=("GENIE3_ET" "GENIE3_RF" "KBOOST")
-    for method in "${methods[@]}"; do
+    for method in "${methods_VM1[@]}"; do
         printf -v first_file '%s' $MONITORING_FOLDER_VM1_64threads/GRN_$method* || exit 1;
         python scripts/csv_2_tsv_net3.py \
             "$first_file" \
@@ -143,10 +143,10 @@ if [ "$SKIP_CSV_2_TSV_DIMREDUCTION_VM2" = false ]; then
         $MONITORING_FOLDER_VM2_1thread/matlab/
 fi
 
+methods_VM2=("ARACNE" "CLR" "GENIE3_ET" "GENIE3_RF" "BC3NET" "C3NET" "KBOOST" "MRNETB" "MRNET" "PCIT")
 # CSV list to TSV list (Geneci)
 if [ "$SKIP_CSV_2_TSV_GENECI_VM2" = false ]; then
-    methods=("ARACNE" "CLR" "GENIE3_ET" "GENIE3_RF" "BC3NET" "C3NET" "KBOOST" "MRNETB" "MRNET" "PCIT")
-    for method in "${methods[@]}"; do
+    for method in "${methods_VM2[@]}"; do
         printf -v first_file '%s' $MONITORING_FOLDER_VM2_1thread/GRN_$method\_* || exit 1;
         python scripts/csv_2_tsv_net3.py \
             "$first_file" \
@@ -158,7 +158,7 @@ if [ "$SKIP_MATLAB_VM1" = false ]; then
     MATLAB_PREDICTIONS_FULL_PATH_VM1_64threads=$(realpath $MONITORING_FOLDER_VM1_64threads/matlab/)
     cd $EVALUATION_FOLDER/matlab || exit 1;
     sudo matlab -nodesktop -nosplash -r "go_my('DimReduction', 64, '${MATLAB_PREDICTIONS_FULL_PATH_VM1_64threads}'); exit;" && \
-    for method in "${methods[@]}"; do
+    for method in "${methods_VM1[@]}"; do
         sudo matlab -nodesktop -nosplash -r "go_my('${method}', 64, '${MATLAB_PREDICTIONS_FULL_PATH_VM1_64threads}'); exit;"
     done
     cp results/* $MATLAB_PREDICTIONS_FULL_PATH_VM1_64threads/results
@@ -169,7 +169,7 @@ if [ "$SKIP_MATLAB_VM2" = false ]; then
     MATLAB_PREDICTIONS_FULL_PATH_VM2_1thread=$(realpath $MONITORING_FOLDER_VM2_1thread/matlab/)
     cd $EVALUATION_FOLDER/matlab || exit 1;
     sudo matlab -nodesktop -nosplash -r "go_my('DimReduction', 1, '${MATLAB_PREDICTIONS_FULL_PATH_VM2_1thread}'); exit;" && \
-    for method in "${methods[@]}"; do
+    for method in "${methods_VM2[@]}"; do
         sudo matlab -nodesktop -nosplash -r "go_my('${method}', 1, '${MATLAB_PREDICTIONS_FULL_PATH_VM2_1thread}'); exit;"
     done
     cp results/* $MATLAB_PREDICTIONS_FULL_PATH_VM2_1thread/results
