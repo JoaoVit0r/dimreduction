@@ -1,0 +1,5 @@
+0,25,50,75,100
+0.962 DimReduction (threads=64),0.725 DimReduction (threads=64),0.488 DimReduction (threads=64),0.251 DimReduction (threads=64),0.087 GENIE3_ET (threads=64)
+0.401 KBOOST (threads=64),0.312 KBOOST (threads=64),0.223 KBOOST (threads=64),0.149 GENIE3_ET (threads=64),0.081 GENIE3_RF (threads=64)
+0.336 GENIE3_ET (threads=64),0.274 GENIE3_ET (threads=64),0.211 GENIE3_ET (threads=64),0.134 KBOOST (threads=64),0.045 KBOOST (threads=64)
+0.000 GENIE3_RF (threads=64),0.020 GENIE3_RF (threads=64),0.041 GENIE3_RF (threads=64),0.061 GENIE3_RF (threads=64),0.015 DimReduction (threads=64)

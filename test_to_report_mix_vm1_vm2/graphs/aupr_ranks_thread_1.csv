@@ -1,0 +1,12 @@
+Rank,Technique_AUPR
+1,0.085 GENIE3_ET (threads=1)
+2,0.085 GENIE3_RF (threads=1)
+3,0.070 MRNETB (threads=1)
+4,0.062 PCIT (threads=1)
+5,0.060 CLR (threads=1)
+6,0.056 MRNET (threads=1)
+7,0.045 KBOOST (threads=1)
+8,0.030 ARACNE (threads=1)
+9,0.026 BC3NET (threads=1)
+10,0.024 C3NET (threads=1)
+11,0.015 DimReduction (threads=1)

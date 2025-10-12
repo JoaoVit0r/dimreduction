@@ -538,7 +538,7 @@ class EvaluationAnalyzer:
                             marker = 'D'  # Diamond for L point
                             markersize = 10
                             markeredgewidth = 2
-                            markeredgecolor = 'red'
+                            markeredgecolor = color
                         else:
                             marker = 'o'  # Circle for other points
                             markersize = 8
@@ -548,17 +548,17 @@ class EvaluationAnalyzer:
                         plt.plot(rank, tp, marker=marker, color=color, markersize=markersize,
                                 markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
                         
-                        # Add value annotation with offset to prevent overlapping
-                        offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
-                        vertical_offset = offset_direction * (0.02 * max(tps) + 0.01 * max(tps) * (i % 3))
+                        # # Add value annotation with offset to prevent overlapping
+                        # offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
+                        # vertical_offset = offset_direction * (0.02 * max(tps) + 0.01 * max(tps) * (i % 3))
                         
-                        plt.annotate(f'{tp:.1f}', 
-                                    xy=(rank, tp),
-                                    xytext=(0, vertical_offset),
-                                    textcoords='offset points',
-                                    ha='center', va='bottom' if offset_direction == 1 else 'top',
-                                    fontsize=9, fontweight='bold',
-                                    bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
+                        # plt.annotate(f'{tp:.1f}', 
+                        #             xy=(rank, tp),
+                        #             xytext=(0, vertical_offset),
+                        #             textcoords='offset points',
+                        #             ha='center', va='bottom' if offset_direction == 1 else 'top',
+                        #             fontsize=9, fontweight='bold',
+                        #             bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
 
             plt.xlabel('Rank (k)', fontsize=12)
             plt.ylabel('True Positives (TP)', fontsize=12)
@@ -647,7 +647,7 @@ class EvaluationAnalyzer:
                             marker = 'D'  # Diamond for L point
                             markersize = 10
                             markeredgewidth = 2
-                            markeredgecolor = 'red'
+                            markeredgecolor = color
                         else:
                             marker = 's'  # Square for other points (different from TP plot)
                             markersize = 8
@@ -657,18 +657,18 @@ class EvaluationAnalyzer:
                         plt.plot(rank, fp, marker=marker, color=color, markersize=markersize,
                                 markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
                         
-                        # Add value annotation with offset to prevent overlapping
-                        offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
-                        vertical_offset = offset_direction * (0.02 * max([f for f in fps if not np.isnan(f)]) + 
-                                                            0.01 * max([f for f in fps if not np.isnan(f)]) * (i % 3))
+                        # # Add value annotation with offset to prevent overlapping
+                        # offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
+                        # vertical_offset = offset_direction * (0.02 * max([f for f in fps if not np.isnan(f)]) + 
+                        #                                     0.01 * max([f for f in fps if not np.isnan(f)]) * (i % 3))
                         
-                        plt.annotate(f'{fp:.1f}', 
-                                    xy=(rank, fp),
-                                    xytext=(0, vertical_offset),
-                                    textcoords='offset points',
-                                    ha='center', va='bottom' if offset_direction == 1 else 'top',
-                                    fontsize=9, fontweight='bold',
-                                    bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
+                        # plt.annotate(f'{fp:.1f}', 
+                        #             xy=(rank, fp),
+                        #             xytext=(0, vertical_offset),
+                        #             textcoords='offset points',
+                        #             ha='center', va='bottom' if offset_direction == 1 else 'top',
+                        #             fontsize=9, fontweight='bold',
+                        #             bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
 
             plt.xlabel('Rank (k)', fontsize=12)
             plt.ylabel('False Positives (FP)', fontsize=12)
