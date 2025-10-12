@@ -1,0 +1,25 @@
+program,script,num_threads_total,num_features,distribution_type,duration,start,end
+python_v13_no_gil,main_from_cli,8,400,demand,0:10:31,2025-05-06 12:17:20,2025-05-06 12:27:51
+python_v13_no_gil,main_from_cli,8,400,demand,0:10:34,2025-05-06 12:28:21,2025-05-06 12:38:55
+python_v13_no_gil,main_from_cli,4,400,demand,0:10:58,2025-05-06 12:51:31,2025-05-06 13:02:29
+python_v13_no_gil,main_from_cli,4,400,demand,0:11:04,2025-05-06 12:39:57,2025-05-06 12:51:01
+python_v13_no_gil,main_from_cli,2,400,demand,0:20:21,2025-05-06 13:24:27,2025-05-06 13:44:48
+python_v13_no_gil,main_from_cli,2,400,demand,0:20:25,2025-05-06 13:03:32,2025-05-06 13:23:57
+python_v13_no_gil,main_from_cli,1,400,demand,0:38:10,2025-05-06 14:24:52,2025-05-06 15:03:02
+python_v13_no_gil,main_from_cli,1,400,demand,0:38:32,2025-05-06 13:45:50,2025-05-06 14:24:22
+python_v13_no_gil,main_from_cli,8,400,sequential,0:10:27,2025-05-06 09:41:50,2025-05-06 09:52:17
+python_v13_no_gil,main_from_cli,8,400,sequential,0:10:30,2025-05-06 09:30:50,2025-05-06 09:41:20
+python_v13_no_gil,main_from_cli,4,400,sequential,0:11:04,2025-05-06 09:53:19,2025-05-06 10:04:23
+python_v13_no_gil,main_from_cli,4,400,sequential,0:11:05,2025-05-06 10:04:53,2025-05-06 10:15:58
+python_v13_no_gil,main_from_cli,2,400,sequential,0:20:14,2025-05-06 10:17:00,2025-05-06 10:37:14
+python_v13_no_gil,main_from_cli,2,400,sequential,0:20:35,2025-05-06 10:37:44,2025-05-06 10:58:19
+python_v13_no_gil,main_from_cli,1,400,sequential,0:38:11,2025-05-06 11:38:07,2025-05-06 12:16:18
+python_v13_no_gil,main_from_cli,1,400,sequential,0:38:16,2025-05-06 10:59:21,2025-05-06 11:37:37
+python_v13_no_gil,main_from_cli,8,400,spaced,0:10:28,2025-05-06 00:35:58,2025-05-06 00:46:26
+python_v13_no_gil,main_from_cli,8,400,spaced,0:10:30,2025-05-06 00:46:56,2025-05-06 00:57:26
+python_v13_no_gil,main_from_cli,4,400,spaced,0:10:25,2025-05-06 01:09:24,2025-05-06 01:19:49
+python_v13_no_gil,main_from_cli,4,400,spaced,0:10:26,2025-05-06 00:58:28,2025-05-06 01:08:54
+python_v13_no_gil,main_from_cli,2,400,spaced,0:19:33,2025-05-06 01:20:51,2025-05-06 01:40:24
+python_v13_no_gil,main_from_cli,2,400,spaced,0:19:45,2025-05-06 01:40:54,2025-05-06 02:00:39
+python_v13_no_gil,main_from_cli,1,400,spaced,0:37:49,2025-05-06 02:01:41,2025-05-06 02:39:30
+python_v13_no_gil,main_from_cli,1,400,spaced,0:37:52,2025-05-06 02:40:00,2025-05-06 03:17:52
