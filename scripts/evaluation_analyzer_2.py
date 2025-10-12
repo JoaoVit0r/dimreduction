@@ -475,10 +475,10 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error generating confusion matrix tables: {e}")
 
-    def plot_tp_fp_vs_rank(self, output_dir=None, show=False):
-        """Generate a line graph of TP and FP vs Rank K for each technique."""
+    def plot_tp_vs_rank(self, output_dir=None, show=False):
+        """Generate a line graph of True Positives (TP) vs Rank K for each technique."""
         if self.curve_data is None:
-            print("No curve data available for plotting TP/FP vs Rank.")
+            print("No curve data available for plotting TP vs Rank.")
             return
 
         try:
@@ -493,7 +493,7 @@ class EvaluationAnalyzer:
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
 
                 if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'L' not in tech_data.columns:
-                    print(f"Warning: P, N, or L values not found for technique {technique}. Skipping TP/FP plot.")
+                    print(f"Warning: P, N, or L values not found for technique {technique}. Skipping TP plot.")
                     continue
 
                 P = tech_data['P'].iloc[0]
@@ -504,7 +504,6 @@ class EvaluationAnalyzer:
                 ranks_to_plot = sorted(list(set([L] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 tps = []
-                fps = []
                 
                 for k in ranks_to_plot:
                     # Find the closest rank in the data
@@ -512,32 +511,26 @@ class EvaluationAnalyzer:
                     
                     if rank_data.empty:
                         tps.append(np.nan)
-                        fps.append(np.nan)
                         continue
 
                     tpr = rank_data['tpr'].iloc[0]
-                    fpr = rank_data['fpr'].iloc[0]
-
                     TP = tpr * P
-                    FP = fpr * N
                     tps.append(TP)
-                    fps.append(FP)
 
                 color = self.color_palette[i % len(self.color_palette)]
-                plt.plot(ranks_to_plot, tps, marker='o', linestyle='-', color=color, label=f'{technique} - TP')
-                plt.plot(ranks_to_plot, fps, marker='x', linestyle='--', color=color, label=f'{technique} - FP')
+                plt.plot(ranks_to_plot, tps, marker='o', linestyle='-', color=color, label=f'{technique}')
 
             plt.xlabel('Rank (k)', fontsize=12)
-            plt.ylabel('Count', fontsize=12)
-            plt.title('True Positives (TP) and False Positives (FP) vs. Rank', fontsize=14, fontweight='bold')
+            plt.ylabel('True Positives (TP)', fontsize=12)
+            plt.title('True Positives (TP) vs. Rank', fontsize=14, fontweight='bold')
             plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.grid(True, alpha=0.3)
             plt.tight_layout()
 
             if output_dir:
-                output_path = os.path.join(output_dir, 'tp_fp_vs_rank.png')
+                output_path = os.path.join(output_dir, 'tp_vs_rank.png')
                 plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"TP/FP vs Rank plot saved to: {output_path}")
+                print(f"TP vs Rank plot saved to: {output_path}")
 
             if show:
                 plt.show()
@@ -545,7 +538,72 @@ class EvaluationAnalyzer:
                 plt.close()
 
         except Exception as e:
-            print(f"Error creating TP/FP vs Rank plot: {e}")
+            print(f"Error creating TP vs Rank plot: {e}")
+
+    def plot_fp_vs_rank(self, output_dir=None, show=False):
+        """Generate a line graph of False Positives (FP) vs Rank K for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for plotting FP vs Rank.")
+            return
+
+        try:
+            plt.figure(figsize=(12, 8))
+            
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
+            
+            techniques = avg_curve_data['technique'].unique()
+
+            for i, technique in enumerate(techniques):
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'L' not in tech_data.columns:
+                    print(f"Warning: P, N, or L values not found for technique {technique}. Skipping FP plot.")
+                    continue
+
+                P = tech_data['P'].iloc[0]
+                N = tech_data['N'].iloc[0]
+                L = tech_data['L'].iloc[0]
+                T = P + N
+
+                ranks_to_plot = sorted(list(set([L] + [round(T/4), round(T/2), round(3*T/4), T])))
+                
+                fps = []
+                
+                for k in ranks_to_plot:
+                    # Find the closest rank in the data
+                    rank_data = tech_data.iloc[(tech_data['rank'] - k).abs().argsort()[:1]]
+                    
+                    if rank_data.empty:
+                        fps.append(np.nan)
+                        continue
+
+                    fpr = rank_data['fpr'].iloc[0]
+                    FP = fpr * N
+                    fps.append(FP)
+
+                color = self.color_palette[i % len(self.color_palette)]
+                plt.plot(ranks_to_plot, fps, marker='x', linestyle='--', color=color, label=f'{technique}')
+
+            plt.xlabel('Rank (k)', fontsize=12)
+            plt.ylabel('False Positives (FP)', fontsize=12)
+            plt.title('False Positives (FP) vs. Rank', fontsize=14, fontweight='bold')
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'fp_vs_rank.png')
+                plt.savefig(output_path, dpi=300, bbox_inches='tight')
+                print(f"FP vs Rank plot saved to: {output_path}")
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+
+        except Exception as e:
+            print(f"Error creating FP vs Rank plot: {e}")
 
     def plot_tradeoff_analysis(self, output_dir=None, show=False, metric='auroc'):
         """
@@ -1492,7 +1550,8 @@ def main():
 
         print("\nGenerating confusion matrix and TP/FP plots...")
         analyzer.generate_confusion_matrix_tables(output_dir=args.output_dir)
-        analyzer.plot_tp_fp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
+        analyzer.plot_tp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
+        analyzer.plot_fp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
         
         # Generate performance metrics bar charts
         analyzer.plot_performance_metrics_bar(output_dir=args.output_dir, show=args.show_plots)
