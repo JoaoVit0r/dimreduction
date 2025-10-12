@@ -147,7 +147,7 @@ fi
 if [ "$SKIP_CSV_2_TSV_GENECI_VM2" = false ]; then
     methods=("ARACNE" "CLR" "GENIE3_ET" "GENIE3_RF" "BC3NET" "C3NET" "KBOOST" "MRNETB" "MRNET" "PCIT")
     for method in "${methods[@]}"; do
-        printf -v first_file '%s' $MONITORING_FOLDER_VM2_1thread/GRN_$method* || exit 1;
+        printf -v first_file '%s' $MONITORING_FOLDER_VM2_1thread/GRN_$method\_* || exit 1;
         python scripts/csv_2_tsv_net3.py \
             "$first_file" \
             "$MONITORING_FOLDER_VM2_1thread/matlab/"
@@ -179,7 +179,7 @@ fi
 if [ "$SKIP_EVALUATION_ANALYZER" = false ]; then
     mkdir -p "$EVALUATION_ANALYZER_FOLDER"
     python scripts/evaluation_analyzer_2.py \
-        --time_file $MONITORING_FOLDER_VM2_1thread/evaluation_results_confident-in-0.csv MONITORING_FOLDER_VM1_64threadsevaluation_results_confident-in-0.csv \
+        --time_file $MONITORING_FOLDER_VM2_1thread/evaluation_results_confident-in-0.csv $MONITORING_FOLDER_VM1_64threads/evaluation_results_confident-in-0.csv \
         --data_folder $MONITORING_FOLDER_VM2_1thread/matlab/results $MONITORING_FOLDER_VM1_64threads/matlab/results \
         --threads 1 64 \
         --output_dir "$EVALUATION_ANALYZER_FOLDER"
