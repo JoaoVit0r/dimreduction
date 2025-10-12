@@ -76,5 +76,5 @@ mkdir -p $MONITORING_FOLDER/graphs
 python scripts/evaluation_analyzer_2.py \
     --time_file $MONITORING_FOLDER/evaluation_results_confident-in-0.csv \
     --data_folder $MONITORING_FOLDER/matlab/results \
-    --threads 1 \
+    --threads 64 \
     --output_dir $MONITORING_FOLDER/graphs
