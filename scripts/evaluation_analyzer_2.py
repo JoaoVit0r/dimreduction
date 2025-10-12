@@ -9,12 +9,14 @@ import sys
 from pathlib import Path
 
 class EvaluationAnalyzer:
-    def __init__(self):
+    def __init__(self, figure_width=12.0, transpose_plots=False):
         self.time_data = None
         self.summary_data = None
         self.curve_data = None
         self.combined_data = None
         self.technique_colors = {}
+        self.figure_width = figure_width
+        self.transpose_plots = transpose_plots
         
     def setup_plotting(self):
         """Set up consistent plotting style and color scheme"""
@@ -26,7 +28,133 @@ class EvaluationAnalyzer:
             '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#aec7e8', '#ffbb78',
             '#98df8a', '#ff9896', '#c5b0d5', '#c49c94', '#f7b6d2', '#c7c7c7'
         ]
+    
+    def get_figure_size(self, base_width=None, aspect_ratio=0.67):
+        """
+        Calculate figure size based on configured width and aspect ratio
         
+        Args:
+            base_width (float): Base width for calculation (uses self.figure_width if None)
+            aspect_ratio (float): Height to width ratio
+            
+        Returns:
+            tuple: (width, height) figure size
+        """
+        if base_width is None:
+            base_width = self.figure_width
+        height = base_width * aspect_ratio
+        return (base_width, height)
+    
+    def save_plot_transposed(self, plt, output_path, transpose_suffix="_transpose"):
+        """
+        Save both original and transposed versions of the plot if requested
+        
+        Args:
+            plt: matplotlib pyplot object
+            output_path (str): Original output file path
+            transpose_suffix (str): Suffix for transposed version
+        """
+        # Save original plot
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"Plot saved to: {output_path}")
+        
+        # Save transposed version if requested
+        if self.transpose_plots:
+            # Extract directory and filename
+            output_dir = os.path.dirname(output_path)
+            filename = os.path.basename(output_path)
+            name, ext = os.path.splitext(filename)
+            
+            # Create transposed filename
+            transposed_filename = f"{name}{transpose_suffix}{ext}"
+            transposed_path = os.path.join(output_dir, transposed_filename)
+            
+            # Get current axes and transpose
+            ax = plt.gca()
+            self.transpose_current_plot(ax)
+            
+            # Save transposed version
+            plt.savefig(transposed_path, dpi=300, bbox_inches='tight')
+            print(f"Transposed plot saved to: {transposed_path}")
+    
+    def transpose_current_plot(self, ax):
+        """
+        Transpose the current plot by swapping data and labels
+        
+        Args:
+            ax: matplotlib axes object
+        """
+        # Get all lines and collections
+        lines = ax.get_lines()
+        collections = ax.collections
+        
+        # For line plots, swap x and y data
+        for line in lines:
+            xdata = line.get_xdata()
+            ydata = line.get_ydata()
+            line.set_xdata(ydata)
+            line.set_ydata(xdata)
+        
+        # For bar charts and other collections, we need to handle differently
+        # This is a simplified approach - complex plots may need special handling
+        for collection in collections:
+            # Try to get offsets (for scatter plots and some bar charts)
+            try:
+                offsets = collection.get_offsets()
+                if offsets.size > 0:
+                    # Swap x and y coordinates
+                    new_offsets = np.column_stack([offsets[:, 1], offsets[:, 0]])
+                    collection.set_offsets(new_offsets)
+            except:
+                pass
+        
+        # Swap axis labels
+        xlabel = ax.get_xlabel()
+        ylabel = ax.get_ylabel()
+        ax.set_xlabel(ylabel)
+        ax.set_ylabel(xlabel)
+        
+        # Reset limits to fit new data
+        ax.relim()
+        ax.autoscale_view()
+    
+    def transpose_bar_plot(self, bars, xlabels, xlabel, ylabel, title):
+        """
+        Create a transposed version of a bar plot (horizontal bars)
+        
+        Returns:
+            tuple: (fig, ax) for the transposed plot
+        """
+        # Calculate appropriate size for horizontal plot
+        width, height = self.get_figure_size(aspect_ratio=0.8)
+        fig, ax = plt.subplots(figsize=(height, width))  # Swap dimensions
+        
+        # Get bar values and labels for horizontal bars
+        values = [bar.get_height() for bar in bars]
+        labels = [label.get_text() for label in xlabels]
+        
+        # Create horizontal bar plot
+        y_pos = np.arange(len(values))
+        bars_transposed = ax.barh(y_pos, values, color=[bar.get_facecolor() for bar in bars])
+        
+        # Set labels and title
+        ax.set_xlabel(ylabel)  # Original y-label becomes x-label
+        ax.set_ylabel(xlabel)  # Original x-label becomes y-label
+        ax.set_title(f"{title} (Transposed)")
+        
+        # Set y-tick labels
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(labels)
+        
+        # Add value labels on bars
+        for bar in bars_transposed:
+            width = bar.get_width()
+            ax.text(width, bar.get_y() + bar.get_height()/2., 
+                   f'{width:.2f}', ha='left', va='center')
+        
+        plt.tight_layout()
+        return fig, ax
+
     def load_time_data(self, file_paths, num_threads_list):
         """
         Load and preprocess time data from multiple CSV files
@@ -263,7 +391,7 @@ class EvaluationAnalyzer:
             return
         
         try:
-            plt.figure(figsize=(12, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
             # Calculate average execution time per technique across all thread counts
             time_avg = self.time_data.groupby(['technique', 'num_threads'])['execution_time_minutes'].mean().sort_values()
@@ -274,17 +402,18 @@ class EvaluationAnalyzer:
             self.technique_colors.update(dict(zip(techniques, colors)))
             
             # Create bar plot
-            bars = plt.bar(range(len(techniques)), time_avg.values, color=colors, alpha=0.7)
+            bars = ax.bar(range(len(techniques)), time_avg.values, color=colors, alpha=0.7)
             
-            plt.xlabel('Technique', fontsize=12)
-            plt.ylabel('Average Execution Time (minutes)', fontsize=12)
-            plt.title('Average Execution Time by Technique (All Thread Counts)', fontsize=14, fontweight='bold')
-            plt.xticks(range(len(techniques)), techniques, rotation=45, ha='right')
+            ax.set_xlabel('Technique', fontsize=12)
+            ax.set_ylabel('Average Execution Time (minutes)', fontsize=12)
+            ax.set_title('Average Execution Time by Technique (All Thread Counts)', fontsize=14, fontweight='bold')
+            ax.set_xticks(range(len(techniques)))
+            ax.set_xticklabels(techniques, rotation=45, ha='right')
             
             # Add value labels on bars
             for bar in bars:
                 height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
+                ax.text(bar.get_x() + bar.get_width()/2., height,
                         f'{height:.2f}',
                         ha='center', va='bottom')
             
@@ -292,8 +421,7 @@ class EvaluationAnalyzer:
             
             if output_dir:
                 output_path = os.path.join(output_dir, 'execution_time_comparison.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"Execution time plot saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
             
             if show:
                 plt.show()
@@ -310,7 +438,7 @@ class EvaluationAnalyzer:
             return
         
         try:
-            plt.figure(figsize=(10, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10, 0.8))
             
             # Get unique techniques
             techniques = self.curve_data['technique'].unique()
@@ -333,24 +461,23 @@ class EvaluationAnalyzer:
                 auc = np.trapezoid(tpr, fpr)
                 color = self.color_palette[i % len(self.color_palette)]
                 label = f'{technique} (AUC: {auc:.3f})'
-                plt.plot(fpr, tpr, label=label, color=color, linewidth=2)
+                ax.plot(fpr, tpr, label=label, color=color, linewidth=2)
             
             # Plot diagonal reference line
-            plt.plot([0, 1], [0, 1], 'k--', alpha=0.5, label='Random Classifier')
+            ax.plot([0, 1], [0, 1], 'k--', alpha=0.5, label='Random Classifier')
             
-            plt.xlabel('False Positive Rate', fontsize=12)
-            plt.ylabel('True Positive Rate', fontsize=12)
-            plt.title('ROC Curve', fontsize=14, fontweight='bold')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.grid(True, alpha=0.3)
-            plt.xlim([0, 1])
-            plt.ylim([0, 1])
+            ax.set_xlabel('False Positive Rate', fontsize=12)
+            ax.set_ylabel('True Positive Rate', fontsize=12)
+            ax.set_title('ROC Curve', fontsize=14, fontweight='bold')
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim([0, 1])
+            ax.set_ylim([0, 1])
             plt.tight_layout()
             
             if output_dir:
                 output_path = os.path.join(output_dir, 'roc_curve.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"ROC curve plot saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
             
             if show:
                 plt.show()
@@ -367,7 +494,7 @@ class EvaluationAnalyzer:
             return
         
         try:
-            plt.figure(figsize=(10, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10, 0.8))
             
             # Get unique techniques
             techniques = self.curve_data['technique'].unique()
@@ -390,21 +517,20 @@ class EvaluationAnalyzer:
                 auc = np.trapezoid(precision, recall)
                 color = self.color_palette[i % len(self.color_palette)]
                 label = f'{technique} (AUC: {auc:.3f})'
-                plt.plot(recall, precision, label=label, color=color, linewidth=2)
+                ax.plot(recall, precision, label=label, color=color, linewidth=2)
             
-            plt.xlabel('Recall', fontsize=12)
-            plt.ylabel('Precision', fontsize=12)
-            plt.title('Precision-Recall Curve', fontsize=14, fontweight='bold')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.grid(True, alpha=0.3)
-            plt.xlim([0, 1])
-            plt.ylim([0, 1])
+            ax.set_xlabel('Recall', fontsize=12)
+            ax.set_ylabel('Precision', fontsize=12)
+            ax.set_title('Precision-Recall Curve', fontsize=14, fontweight='bold')
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim([0, 1])
+            ax.set_ylim([0, 1])
             plt.tight_layout()
             
             if output_dir:
                 output_path = os.path.join(output_dir, 'precision_recall_curve.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"Precision-Recall curve plot saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
             
             if show:
                 plt.show()
@@ -482,7 +608,7 @@ class EvaluationAnalyzer:
             return
 
         try:
-            plt.figure(figsize=(14, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -522,7 +648,7 @@ class EvaluationAnalyzer:
                 color = self.color_palette[i % len(self.color_palette)]
                 
                 # Plot the line
-                line = plt.plot(ranks_to_plot, tps, marker='', linestyle='-', color=color, label=f'{technique}', linewidth=2)
+                line = ax.plot(ranks_to_plot, tps, marker='', linestyle='-', color=color, label=f'{technique}', linewidth=2)
                 
                 # Plot markers for all points
                 for j, (rank, tp) in enumerate(zip(ranks_to_plot, tps)):
@@ -539,24 +665,24 @@ class EvaluationAnalyzer:
                             markeredgewidth = 1
                             markeredgecolor = color
                         
-                        plt.plot(rank, tp, marker=marker, color=color, markersize=markersize,
+                        ax.plot(rank, tp, marker=marker, color=color, markersize=markersize,
                                 markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
 
-            plt.xlabel('Rank (k)', fontsize=12)
-            plt.ylabel('True Positives (TP)', fontsize=12)
-            plt.title('True Positives (TP) vs. Rank', fontsize=14, fontweight='bold')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.grid(True, alpha=0.3)
+            ax.set_xlabel('Rank (k)', fontsize=12)
+            ax.set_ylabel('True Positives (TP)', fontsize=12)
+            ax.set_title('True Positives (TP) vs. Rank', fontsize=14, fontweight='bold')
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.grid(True, alpha=0.3)
             
             # Set x-axis labels
-            plt.xticks(rank_labels, rank_labels, rotation=0)
+            ax.set_xticks(rank_labels)
+            ax.set_xticklabels(rank_labels, rotation=0)
             
             plt.tight_layout()
 
             if output_dir:
                 output_path = os.path.join(output_dir, 'tp_vs_rank.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"TP vs Rank plot saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
 
             if show:
                 plt.show()
@@ -573,7 +699,7 @@ class EvaluationAnalyzer:
             return
 
         try:
-            plt.figure(figsize=(14, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -612,7 +738,7 @@ class EvaluationAnalyzer:
                 color = self.color_palette[i % len(self.color_palette)]
                 
                 # Plot the line
-                line = plt.plot(ranks_to_plot, fps, marker='', linestyle='--', color=color, label=f'{technique}', linewidth=2)
+                line = ax.plot(ranks_to_plot, fps, marker='', linestyle='--', color=color, label=f'{technique}', linewidth=2)
                 
                 # Plot markers for all points
                 for j, (rank, fp) in enumerate(zip(ranks_to_plot, fps)):
@@ -629,24 +755,24 @@ class EvaluationAnalyzer:
                             markeredgewidth = 1
                             markeredgecolor = color
                         
-                        plt.plot(rank, fp, marker=marker, color=color, markersize=markersize,
+                        ax.plot(rank, fp, marker=marker, color=color, markersize=markersize,
                                 markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
 
-            plt.xlabel('Rank (k)', fontsize=12)
-            plt.ylabel('False Positives (FP)', fontsize=12)
-            plt.title('False Positives (FP) vs. Rank', fontsize=14, fontweight='bold')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.grid(True, alpha=0.3)
+            ax.set_xlabel('Rank (k)', fontsize=12)
+            ax.set_ylabel('False Positives (FP)', fontsize=12)
+            ax.set_title('False Positives (FP) vs. Rank', fontsize=14, fontweight='bold')
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.grid(True, alpha=0.3)
             
             # Set x-axis labels
-            plt.xticks(rank_labels, rank_labels, rotation=0)
+            ax.set_xticks(rank_labels)
+            ax.set_xticklabels(rank_labels, rotation=0)
             
             plt.tight_layout()
 
             if output_dir:
                 output_path = os.path.join(output_dir, 'fp_vs_rank.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"FP vs Rank plot saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
 
             if show:
                 plt.show()
@@ -690,7 +816,7 @@ class EvaluationAnalyzer:
                 # Generate alpha values from 0 to 1
                 alpha_values = np.arange(0, 1.01, 0.01)
                 
-                plt.figure(figsize=(12, 8))
+                fig, ax = plt.subplots(figsize=self.get_figure_size(10, 0.8))
                 
                 # Store AUC values for each technique
                 auc_values = {}
@@ -715,16 +841,16 @@ class EvaluationAnalyzer:
                     label = f'{technique} (AUC: {auc:.3f})'
                     
                     # Plot line
-                    plt.plot(alpha_values, scores, label=label, color=color, linewidth=2)
+                    ax.plot(alpha_values, scores, label=label, color=color, linewidth=2)
                 
-                plt.xlabel('α (Weight of Metric)', fontsize=12)
-                plt.ylabel('Score', fontsize=12)
-                plt.title(f'Trade-off Analysis: {metric.upper()} vs Speed (Thread = {thread_count})', 
+                ax.set_xlabel('α (Weight of Metric)', fontsize=12)
+                ax.set_ylabel('Score', fontsize=12)
+                ax.set_title(f'Trade-off Analysis: {metric.upper()} vs Speed (Thread = {thread_count})', 
                         fontsize=14, fontweight='bold')
-                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-                plt.grid(True, alpha=0.3)
-                plt.xlim([0, 1])
-                plt.ylim([0, 1])
+                ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlim([0, 1])
+                ax.set_ylim([0, 1])
                 plt.tight_layout()
                 
                 # Print AUC summary to console
@@ -736,8 +862,7 @@ class EvaluationAnalyzer:
                 
                 if output_dir:
                     output_path = os.path.join(output_dir, f'tradeoff_analysis_{metric}_thread_{thread_count}.png')
-                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                    print(f"Trade-off analysis plot saved to: {output_path}")
+                    self.save_plot_transposed(plt, output_path)
                 
                 if show:
                     plt.show()
@@ -1075,7 +1200,7 @@ class EvaluationAnalyzer:
             # Generate alpha values from 0 to 1
             alpha_values = np.arange(0, 1.01, 0.01)
             
-            plt.figure(figsize=(12, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10, 0.8))
             
             # Store AUC values for each technique-thread combination
             auc_values = {}
@@ -1123,21 +1248,21 @@ class EvaluationAnalyzer:
                     
                     # Plot line with optional markers
                     if marker and len(alpha_values) <= 20:
-                        plt.plot(alpha_values, scores, label=label, color=color, 
+                        ax.plot(alpha_values, scores, label=label, color=color, 
                                 linestyle=linestyle, marker=marker, markersize=6, 
                                 linewidth=2, markevery=marker_freq)
                     else:
-                        plt.plot(alpha_values, scores, label=label, color=color, 
+                        ax.plot(alpha_values, scores, label=label, color=color, 
                                 linestyle=linestyle, linewidth=2)
             
-            plt.xlabel('α (Weight of Metric)', fontsize=12)
-            plt.ylabel('Score', fontsize=12)
-            plt.title(f'Trade-off Analysis: {metric.upper()} vs Speed (All Thread Configurations)', 
+            ax.set_xlabel('α (Weight of Metric)', fontsize=12)
+            ax.set_ylabel('Score', fontsize=12)
+            ax.set_title(f'Trade-off Analysis: {metric.upper()} vs Speed (All Thread Configurations)', 
                     fontsize=14, fontweight='bold')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.grid(True, alpha=0.3)
-            plt.xlim([0, 1])
-            plt.ylim([0, 1])
+            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim([0, 1])
+            ax.set_ylim([0, 1])
             plt.tight_layout()
             
             # Print AUC summary to console
@@ -1149,8 +1274,7 @@ class EvaluationAnalyzer:
             
             if output_dir:
                 output_path = os.path.join(output_dir, f'tradeoff_analysis_{metric}_all_threads.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"Trade-off analysis plot saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
             
             if show:
                 plt.show()
@@ -1348,29 +1472,30 @@ class EvaluationAnalyzer:
             aupr_color = '#ff7f0e'   # Orange
             
             # Plot 1: Combined AUROC-AUPR Performance Bar Chart
-            plt.figure(figsize=(14, 8))
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
             x_pos = np.arange(len(techniques))
             bar_width = 0.35
             
             # Create bars for AUROC and AUPR
-            bars_auroc = plt.bar(x_pos - bar_width/2, performance_avg['auroc'], 
+            bars_auroc = ax.bar(x_pos - bar_width/2, performance_avg['auroc'], 
                                 bar_width, color=auroc_color, alpha=0.7, label='AUROC')
-            bars_aupr = plt.bar(x_pos + bar_width/2, performance_avg['aupr'], 
+            bars_aupr = ax.bar(x_pos + bar_width/2, performance_avg['aupr'], 
                                bar_width, color=aupr_color, alpha=0.7, label='AUPR')
             
-            plt.xlabel('Technique', fontsize=12)
-            plt.ylabel('Performance Score', fontsize=12)
-            plt.title('AUROC and AUPR Performance by Technique (Mean Across All Threads)', fontsize=14, fontweight='bold')
-            plt.xticks(x_pos, techniques, rotation=45, ha='right')
-            plt.ylim(0, 1)
-            plt.legend()
+            ax.set_xlabel('Technique', fontsize=12)
+            ax.set_ylabel('Performance Score', fontsize=12)
+            ax.set_title('AUROC and AUPR Performance by Technique (Mean Across All Threads)', fontsize=14, fontweight='bold')
+            ax.set_xticks(x_pos)
+            ax.set_xticklabels(techniques, rotation=45, ha='right')
+            ax.set_ylim(0, 1)
+            ax.legend()
             
             # Add value labels on bars
             for bars in [bars_auroc, bars_aupr]:
                 for bar in bars:
                     height = bar.get_height()
-                    plt.text(bar.get_x() + bar.get_width()/2., height,
+                    ax.text(bar.get_x() + bar.get_width()/2., height,
                             f'{height:.3f}',
                             ha='center', va='bottom', fontsize=9)
             
@@ -1378,8 +1503,7 @@ class EvaluationAnalyzer:
             
             if output_dir:
                 output_path = os.path.join(output_dir, 'auroc-aupr_performance_bar.png')
-                plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                print(f"AUROC-AUPR performance bar chart saved to: {output_path}")
+                self.save_plot_transposed(plt, output_path)
             
             if show:
                 plt.show()
@@ -1427,29 +1551,30 @@ class EvaluationAnalyzer:
                 if len(tradeoff_df) == 0:
                     continue
                 
-                plt.figure(figsize=(14, 8))
+                fig, ax = plt.subplots(figsize=self.get_figure_size(10))
                 
                 x_pos = np.arange(len(tradeoff_df))
                 bar_width = 0.35
                 
                 # Create bars for AUROC and AUPR trade-off AUC
-                bars_auroc_tradeoff = plt.bar(x_pos - bar_width/2, tradeoff_df['auroc_tradeoff_auc'], 
+                bars_auroc_tradeoff = ax.bar(x_pos - bar_width/2, tradeoff_df['auroc_tradeoff_auc'], 
                                             bar_width, color=auroc_color, alpha=0.7, label='AUROC Trade-off AUC')
-                bars_aupr_tradeoff = plt.bar(x_pos + bar_width/2, tradeoff_df['aupr_tradeoff_auc'], 
+                bars_aupr_tradeoff = ax.bar(x_pos + bar_width/2, tradeoff_df['aupr_tradeoff_auc'], 
                                            bar_width, color=aupr_color, alpha=0.7, label='AUPR Trade-off AUC')
                 
-                plt.xlabel('Technique', fontsize=12)
-                plt.ylabel('Trade-off AUC', fontsize=12)
-                plt.title(f'Trade-off AUC for AUROC and AUPR by Technique (Thread = {thread_count})', fontsize=14, fontweight='bold')
-                plt.xticks(x_pos, tradeoff_df['technique'], rotation=45, ha='right')
-                plt.ylim(0, 1)
-                plt.legend()
+                ax.set_xlabel('Technique', fontsize=12)
+                ax.set_ylabel('Trade-off AUC', fontsize=12)
+                ax.set_title(f'Trade-off AUC for AUROC and AUPR by Technique (Thread = {thread_count})', fontsize=14, fontweight='bold')
+                ax.set_xticks(x_pos)
+                ax.set_xticklabels(tradeoff_df['technique'], rotation=45, ha='right')
+                ax.set_ylim(0, 1)
+                ax.legend()
                 
                 # Add value labels on bars
                 for bars in [bars_auroc_tradeoff, bars_aupr_tradeoff]:
                     for bar in bars:
                         height = bar.get_height()
-                        plt.text(bar.get_x() + bar.get_width()/2., height,
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
                                 f'{height:.3f}',
                                 ha='center', va='bottom', fontsize=9)
                 
@@ -1457,8 +1582,7 @@ class EvaluationAnalyzer:
                 
                 if output_dir:
                     output_path = os.path.join(output_dir, f'auc_tradeoff_auroc-aupr_bar_thread_{thread_count}.png')
-                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                    print(f"Trade-off AUC bar chart saved to: {output_path}")
+                    self.save_plot_transposed(plt, output_path)
                 
                 if show:
                     plt.show()
@@ -1506,30 +1630,31 @@ class EvaluationAnalyzer:
             all_tradeoff_avg = all_tradeoff_avg.sort_values('technique')
             
             if len(all_tradeoff_avg) > 0:
-                plt.figure(figsize=(14, 8))
+                fig, ax = plt.subplots(figsize=self.get_figure_size(10))
                 
                 x_pos = np.arange(len(all_tradeoff_avg))
                 bar_width = 0.35
                 
                 # Create bars for AUROC and AUPR trade-off AUC
-                bars_auroc_tradeoff = plt.bar(x_pos - bar_width/2, all_tradeoff_avg['auroc_tradeoff_auc'], 
+                bars_auroc_tradeoff = ax.bar(x_pos - bar_width/2, all_tradeoff_avg['auroc_tradeoff_auc'], 
                                             bar_width, color=auroc_color, alpha=0.7, label='AUROC Trade-off AUC')
-                bars_aupr_tradeoff = plt.bar(x_pos + bar_width/2, all_tradeoff_avg['aupr_tradeoff_auc'], 
+                bars_aupr_tradeoff = ax.bar(x_pos + bar_width/2, all_tradeoff_avg['aupr_tradeoff_auc'], 
                                            bar_width, color=aupr_color, alpha=0.7, label='AUPR Trade-off AUC')
                 
                 label = (all_tradeoff_avg['technique'] + ' (threads=' + all_tradeoff_avg['num_threads'].astype(str) + ')').tolist()
-                plt.xlabel('Technique', fontsize=12)
-                plt.ylabel('Trade-off AUC', fontsize=12)
-                plt.title('Trade-off AUC for AUROC and AUPR by Technique (All Threads - Mean)', fontsize=14, fontweight='bold')
-                plt.xticks(x_pos, label, rotation=45, ha='right')
-                plt.ylim(0, 1)
-                plt.legend()
+                ax.set_xlabel('Technique', fontsize=12)
+                ax.set_ylabel('Trade-off AUC', fontsize=12)
+                ax.set_title('Trade-off AUC for AUROC and AUPR by Technique (All Threads - Mean)', fontsize=14, fontweight='bold')
+                ax.set_xticks(x_pos)
+                ax.set_xticklabels(label, rotation=45, ha='right')
+                ax.set_ylim(0, 1)
+                ax.legend()
                 
                 # Add value labels on bars
                 for bars in [bars_auroc_tradeoff, bars_aupr_tradeoff]:
                     for bar in bars:
                         height = bar.get_height()
-                        plt.text(bar.get_x() + bar.get_width()/2., height,
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
                                 f'{height:.3f}',
                                 ha='center', va='bottom', fontsize=9)
                 
@@ -1537,8 +1662,7 @@ class EvaluationAnalyzer:
                 
                 if output_dir:
                     output_path = os.path.join(output_dir, 'auc_tradeoff_auroc-aupr_bar_all_threads.png')
-                    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-                    print(f"Trade-off AUC bar chart (all threads) saved to: {output_path}")
+                    self.save_plot_transposed(plt, output_path)
                 
                 if show:
                     plt.show()
@@ -1557,6 +1681,8 @@ def main():
     parser.add_argument('--output_dir', type=str, required=True, help='Output directory for saving graphs')
     parser.add_argument('--show_plots', action='store_true', help='Show plots interactively')
     parser.add_argument('--generate_report', action='store_true', help='Generate comprehensive report')
+    parser.add_argument('--figure_width', type=float, default=12.0, help='Base width for figures (default: 12.0)')
+    parser.add_argument('--transpose_plots', action='store_true', help='Generate transposed versions of plots')
     
     args = parser.parse_args()
     
@@ -1571,8 +1697,8 @@ def main():
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Initialize analyzer
-    analyzer = EvaluationAnalyzer()
+    # Initialize analyzer with new parameters
+    analyzer = EvaluationAnalyzer(figure_width=args.figure_width, transpose_plots=args.transpose_plots)
     analyzer.setup_plotting()
     
     print("\n" + "="*50)
@@ -1582,6 +1708,8 @@ def main():
     print(f"Data folders: {args.data_folder}")
     print(f"Thread counts: {args.threads}")
     print(f"Output directory: {args.output_dir}")
+    print(f"Figure width: {args.figure_width}")
+    print(f"Transpose plots: {args.transpose_plots}")
     
     # Load data for all specified thread configurations
     time_avg = analyzer.load_time_data(args.time_file, args.threads)
