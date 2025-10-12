@@ -504,7 +504,7 @@ class EvaluationAnalyzer:
                 ranks_to_plot = sorted(list(set([L] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 tps = []
-                rank_labels = []
+                rank_labels = sorted(list(set([0] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 for k in ranks_to_plot:
                     # Find the closest rank in the data
@@ -518,12 +518,6 @@ class EvaluationAnalyzer:
                     tpr = rank_data['tpr'].iloc[0]
                     TP = tpr * P
                     tps.append(TP)
-                    
-                    # Create label with special marker for L
-                    if k == L:
-                        rank_labels.append(f'L={k}\n(True Edges)')
-                    else:
-                        rank_labels.append(str(k))
 
                 color = self.color_palette[i % len(self.color_palette)]
                 
@@ -547,18 +541,6 @@ class EvaluationAnalyzer:
                         
                         plt.plot(rank, tp, marker=marker, color=color, markersize=markersize,
                                 markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
-                        
-                        # # Add value annotation with offset to prevent overlapping
-                        # offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
-                        # vertical_offset = offset_direction * (0.02 * max(tps) + 0.01 * max(tps) * (i % 3))
-                        
-                        # plt.annotate(f'{tp:.1f}', 
-                        #             xy=(rank, tp),
-                        #             xytext=(0, vertical_offset),
-                        #             textcoords='offset points',
-                        #             ha='center', va='bottom' if offset_direction == 1 else 'top',
-                        #             fontsize=9, fontweight='bold',
-                        #             bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
 
             plt.xlabel('Rank (k)', fontsize=12)
             plt.ylabel('True Positives (TP)', fontsize=12)
@@ -567,7 +549,7 @@ class EvaluationAnalyzer:
             plt.grid(True, alpha=0.3)
             
             # Set x-axis labels
-            plt.xticks(ranks_to_plot, rank_labels, rotation=0)
+            plt.xticks(rank_labels, rank_labels, rotation=0)
             
             plt.tight_layout()
 
@@ -613,7 +595,7 @@ class EvaluationAnalyzer:
                 ranks_to_plot = sorted(list(set([L] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 fps = []
-                rank_labels = []
+                rank_labels = sorted(list(set([0] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 for k in ranks_to_plot:
                     # Find the closest rank in the data
@@ -621,18 +603,11 @@ class EvaluationAnalyzer:
                     
                     if rank_data.empty:
                         fps.append(np.nan)
-                        rank_labels.append(str(k))
                         continue
 
                     fpr = rank_data['fpr'].iloc[0]
                     FP = fpr * N
                     fps.append(FP)
-                    
-                    # Create label with special marker for L
-                    if k == L:
-                        rank_labels.append(f'L={k}\n(True Edges)')
-                    else:
-                        rank_labels.append(str(k))
 
                 color = self.color_palette[i % len(self.color_palette)]
                 
@@ -649,26 +624,13 @@ class EvaluationAnalyzer:
                             markeredgewidth = 2
                             markeredgecolor = color
                         else:
-                            marker = 's'  # Square for other points (different from TP plot)
+                            marker = 'o'  # Circle for other points
                             markersize = 8
                             markeredgewidth = 1
                             markeredgecolor = color
                         
                         plt.plot(rank, fp, marker=marker, color=color, markersize=markersize,
                                 markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
-                        
-                        # # Add value annotation with offset to prevent overlapping
-                        # offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
-                        # vertical_offset = offset_direction * (0.02 * max([f for f in fps if not np.isnan(f)]) + 
-                        #                                     0.01 * max([f for f in fps if not np.isnan(f)]) * (i % 3))
-                        
-                        # plt.annotate(f'{fp:.1f}', 
-                        #             xy=(rank, fp),
-                        #             xytext=(0, vertical_offset),
-                        #             textcoords='offset points',
-                        #             ha='center', va='bottom' if offset_direction == 1 else 'top',
-                        #             fontsize=9, fontweight='bold',
-                        #             bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
 
             plt.xlabel('Rank (k)', fontsize=12)
             plt.ylabel('False Positives (FP)', fontsize=12)
@@ -677,7 +639,7 @@ class EvaluationAnalyzer:
             plt.grid(True, alpha=0.3)
             
             # Set x-axis labels
-            plt.xticks(ranks_to_plot, rank_labels, rotation=0)
+            plt.xticks(rank_labels, rank_labels, rotation=0)
             
             plt.tight_layout()
 
