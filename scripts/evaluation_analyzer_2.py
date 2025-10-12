@@ -482,7 +482,7 @@ class EvaluationAnalyzer:
             return
 
         try:
-            plt.figure(figsize=(12, 8))
+            plt.figure(figsize=(14, 8))
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -504,6 +504,7 @@ class EvaluationAnalyzer:
                 ranks_to_plot = sorted(list(set([L] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 tps = []
+                rank_labels = []
                 
                 for k in ranks_to_plot:
                     # Find the closest rank in the data
@@ -511,20 +512,63 @@ class EvaluationAnalyzer:
                     
                     if rank_data.empty:
                         tps.append(np.nan)
+                        rank_labels.append(str(k))
                         continue
 
                     tpr = rank_data['tpr'].iloc[0]
                     TP = tpr * P
                     tps.append(TP)
+                    
+                    # Create label with special marker for L
+                    if k == L:
+                        rank_labels.append(f'L={k}\n(True Edges)')
+                    else:
+                        rank_labels.append(str(k))
 
                 color = self.color_palette[i % len(self.color_palette)]
-                plt.plot(ranks_to_plot, tps, marker='o', linestyle='-', color=color, label=f'{technique}')
+                
+                # Plot the line
+                line = plt.plot(ranks_to_plot, tps, marker='', linestyle='-', color=color, label=f'{technique}', linewidth=2)
+                
+                # Plot markers for all points
+                for j, (rank, tp) in enumerate(zip(ranks_to_plot, tps)):
+                    if not np.isnan(tp):
+                        # Use different marker for L point
+                        if rank == L:
+                            marker = 'D'  # Diamond for L point
+                            markersize = 10
+                            markeredgewidth = 2
+                            markeredgecolor = 'red'
+                        else:
+                            marker = 'o'  # Circle for other points
+                            markersize = 8
+                            markeredgewidth = 1
+                            markeredgecolor = color
+                        
+                        plt.plot(rank, tp, marker=marker, color=color, markersize=markersize,
+                                markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
+                        
+                        # Add value annotation with offset to prevent overlapping
+                        offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
+                        vertical_offset = offset_direction * (0.02 * max(tps) + 0.01 * max(tps) * (i % 3))
+                        
+                        plt.annotate(f'{tp:.1f}', 
+                                    xy=(rank, tp),
+                                    xytext=(0, vertical_offset),
+                                    textcoords='offset points',
+                                    ha='center', va='bottom' if offset_direction == 1 else 'top',
+                                    fontsize=9, fontweight='bold',
+                                    bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
 
             plt.xlabel('Rank (k)', fontsize=12)
             plt.ylabel('True Positives (TP)', fontsize=12)
             plt.title('True Positives (TP) vs. Rank', fontsize=14, fontweight='bold')
             plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.grid(True, alpha=0.3)
+            
+            # Set x-axis labels
+            plt.xticks(ranks_to_plot, rank_labels, rotation=0)
+            
             plt.tight_layout()
 
             if output_dir:
@@ -547,7 +591,7 @@ class EvaluationAnalyzer:
             return
 
         try:
-            plt.figure(figsize=(12, 8))
+            plt.figure(figsize=(14, 8))
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -569,6 +613,7 @@ class EvaluationAnalyzer:
                 ranks_to_plot = sorted(list(set([L] + [round(T/4), round(T/2), round(3*T/4), T])))
                 
                 fps = []
+                rank_labels = []
                 
                 for k in ranks_to_plot:
                     # Find the closest rank in the data
@@ -576,20 +621,64 @@ class EvaluationAnalyzer:
                     
                     if rank_data.empty:
                         fps.append(np.nan)
+                        rank_labels.append(str(k))
                         continue
 
                     fpr = rank_data['fpr'].iloc[0]
                     FP = fpr * N
                     fps.append(FP)
+                    
+                    # Create label with special marker for L
+                    if k == L:
+                        rank_labels.append(f'L={k}\n(True Edges)')
+                    else:
+                        rank_labels.append(str(k))
 
                 color = self.color_palette[i % len(self.color_palette)]
-                plt.plot(ranks_to_plot, fps, marker='x', linestyle='--', color=color, label=f'{technique}')
+                
+                # Plot the line
+                line = plt.plot(ranks_to_plot, fps, marker='', linestyle='--', color=color, label=f'{technique}', linewidth=2)
+                
+                # Plot markers for all points
+                for j, (rank, fp) in enumerate(zip(ranks_to_plot, fps)):
+                    if not np.isnan(fp):
+                        # Use different marker for L point
+                        if rank == L:
+                            marker = 'D'  # Diamond for L point
+                            markersize = 10
+                            markeredgewidth = 2
+                            markeredgecolor = 'red'
+                        else:
+                            marker = 's'  # Square for other points (different from TP plot)
+                            markersize = 8
+                            markeredgewidth = 1
+                            markeredgecolor = color
+                        
+                        plt.plot(rank, fp, marker=marker, color=color, markersize=markersize,
+                                markeredgewidth=markeredgewidth, markeredgecolor=markeredgecolor)
+                        
+                        # Add value annotation with offset to prevent overlapping
+                        offset_direction = 1 if (i % 2 == 0) else -1  # Alternate above/below
+                        vertical_offset = offset_direction * (0.02 * max([f for f in fps if not np.isnan(f)]) + 
+                                                            0.01 * max([f for f in fps if not np.isnan(f)]) * (i % 3))
+                        
+                        plt.annotate(f'{fp:.1f}', 
+                                    xy=(rank, fp),
+                                    xytext=(0, vertical_offset),
+                                    textcoords='offset points',
+                                    ha='center', va='bottom' if offset_direction == 1 else 'top',
+                                    fontsize=9, fontweight='bold',
+                                    bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8, edgecolor='none'))
 
             plt.xlabel('Rank (k)', fontsize=12)
             plt.ylabel('False Positives (FP)', fontsize=12)
             plt.title('False Positives (FP) vs. Rank', fontsize=14, fontweight='bold')
             plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.grid(True, alpha=0.3)
+            
+            # Set x-axis labels
+            plt.xticks(ranks_to_plot, rank_labels, rotation=0)
+            
             plt.tight_layout()
 
             if output_dir:
