@@ -65,7 +65,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --output-dir-evaluation_analyzer)
-            EVALUATION_ANALYZER=$2
+            EVALUATION_ANALYZER_FOLDER=$2
             shift 2
             ;;
         *)
@@ -93,7 +93,8 @@ fi
 MONITORING_FOLDER_VM2_1thread="monitoring_plots/20250912_mutiples_runs_From_VM2"
 MONITORING_FOLDER_VM1_64threads="monitoring_plots/20250914_mutiples_runs"
 mkdir -p $MONITORING_FOLDER_VM1_64threads/matlab/results
-EVALUATION_ANALYZER=${EVALUATION_ANALYZER:-$MONITORING_FOLDER_VM1_64threads/graphs}
+mkdir -p $MONITORING_FOLDER_VM2_1thread/matlab/results
+EVALUATION_ANALYZER_FOLDER=${EVALUATION_ANALYZER_FOLDER:-$MONITORING_FOLDER_VM1_64threads/graphs}
 
 if [ "$SKIP_GENECI_EVALUATE_VM1" = false ]; then
     python scripts/geneci_evaluate.py \
@@ -176,10 +177,10 @@ if [ "$SKIP_MATLAB_VM2" = false ]; then
 fi
 
 if [ "$SKIP_EVALUATION_ANALYZER" = false ]; then
-    mkdir -p "$EVALUATION_ANALYZER"
+    mkdir -p "$EVALUATION_ANALYZER_FOLDER"
     python scripts/evaluation_analyzer_2.py \
         --time_file $MONITORING_FOLDER_VM2_1thread/evaluation_results_confident-in-0.csv MONITORING_FOLDER_VM1_64threadsevaluation_results_confident-in-0.csv \
         --data_folder $MONITORING_FOLDER_VM2_1thread/matlab/results $MONITORING_FOLDER_VM1_64threads/matlab/results \
         --threads 1 64 \
-        --output_dir "$EVALUATION_ANALYZER"
+        --output_dir "$EVALUATION_ANALYZER_FOLDER"
 fi
