@@ -469,7 +469,7 @@ class EvaluationAnalyzer:
             ax.set_xlabel('False Positive Rate', fontsize=12)
             ax.set_ylabel('True Positive Rate', fontsize=12)
             ax.set_title('ROC Curve', fontsize=14, fontweight='bold')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             ax.set_xlim([0, 1])
             ax.set_ylim([0, 1])
@@ -522,7 +522,7 @@ class EvaluationAnalyzer:
             ax.set_xlabel('Recall', fontsize=12)
             ax.set_ylabel('Precision', fontsize=12)
             ax.set_title('Precision-Recall Curve', fontsize=14, fontweight='bold')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             ax.set_xlim([0, 1])
             ax.set_ylim([0, 1])
@@ -671,7 +671,7 @@ class EvaluationAnalyzer:
             ax.set_xlabel('Rank (k)', fontsize=12)
             ax.set_ylabel('True Positives (TP)', fontsize=12)
             ax.set_title('True Positives (TP) vs. Rank', fontsize=14, fontweight='bold')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             
             # Set x-axis labels
@@ -761,7 +761,7 @@ class EvaluationAnalyzer:
             ax.set_xlabel('Rank (k)', fontsize=12)
             ax.set_ylabel('False Positives (FP)', fontsize=12)
             ax.set_title('False Positives (FP) vs. Rank', fontsize=14, fontweight='bold')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             
             # Set x-axis labels
@@ -847,7 +847,7 @@ class EvaluationAnalyzer:
                 ax.set_ylabel('Score', fontsize=12)
                 ax.set_title(f'Trade-off Analysis: {metric.upper()} vs Speed (Thread = {thread_count})', 
                         fontsize=14, fontweight='bold')
-                ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
                 ax.grid(True, alpha=0.3)
                 ax.set_xlim([0, 1])
                 ax.set_ylim([0, 1])
@@ -1259,7 +1259,7 @@ class EvaluationAnalyzer:
             ax.set_ylabel('Score', fontsize=12)
             ax.set_title(f'Trade-off Analysis: {metric.upper()} vs Speed (All Thread Configurations)', 
                     fontsize=14, fontweight='bold')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=3)
             ax.grid(True, alpha=0.3)
             ax.set_xlim([0, 1])
             ax.set_ylim([0, 1])
@@ -1489,7 +1489,7 @@ class EvaluationAnalyzer:
             ax.set_xticks(x_pos)
             ax.set_xticklabels(techniques, rotation=45, ha='right')
             ax.set_ylim(0, 1)
-            ax.legend()
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=2)
             
             # Add value labels on bars
             for bars in [bars_auroc, bars_aupr]:
@@ -1568,7 +1568,7 @@ class EvaluationAnalyzer:
                 ax.set_xticks(x_pos)
                 ax.set_xticklabels(tradeoff_df['technique'], rotation=45, ha='right')
                 ax.set_ylim(0, 1)
-                ax.legend()
+                ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=2)
                 
                 # Add value labels on bars
                 for bars in [bars_auroc_tradeoff, bars_aupr_tradeoff]:
@@ -1648,7 +1648,7 @@ class EvaluationAnalyzer:
                 ax.set_xticks(x_pos)
                 ax.set_xticklabels(label, rotation=45, ha='right')
                 ax.set_ylim(0, 1)
-                ax.legend()
+                ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.5), ncol=2)
                 
                 # Add value labels on bars
                 for bars in [bars_auroc_tradeoff, bars_aupr_tradeoff]:
