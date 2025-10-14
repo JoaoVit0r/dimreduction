@@ -53,7 +53,10 @@
       "request": "launch",
       "program": "scripts/plot_dstat.py",
       "console": "integratedTerminal",
-      "args": ["monitoring_plots/dstat_output_20250320_112106.csv", "monitoring_plots/output", "monitoring_plots/execution_markers_20250320_112106.txt", "split_by:hour"]
+      "args": ["monitoring_plots/dstat_output_20250320_112106.csv",
+       "monitoring_plots/output",
+       "monitoring_plots/execution_markers_20250320_112106.txt",
+       "split_by:hour"]
     },
     {
       "name": "Python Debugger: Current File",
@@ -76,7 +79,13 @@
       "request": "launch",
       "program": "scripts/geneci_evaluate.py",
       "console": "integratedTerminal",
-      "args": ["--monitoring-dir", "monitoring_plots/20250824_23573*", "--external-projects", "../test_external_code/try_minet"]
+      "args": [
+        "--monitoring-dir", "test_evaluation__only_testing_debug/2025090*",
+        "--external-projects", "/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/test_external_code/try_minet",
+        "--threshold", "0.0001",
+        "--output", "test_evaluation__only_testing_debug/evaluation_results_confident-in-0.csv",
+        "--output-dir", "test_evaluation__only_testing_debug/",
+      ]
     },
     // python ./scripts/evaluate_metrics.py --prediction temp-final_data.txt --gold-standard ../test_external_code/try_minet/input_data/geneci/DREAM4/GS/dream4_0100_01_gs.csv \
     // --pred-format matrix --gold-format matrix --pred-has-header --gold-has-header --sep tab
@@ -87,11 +96,88 @@
       "program": "scripts/evaluate_metrics.py",
       "console": "integratedTerminal",
       "args": [
-        "--prediction", "temp_ARACNE.csv",
+        "--prediction", "test_evaluation_vm2_20250912_mutiples_runs/GRN_CLR_binary_1758245303_300548_threshold_1e-06.txt",
         "--pred-format", "list",
-        "--gold-standard", "../test_external_code/try_minet/input_data/geneci/DREAM4/GS/dream4_100_01_gs.csv",
-        "--gold-has-header",
-        "--gold-format", "matrix",
+        "--gold-standard", "/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/test_external_code/try_minet/input_data/geneci/DREAM5/EVAL/DREAM5_NetworkInference_GoldStandard_Network3.tsv",
+        // "--gold-has-header",
+        "--gold-format", "list",
+        "--gold-sep", "tab",
+        "--transcription-factors", "../data_sets/DREAM5/DREAM5_NetworkInferenceChallenge_Data/Network3_Data/Network3_transcription_factors.tsv"
+      ],
+    },    {
+      "name": "Evaluate_metrics playground",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/evaluate_metrics.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--prediction", "scripts/playground/pred_list.csv",
+        "--pred-format", "list",
+        "--gold-standard", "scripts/playground/gold_list.csv",
+        "--gold-format", "list",
+        "--transcription-factors", "scripts/playground/tfs.txt",
+        "--output", "scripts/playground/results.csv",
+      ],
+    },
+    { 
+      "name":"venn_diagram",
+      "type":"debugpy",
+      "request":"launch",
+      "program": "scripts/venn_diagram.py",
+      "console":"integratedTerminal",
+      "args":[
+        "/home/jvski/Documents/UTFPR/dupla_diplomacao/classes/thesis/test_external_code/try_minet/input_data/geneci/DREAM5/EVAL/DREAM5_NetworkInference_Edges_Network3.tsv",
+        "test_evaluation_vm2_20250912_mutiples_runs/1757700232-final_weight_data_binary_1758243725_981084_threshold_1e-06.txt",
+        "test_evaluation_vm2_20250912_mutiples_runs/GRN_ARACNE_binary_1758245272_91757_threshold_1e-06.txt",
+        "test_evaluation_vm2_20250912_mutiples_runs/GRN_CLR_binary_1758245303_300548_threshold_1e-06.txt",
+        "test_evaluation_vm2_20250912_mutiples_runs/GRN_GENIE3_ET_binary_1758244480_822195_threshold_1e-06.txt",
+      ],
+    },
+    {
+      "name": "Converter to list",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/dream5_converter.py",
+      "console": "integratedTerminal",
+      "args": [
+        "${workspaceFolder}/test_matlab_vm1_20250914_mutiples_runs/1757868777-final_weight_data.txt",
+        "${workspaceFolder}/test_matlab_vm2_20250914_mutiples_runs/1757868777-final_weight_data_list.txt",
+        "--max-predictions", "21000000",
+        "--tf-list", "${env:THESIS_HOME}/test_external_code/try_minet/input_data/geneci/DREAM5/Network3_transcription_factors.tsv"
+      ]
+    },
+    {
+      "name": "Analysis Final Debugs",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/evaluation_analyzer_2.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--time_file",
+          "${workspaceFolder}/test_to_report_mix_vm1_vm2/vm2/evaluation_results_confident-in-0.csv",
+          "${workspaceFolder}/test_to_report_mix_vm1_vm2/vm1/evaluation_results_confident-in-0.csv",
+        "--data_folder",
+          "${workspaceFolder}/test_to_report_mix_vm1_vm2/vm2/../matlab/results",
+          "${workspaceFolder}/test_to_report_mix_vm1_vm2/vm1/../matlab/results",
+        "--threads",
+          "1",
+          "64",
+        "--output_dir", "${workspaceFolder}/test_to_report_mix_vm1_vm2/graphs"
+      ]
+    },
+    {
+      "name": "Analysis old tests",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "scripts/evaluation_analyzer_2.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--time_file", "${workspaceFolder}/test_matlab_vm2_20250912_mutiples_runs/evaluation_results_confident-in-0.csv",
+        "--data_folder", "${workspaceFolder}/test_matlab_vm2_20250912_mutiples_runs/matlab",
+        "--threads", "1",
+        "--output_dir", "${workspaceFolder}/test_matlab_vm2_20250912_mutiples_runs/graphs",
+        "--generate_report"
+        // "--show_plots"
       ]
     },
   ]

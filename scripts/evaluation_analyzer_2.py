@@ -1674,10 +1674,10 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error creating performance metrics bar charts: {e}")
 
-    def plot_tp_vs_weight(self, output_dir=None, show=False):
-        """Generate a line graph of True Positives (TP) vs Weight threshold for each technique."""
+    def plot_tp_vs_confidence(self, output_dir=None, show=False):
+        """Generate a line graph of True Positives (TP) vs Confidence Threshold for each technique."""
         if self.curve_data is None:
-            print("No curve data available for plotting TP vs Weight.")
+            print("No curve data available for plotting TP vs Confidence.")
             return
 
         try:
@@ -1687,56 +1687,70 @@ class EvaluationAnalyzer:
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
             
             techniques = avg_curve_data['technique'].unique()
+            
+            # Fixed weight thresholds to evaluate
+            confidence_thresholds = [0.0, 0.25, 0.5, 0.75, 1.0]
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
 
-                if 'P' not in tech_data.columns or 'tpr' not in tech_data.columns or 'min_weight' not in tech_data.columns:
-                    print(f"Warning: P, tpr, or min_weight values not found for technique {technique}. Skipping TP vs Weight plot.")
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping TP vs confidence plot.")
                     continue
 
                 P = tech_data['P'].iloc[0]
-                
-                # Sort by min_weight (descending) for threshold analysis
-                tech_data = tech_data.sort_values('min_weight', ascending=False)
-                
-                # Create weight thresholds (use actual min_weight values from data)
-                weight_thresholds = sorted(tech_data['min_weight'].unique(), reverse=True)
-                
+                N = tech_data['N'].iloc[0]
+                L = tech_data['L'].iloc[0]
+
                 tps = []
-                valid_weights = []
+                actual_confidences = []
                 
-                for weight_threshold in weight_thresholds:
-                    # Find the rank with the smallest min_weight that is >= threshold
-                    # (this corresponds to including all predictions with weight >= threshold)
-                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
-                    if not candidate_ranks.empty:
-                        # Take the rank with the highest min_weight that meets the threshold
-                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
-                        tpr = best_rank['tpr']
+                for confidence_threshold in confidence_thresholds:
+                    # Find the row with the closest min_weight that is >= threshold
+                    valid_rows = tech_data[tech_data['min_weight'] >= confidence_threshold]
+                    
+                    if len(valid_rows) == 0:
+                        # No predictions meet the weight threshold
+                        tps.append(0)
+                        actual_confidences.append("N/A")
+                    else:
+                        # Take the row with the highest rank (largest coverage) that meets the threshold
+                        best_row = valid_rows.iloc[-1]
+                        tpr = best_row['tpr']
                         TP = tpr * P
                         tps.append(TP)
-                        valid_weights.append(weight_threshold)
-                
-                if len(valid_weights) > 0:
-                    color = self.color_palette[i % len(self.color_palette)]
-                    
-                    # Plot the line
-                    ax.plot(valid_weights, tps, label=f'{technique}', color=color, linewidth=2)
+                        actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
-            ax.set_xlabel('Weight Threshold', fontsize=12)
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                line = ax.plot(confidence_thresholds, tps, marker='o', linestyle='-', color=color, label=f'{technique}', linewidth=2)
+                
+                # # Add actual weight values as annotations
+                # for j, (confidence, tp, actual_w) in enumerate(zip(confidence_thresholds, tps, actual_confidences)):
+                #     if actual_w != "N/A":
+                #         ax.annotate(f'{actual_w}', 
+                #                 (confidence, tp),
+                #                 textcoords="offset points", 
+                #                 xytext=(0,10), 
+                #                 ha='center',
+                #                 fontsize=8,
+                #                 color=color)
+
+            ax.set_xlabel('Confidence Threshold', fontsize=12)
             ax.set_ylabel('True Positives (TP)', fontsize=12)
-            ax.set_title('True Positives (TP) vs. Weight Threshold', fontsize=14, fontweight='bold')
+            ax.set_title('True Positives (TP) vs. Confidence Threshold', fontsize=14, fontweight='bold')
             ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             
-            # Set x-axis to show thresholds from high to low confidence
-            ax.invert_xaxis()
+            # Set x-axis labels
+            ax.set_xticks(confidence_thresholds)
+            ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
             
             plt.tight_layout()
 
             if output_dir:
-                output_path = os.path.join(output_dir, 'tp_vs_weight.png')
+                output_path = os.path.join(output_dir, 'tp_vs_confidence.png')
                 self.save_plot_transposed(plt, output_path)
 
             if show:
@@ -1745,12 +1759,12 @@ class EvaluationAnalyzer:
                 plt.close()
 
         except Exception as e:
-            print(f"Error creating TP vs Weight plot: {e}")
+            print(f"Error creating TP vs Confidence plot: {e}")
 
-    def plot_fp_vs_weight(self, output_dir=None, show=False):
-        """Generate a line graph of False Positives (FP) vs Weight threshold for each technique."""
+    def plot_fp_vs_confidence(self, output_dir=None, show=False):
+        """Generate a line graph of False Positives (FP) vs Confidence Threshold for each technique."""
         if self.curve_data is None:
-            print("No curve data available for plotting FP vs Weight.")
+            print("No curve data available for plotting FP vs Confidence.")
             return
 
         try:
@@ -1760,55 +1774,70 @@ class EvaluationAnalyzer:
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
             
             techniques = avg_curve_data['technique'].unique()
+            
+            # Fixed weight thresholds to evaluate
+            confidence_thresholds = [0.0, 0.25, 0.5, 0.75, 1.0]
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
 
-                if 'N' not in tech_data.columns or 'fpr' not in tech_data.columns or 'min_weight' not in tech_data.columns:
-                    print(f"Warning: N, fpr, or min_weight values not found for technique {technique}. Skipping FP vs Weight plot.")
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping FP vs confidence plot.")
                     continue
 
+                P = tech_data['P'].iloc[0]
                 N = tech_data['N'].iloc[0]
-                
-                # Sort by min_weight (descending) for threshold analysis
-                tech_data = tech_data.sort_values('min_weight', ascending=False)
-                
-                # Create weight thresholds (use actual min_weight values from data)
-                weight_thresholds = sorted(tech_data['min_weight'].unique(), reverse=True)
-                
+                L = tech_data['L'].iloc[0]
+
                 fps = []
-                valid_weights = []
+                actual_confidences = []
                 
-                for weight_threshold in weight_thresholds:
-                    # Find the rank with the smallest min_weight that is >= threshold
-                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
-                    if not candidate_ranks.empty:
-                        # Take the rank with the highest min_weight that meets the threshold
-                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
-                        fpr = best_rank['fpr']
+                for confidence_threshold in confidence_thresholds:
+                    # Find the row with the closest min_weight that is >= threshold
+                    valid_rows = tech_data[tech_data['min_weight'] >= confidence_threshold]
+                    
+                    if len(valid_rows) == 0:
+                        # No predictions meet the weight threshold
+                        fps.append(0)
+                        actual_confidences.append("N/A")
+                    else:
+                        # Take the row with the highest rank (largest coverage) that meets the threshold
+                        best_row = valid_rows.iloc[-1]
+                        fpr = best_row['fpr']
                         FP = fpr * N
                         fps.append(FP)
-                        valid_weights.append(weight_threshold)
-                
-                if len(valid_weights) > 0:
-                    color = self.color_palette[i % len(self.color_palette)]
-                    
-                    # Plot the line
-                    ax.plot(valid_weights, fps, label=f'{technique}', color=color, linewidth=2)
+                        actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
-            ax.set_xlabel('Weight Threshold', fontsize=12)
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                line = ax.plot(confidence_thresholds, fps, marker='o', linestyle='--', color=color, label=f'{technique}', linewidth=2)
+                
+                # # Add actual weight values as annotations
+                # for j, (confidence, fp, actual_w) in enumerate(zip(confidence_thresholds, fps, actual_confidences)):
+                #     if actual_w != "N/A":
+                #         ax.annotate(f'{actual_w}', 
+                #                 (confidence, fp),
+                #                 textcoords="offset points", 
+                #                 xytext=(0,10), 
+                #                 ha='center',
+                #                 fontsize=8,
+                #                 color=color)
+
+            ax.set_xlabel('Confidence Threshold', fontsize=12)
             ax.set_ylabel('False Positives (FP)', fontsize=12)
-            ax.set_title('False Positives (FP) vs. Weight Threshold', fontsize=14, fontweight='bold')
+            ax.set_title('False Positives (FP) vs. Confidence Threshold', fontsize=14, fontweight='bold')
             ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             
-            # Set x-axis to show thresholds from high to low confidence
-            ax.invert_xaxis()
+            # Set x-axis labels
+            ax.set_xticks(confidence_thresholds)
+            ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
             
             plt.tight_layout()
 
             if output_dir:
-                output_path = os.path.join(output_dir, 'fp_vs_weight.png')
+                output_path = os.path.join(output_dir, 'fp_vs_confidence.png')
                 self.save_plot_transposed(plt, output_path)
 
             if show:
@@ -1817,86 +1846,20 @@ class EvaluationAnalyzer:
                 plt.close()
 
         except Exception as e:
-            print(f"Error creating FP vs Weight plot: {e}")
+            print(f"Error creating FP vs Confidence plot: {e}")
 
-    def plot_precision_vs_weight(self, output_dir=None, show=False):
-        """Generate a line graph of Precision vs Weight threshold for each technique."""
+
+    def generate_confusion_matrix_tables_vs_confidence(self, output_dir=None, show=False):
+        """Generate confusion matrix tables for each technique at fixed confidence thresholds and save as CSV."""
         if self.curve_data is None:
-            print("No curve data available for plotting Precision vs Weight.")
-            return
-
-        try:
-            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
-            
-            # Average curve data across runs for each technique and rank
-            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
-            
-            techniques = avg_curve_data['technique'].unique()
-
-            for i, technique in enumerate(techniques):
-                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
-
-                if 'precision' not in tech_data.columns or 'min_weight' not in tech_data.columns:
-                    print(f"Warning: precision or min_weight values not found for technique {technique}. Skipping Precision vs Weight plot.")
-                    continue
-                
-                # Sort by min_weight (descending) for threshold analysis
-                tech_data = tech_data.sort_values('min_weight', ascending=False)
-                
-                # Create weight thresholds (use actual min_weight values from data)
-                weight_thresholds = sorted(tech_data['min_weight'].unique(), reverse=True)
-                
-                precisions = []
-                valid_weights = []
-                
-                for weight_threshold in weight_thresholds:
-                    # Find the rank with the smallest min_weight that is >= threshold
-                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
-                    if not candidate_ranks.empty:
-                        # Take the rank with the highest min_weight that meets the threshold
-                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
-                        precision = best_rank['precision']
-                        precisions.append(precision)
-                        valid_weights.append(weight_threshold)
-                
-                if len(valid_weights) > 0:
-                    color = self.color_palette[i % len(self.color_palette)]
-                    
-                    # Plot the line
-                    ax.plot(valid_weights, precisions, label=f'{technique}', color=color, linewidth=2)
-
-            ax.set_xlabel('Weight Threshold', fontsize=12)
-            ax.set_ylabel('Precision', fontsize=12)
-            ax.set_title('Precision vs. Weight Threshold', fontsize=14, fontweight='bold')
-            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
-            ax.grid(True, alpha=0.3)
-            ax.set_ylim(0, 1)
-            
-            # Set x-axis to show thresholds from high to low confidence
-            ax.invert_xaxis()
-            
-            plt.tight_layout()
-
-            if output_dir:
-                output_path = os.path.join(output_dir, 'precision_vs_weight.png')
-                self.save_plot_transposed(plt, output_path)
-
-            if show:
-                plt.show()
-            else:
-                plt.close()
-
-        except Exception as e:
-            print(f"Error creating Precision vs Weight plot: {e}")
-
-    def generate_weight_based_confusion_tables(self, output_dir=None):
-        """Generate confusion matrix tables at specific weight thresholds for each technique."""
-        if self.curve_data is None:
-            print("No curve data available for generating weight-based confusion matrix tables.")
+            print("No curve data available for generating confusion matrix tables by confidence.")
             return
 
         try:
             all_cm_data = []
+            
+            # Fixed weight thresholds to evaluate
+            confidence_thresholds = [0.0, 0.25, 0.5, 0.75, 1.0]
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -1907,50 +1870,65 @@ class EvaluationAnalyzer:
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
                 
                 if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'min_weight' not in tech_data.columns:
-                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping weight-based confusion matrix.")
+                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping confidence-based confusion matrix.")
                     continue
 
                 P = tech_data['P'].iloc[0]
                 N = tech_data['N'].iloc[0]
+                L = tech_data['L'].iloc[0]
+                T = P + N
                 
-                # Define weight thresholds to evaluate (adjust these as needed based on your data)
-                weight_thresholds = [1.0, 0.75, 0.5, 0.25, 0.0]
-
-                for weight_threshold in weight_thresholds:
-                    # Find the rank with the smallest min_weight that is >= threshold
-                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
-                    if not candidate_ranks.empty:
-                        # Take the rank with the highest min_weight that meets the threshold
-                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
-                        
-                        tpr = best_rank['tpr']
-                        fpr = best_rank['fpr']
-
-                        TP = tpr * P
-                        FP = fpr * N
+                for confidence_threshold in confidence_thresholds:
+                    # Find the row with the closest min_weight that is >= threshold
+                    # Since data is sorted by rank (ascending) and min_weight decreases with rank,
+                    # we want the row with the highest rank where min_weight >= threshold
+                    valid_rows = tech_data[tech_data['min_weight'] >= confidence_threshold]
+                    
+                    if len(valid_rows) == 0:
+                        # No predictions meet the weight threshold
+                        TP = 0
+                        FP = 0
+                        FN = P
+                        TN = N
+                        actual_rank = 0
+                        actual_confidence = "N/A"
+                    else:
+                        # Take the row with the highest rank (largest coverage) that meets the threshold
+                        best_row = valid_rows.iloc[-1]
+                        tpr = best_row['tpr']
+                        fpr = best_row['fpr']
+                        # make a round on tp and fp
+                        TP = round(tpr * P)
+                        FP = round(fpr * N)
                         FN = P - TP
                         TN = N - FP
-                        
-                        all_cm_data.append({
-                            'technique': technique,
-                            'weight_threshold': weight_threshold,
-                            'rank_at_threshold': best_rank['rank'],
-                            'min_weight_at_rank': best_rank['min_weight'],
-                            'TP': TP,
-                            'FP': FP,
-                            'FN': FN,
-                            'TN': TN
-                        })
+                        actual_rank = best_row['rank']
+                        actual_confidence = best_row['min_weight']
+                    
+                    all_cm_data.append({
+                        'technique': technique,
+                        'confidence_threshold': confidence_threshold,
+                        'actual_confidence_used': actual_confidence,
+                        'rank_at_threshold': actual_rank,
+                        'TP': TP,
+                        'FP': FP,
+                        'FN': FN,
+                        'TN': TN,
+                        'precision': TP / (TP + FP) if (TP + FP) > 0 else 0,
+                        'recall': TP / P if P > 0 else 0
+                    })
 
             if all_cm_data:
                 cm_df = pd.DataFrame(all_cm_data)
                 if output_dir:
-                    output_path = os.path.join(output_dir, 'confusion_matrix_weight_analysis.csv')
+                    output_path = os.path.join(output_dir, 'confusion_matrix_analysis_vs_confidence.csv')
                     cm_df.to_csv(output_path, index=False)
-                    print(f"Weight-based confusion matrix analysis saved to: {output_path}")
+                    print(f"Confusion matrix analysis by confidence saved to: {output_path}")
 
         except Exception as e:
-            print(f"Error generating weight-based confusion matrix tables: {e}")
+            print(f"Error generating confusion matrix tables by confidence: {e}")
+
+
 def main():
     """Main function to run the evaluation analysis"""
     parser = argparse.ArgumentParser(description='Evaluate and visualize performance metrics')
@@ -2011,11 +1989,11 @@ def main():
         analyzer.plot_tp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_fp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
         
-        print("\nGenerating weight-based analysis plots...")
-        analyzer.generate_weight_based_confusion_tables(output_dir=args.output_dir)
-        analyzer.plot_tp_vs_weight(output_dir=args.output_dir, show=args.show_plots)
-        analyzer.plot_fp_vs_weight(output_dir=args.output_dir, show=args.show_plots)
-        analyzer.plot_precision_vs_weight(output_dir=args.output_dir, show=args.show_plots)
+        print("\nGenerating confidence-based analysis plots...")
+        analyzer.generate_confusion_matrix_tables_vs_confidence(output_dir=args.output_dir)
+        analyzer.plot_tp_vs_confidence(output_dir=args.output_dir, show=args.show_plots)
+        analyzer.plot_fp_vs_confidence(output_dir=args.output_dir, show=args.show_plots)
+        # analyzer.plot_precision_vs_weight(output_dir=args.output_dir, show=args.show_plots)
         
         # Generate performance metrics bar charts
         analyzer.plot_performance_metrics_bar(output_dir=args.output_dir, show=args.show_plots)

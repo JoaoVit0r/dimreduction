@@ -1,0 +1,1710 @@
+
+no changes added to commit (use "git add" and/or "git commit -a")
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: DimReduction with 64 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_DimReduction_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.490787 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_DimReduction_Network3.tsv
+Processing chunk 1/4 (rows 1 to 5891)...
+Processing chunk 2/4 (rows 5892 to 11782)...
+Processing chunk 3/4 (rows 11783 to 17673)...
+Processing chunk 4/4 (rows 17674 to 23562)...
+Elapsed time is 0.394081 seconds.
+TPL: 13
+First 5 TPk: [0 0 0 0 0]
+Last 5 TPk: [2065.94603545569 2065.95952659084 2065.97301772598 2065.98650886113 2065.99999999628]
+First 5 FPk: [1 2 3 4 5]
+Last 5 FPk: [150210.053964415 150211.04047328 150212.026982145 150213.01349101 150213.999999874]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 106:
+		Predicted Positive	Predicted Negative
+Actual Positive		13 (TP)			2053 (FN)
+Actual Negative		93 (FP)			150121 (TN)
+
+Threshold k = 105:
+		Predicted Positive	Predicted Negative
+Actual Positive		13 (TP)			2053 (FN)
+Actual Negative		92 (FP)			150122 (TN)
+
+Threshold k = 92:
+		Predicted Positive	Predicted Negative
+Actual Positive		11 (TP)			2055 (FN)
+Actual Negative		81 (FP)			150133 (TN)
+
+Threshold k = 63:
+		Predicted Positive	Predicted Negative
+Actual Positive		6 (TP)			2060 (FN)
+Actual Negative		57 (FP)			150157 (TN)
+
+Threshold k = 24:
+		Predicted Positive	Predicted Negative
+Actual Positive		1 (TP)			2065 (FN)
+Actual Negative		23 (FP)			150191 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 1.0000
+Weight at rank 106 (last prediction): 0.2050
+Weight at rank 107 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		5.251775e+02 (TP)			1.540823e+03 (FN)
+Actual Negative		3.754482e+04 (FP)			1.126692e+05 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.038785e+03 (TP)			1.027215e+03 (FN)
+Actual Negative		7.510122e+04 (FP)			7.511278e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.552392e+03 (TP)			5.136075e+02 (FN)
+Actual Negative		1.126576e+05 (FP)			3.755639e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			3.721198e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			1.256121e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_DimReduction_64_threads.csv
+Summary for future merging saved to: results/summary_DimReduction_64_threads.csv
+Curve data for Python visualization saved to: results/curve_data_DimReduction_64_threads.csv
+Evaluation completed for technique: DimReduction with 64 threads
+AUROC: 0.5028 (p-value: 0.9996)
+AUPR:  0.0145 (p-value: 0.9992)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: GENIE3_ET with 64 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_GENIE3_ET_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.489242 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_GENIE3_ET_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10172305)...
+Processing chunk 2/4 (rows 10172306 to 20344610)...
+Processing chunk 3/4 (rows 20344611 to 30516915)...
+Processing chunk 4/4 (rows 30516916 to 40689218)...
+Elapsed time is 761.983267 seconds.
+TPL: 2066
+First 5 TPk: [1 2 3 4 5]
+Last 5 TPk: [2066 2066 2066 2066 2066]
+First 5 FPk: [0 0 0 0 0]
+Last 5 FPk: [150210 150211 150212 150213 150214]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Threshold k = 63:
+		Predicted Positive	Predicted Negative
+Actual Positive		40 (TP)			2026 (FN)
+Actual Negative		23 (FP)			150191 (TN)
+
+Threshold k = 10:
+		Predicted Positive	Predicted Negative
+Actual Positive		6 (TP)			2060 (FN)
+Actual Negative		4 (FP)			150210 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.6559
+Weight at rank 152280 (last prediction): 0.0000
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		1000 (TP)			1066 (FN)
+Actual Negative		37070 (FP)			113144 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1442 (TP)			624 (FN)
+Actual Negative		74698 (FP)			75516 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1788 (TP)			278 (FN)
+Actual Negative		112422 (FP)			37792 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_GENIE3_ET_64_threads.csv
+Summary for future merging saved to: results/summary_GENIE3_ET_64_threads.csv
+Curve data for Python visualization saved to: results/curve_data_GENIE3_ET_64_threads.csv
+Evaluation completed for technique: GENIE3_ET with 64 threads
+AUROC: 0.6655 (p-value: 0.0000)
+AUPR:  0.0867 (p-value: 0.0000)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: GENIE3_RF with 64 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_GENIE3_RF_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.497122 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_GENIE3_RF_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10172305)...
+Processing chunk 2/4 (rows 10172306 to 20344610)...
+Processing chunk 3/4 (rows 20344611 to 30516915)...
+Processing chunk 4/4 (rows 30516916 to 40689218)...
+Elapsed time is 756.905926 seconds.
+TPL: 2066
+First 5 TPk: [0 1 2 3 3]
+Last 5 TPk: [2066 2066 2066 2066 2066]
+First 5 FPk: [1 1 1 1 2]
+Last 5 FPk: [150210 150211 150212 150213 150214]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Threshold k = 120:
+		Predicted Positive	Predicted Negative
+Actual Positive		68 (TP)			1998 (FN)
+Actual Negative		52 (FP)			150162 (TN)
+
+Threshold k = 18:
+		Predicted Positive	Predicted Negative
+Actual Positive		14 (TP)			2052 (FN)
+Actual Negative		4 (FP)			150210 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.6912
+Weight at rank 152280 (last prediction): 0.0000
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		993 (TP)			1073 (FN)
+Actual Negative		37077 (FP)			113137 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1404 (TP)			662 (FN)
+Actual Negative		74736 (FP)			75478 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1747 (TP)			319 (FN)
+Actual Negative		112463 (FP)			37751 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_GENIE3_RF_64_threads.csv
+Summary for future merging saved to: results/summary_GENIE3_RF_64_threads.csv
+Curve data for Python visualization saved to: results/curve_data_GENIE3_RF_64_threads.csv
+Evaluation completed for technique: GENIE3_RF with 64 threads
+AUROC: 0.6546 (p-value: 0.0000)
+AUPR:  0.0814 (p-value: 0.0000)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: KBOOST with 64 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_KBOOST_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.488751 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250914_mutiples_runs/matlab/DREAM5_NetworkInference_KBOOST_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10172305)...
+Processing chunk 2/4 (rows 10172306 to 20344610)...
+Processing chunk 3/4 (rows 20344611 to 30516915)...
+Processing chunk 4/4 (rows 30516916 to 40689220)...
+Elapsed time is 490.843434 seconds.
+TPL: 2066
+First 5 TPk: [0 1 1 2 3]
+Last 5 TPk: [2066 2066 2066 2066 2066]
+First 5 FPk: [1 1 2 2 2]
+Last 5 FPk: [150210 150211 150212 150213 150214]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Threshold k = 4:
+		Predicted Positive	Predicted Negative
+Actual Positive		2 (TP)			2064 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.4456
+Weight at rank 152280 (last prediction): 0.0000
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		685 (TP)			1381 (FN)
+Actual Negative		37385 (FP)			112829 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1114 (TP)			952 (FN)
+Actual Negative		75026 (FP)			75188 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1669 (TP)			397 (FN)
+Actual Negative		112541 (FP)			37673 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_KBOOST_64_threads.csv
+Summary for future merging saved to: results/summary_KBOOST_64_threads.csv
+Curve data for Python visualization saved to: results/curve_data_KBOOST_64_threads.csv
+Evaluation completed for technique: KBOOST with 64 threads
+AUROC: 0.5572 (p-value: 0.9995)
+AUPR:  0.0445 (p-value: 0.5725)
+/home/a62924/virt_machine/dimreduction-python
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: DimReduction with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_DimReduction_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.497470 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_DimReduction_Network3.tsv
+Processing chunk 1/4 (rows 1 to 5891)...
+Processing chunk 2/4 (rows 5892 to 11782)...
+Processing chunk 3/4 (rows 11783 to 17673)...
+Processing chunk 4/4 (rows 17674 to 23562)...
+Elapsed time is 0.391746 seconds.
+TPL: 13
+First 5 TPk: [0 0 0 0 0]
+Last 5 TPk: [2065.94603545569 2065.95952659084 2065.97301772598 2065.98650886113 2065.99999999628]
+First 5 FPk: [1 2 3 4 5]
+Last 5 FPk: [150210.053964415 150211.04047328 150212.026982145 150213.01349101 150213.999999874]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 106:
+		Predicted Positive	Predicted Negative
+Actual Positive		13 (TP)			2053 (FN)
+Actual Negative		93 (FP)			150121 (TN)
+
+Threshold k = 105:
+		Predicted Positive	Predicted Negative
+Actual Positive		13 (TP)			2053 (FN)
+Actual Negative		92 (FP)			150122 (TN)
+
+Threshold k = 92:
+		Predicted Positive	Predicted Negative
+Actual Positive		11 (TP)			2055 (FN)
+Actual Negative		81 (FP)			150133 (TN)
+
+Threshold k = 63:
+		Predicted Positive	Predicted Negative
+Actual Positive		6 (TP)			2060 (FN)
+Actual Negative		57 (FP)			150157 (TN)
+
+Threshold k = 24:
+		Predicted Positive	Predicted Negative
+Actual Positive		1 (TP)			2065 (FN)
+Actual Negative		23 (FP)			150191 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 1.0000
+Weight at rank 106 (last prediction): 0.2050
+Weight at rank 107 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		5.251775e+02 (TP)			1.540823e+03 (FN)
+Actual Negative		3.754482e+04 (FP)			1.126692e+05 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.038785e+03 (TP)			1.027215e+03 (FN)
+Actual Negative		7.510122e+04 (FP)			7.511278e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.552392e+03 (TP)			5.136075e+02 (FN)
+Actual Negative		1.126576e+05 (FP)			3.755639e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			3.721198e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			1.256121e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_DimReduction_1_threads.csv
+Summary for future merging saved to: results/summary_DimReduction_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_DimReduction_1_threads.csv
+Evaluation completed for technique: DimReduction with 1 threads
+AUROC: 0.5028 (p-value: 0.9996)
+AUPR:  0.0145 (p-value: 0.9992)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: ARACNE with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_ARACNE_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.493495 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_ARACNE_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10249)...
+Processing chunk 2/4 (rows 10250 to 20498)...
+Processing chunk 3/4 (rows 20499 to 30747)...
+Processing chunk 4/4 (rows 30748 to 40996)...
+Elapsed time is 0.752816 seconds.
+TPL: 56
+First 5 TPk: [1 2 3 4 4]
+Last 5 TPk: [2065.94713551966 2065.96035163938 2065.9735677591 2065.98678387882 2065.99999999854]
+First 5 FPk: [0 0 0 0 1]
+Last 5 FPk: [150210.052864192 150211.039648072 150212.026431952 150213.013215832 150213.999999713]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 193:
+		Predicted Positive	Predicted Negative
+Actual Positive		56 (TP)			2010 (FN)
+Actual Negative		137 (FP)			150077 (TN)
+
+Threshold k = 30:
+		Predicted Positive	Predicted Negative
+Actual Positive		20 (TP)			2046 (FN)
+Actual Negative		10 (FP)			150204 (TN)
+
+Threshold k = 6:
+		Predicted Positive	Predicted Negative
+Actual Positive		4 (TP)			2062 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.6211
+Weight at rank 193 (last prediction): 0.0328
+Weight at rank 194 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		5.565870e+02 (TP)			1.509413e+03 (FN)
+Actual Negative		3.751341e+04 (FP)			1.127006e+05 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.059725e+03 (TP)			1.006275e+03 (FN)
+Actual Negative		7.508028e+04 (FP)			7.513372e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.562862e+03 (TP)			5.031377e+02 (FN)
+Actual Negative		1.126471e+05 (FP)			3.756686e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			1.458375e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			2.872257e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_ARACNE_1_threads.csv
+Summary for future merging saved to: results/summary_ARACNE_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_ARACNE_1_threads.csv
+Evaluation completed for technique: ARACNE with 1 threads
+AUROC: 0.5131 (p-value: 0.9996)
+AUPR:  0.0296 (p-value: 0.9992)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: CLR with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_CLR_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.498562 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_CLR_Network3.tsv
+Processing chunk 1/4 (rows 1 to 4380774)...
+Processing chunk 2/4 (rows 4380775 to 8761548)...
+Processing chunk 3/4 (rows 8761549 to 13142322)...
+Processing chunk 4/4 (rows 13142323 to 17523096)...
+Elapsed time is 332.019664 seconds.
+TPL: 1053
+First 5 TPk: [1 2 3 3 3]
+Last 5 TPk: [2065.95625419061 2065.96719064473 2065.97812709886 2065.98906355299 2066.00000000712]
+First 5 FPk: [0 0 0 1 2]
+Last 5 FPk: [150210.04374607 150211.032809615 150212.021873161 150213.010936707 150214.000000253]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 59654:
+		Predicted Positive	Predicted Negative
+Actual Positive		1053 (TP)			1013 (FN)
+Actual Negative		58601 (FP)			91613 (TN)
+
+Threshold k = 26:
+		Predicted Positive	Predicted Negative
+Actual Positive		17 (TP)			2049 (FN)
+Actual Negative		9 (FP)			150205 (TN)
+
+Threshold k = 11:
+		Predicted Positive	Predicted Negative
+Actual Positive		9 (TP)			2057 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.7426
+Weight at rank 59654 (last prediction): 0.0000
+Weight at rank 59655 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		802 (TP)			1264 (FN)
+Actual Negative		37268 (FP)			112946 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.233298e+03 (TP)			8.327016e+02 (FN)
+Actual Negative		7.490670e+04 (FP)			7.530730e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.649649e+03 (TP)			4.163508e+02 (FN)
+Actual Negative		1.125604e+05 (FP)			3.765365e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			-7.115887e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			-2.530869e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_CLR_1_threads.csv
+Summary for future merging saved to: results/summary_CLR_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_CLR_1_threads.csv
+Evaluation completed for technique: CLR with 1 threads
+AUROC: 0.5892 (p-value: 0.0543)
+AUPR:  0.0602 (p-value: 0.0004)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: GENIE3_ET with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_GENIE3_ET_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.502823 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_GENIE3_ET_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10172305)...
+Processing chunk 2/4 (rows 10172306 to 20344610)...
+Processing chunk 3/4 (rows 20344611 to 30516915)...
+Processing chunk 4/4 (rows 30516916 to 40689218)...
+Elapsed time is 771.996797 seconds.
+TPL: 2066
+First 5 TPk: [1 2 2 2 3]
+Last 5 TPk: [2066 2066 2066 2066 2066]
+First 5 FPk: [0 0 1 2 2]
+Last 5 FPk: [150210 150211 150212 150213 150214]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Threshold k = 62:
+		Predicted Positive	Predicted Negative
+Actual Positive		41 (TP)			2025 (FN)
+Actual Negative		21 (FP)			150193 (TN)
+
+Threshold k = 8:
+		Predicted Positive	Predicted Negative
+Actual Positive		5 (TP)			2061 (FN)
+Actual Negative		3 (FP)			150211 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.7470
+Weight at rank 152280 (last prediction): 0.0000
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		1014 (TP)			1052 (FN)
+Actual Negative		37056 (FP)			113158 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1455 (TP)			611 (FN)
+Actual Negative		74685 (FP)			75529 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1814 (TP)			252 (FN)
+Actual Negative		112396 (FP)			37818 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_GENIE3_ET_1_threads.csv
+Summary for future merging saved to: results/summary_GENIE3_ET_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_GENIE3_ET_1_threads.csv
+Evaluation completed for technique: GENIE3_ET with 1 threads
+AUROC: 0.6700 (p-value: 0.0000)
+AUPR:  0.0855 (p-value: 0.0000)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: GENIE3_RF with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_GENIE3_RF_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.493235 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_GENIE3_RF_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10172305)...
+Processing chunk 2/4 (rows 10172306 to 20344610)...
+Processing chunk 3/4 (rows 20344611 to 30516915)...
+Processing chunk 4/4 (rows 30516916 to 40689218)...
+Elapsed time is 769.654931 seconds.
+TPL: 2066
+First 5 TPk: [1 2 2 2 3]
+Last 5 TPk: [2066 2066 2066 2066 2066]
+First 5 FPk: [0 0 1 2 2]
+Last 5 FPk: [150210 150211 150212 150213 150214]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Threshold k = 120:
+		Predicted Positive	Predicted Negative
+Actual Positive		67 (TP)			1999 (FN)
+Actual Negative		53 (FP)			150161 (TN)
+
+Threshold k = 16:
+		Predicted Positive	Predicted Negative
+Actual Positive		12 (TP)			2054 (FN)
+Actual Negative		4 (FP)			150210 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.7084
+Weight at rank 152280 (last prediction): 0.0000
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		989 (TP)			1077 (FN)
+Actual Negative		37081 (FP)			113133 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1395 (TP)			671 (FN)
+Actual Negative		74745 (FP)			75469 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1766 (TP)			300 (FN)
+Actual Negative		112444 (FP)			37770 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_GENIE3_RF_1_threads.csv
+Summary for future merging saved to: results/summary_GENIE3_RF_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_GENIE3_RF_1_threads.csv
+Evaluation completed for technique: GENIE3_RF with 1 threads
+AUROC: 0.6531 (p-value: 0.0000)
+AUPR:  0.0846 (p-value: 0.0000)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: BC3NET with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_BC3NET_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.497306 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_BC3NET_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10534)...
+Processing chunk 2/4 (rows 10535 to 21068)...
+Processing chunk 3/4 (rows 21069 to 31602)...
+Processing chunk 4/4 (rows 31603 to 42136)...
+Elapsed time is 0.758480 seconds.
+TPL: 64
+First 5 TPk: [0 0 1 1 1]
+Last 5 TPk: [2065.9473535509 2065.96051516527 2065.97367677964 2065.98683839401 2066.00000000838]
+First 5 FPk: [1 2 2 3 4]
+Last 5 FPk: [150210.052646916 150211.039485302 150212.026323687 150213.013162073 150214.000000458]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 171:
+		Predicted Positive	Predicted Negative
+Actual Positive		64 (TP)			2002 (FN)
+Actual Negative		107 (FP)			150107 (TN)
+
+Threshold k = 171:
+		Predicted Positive	Predicted Negative
+Actual Positive		64 (TP)			2002 (FN)
+Actual Negative		107 (FP)			150107 (TN)
+
+Threshold k = 169:
+		Predicted Positive	Predicted Negative
+Actual Positive		63 (TP)			2003 (FN)
+Actual Negative		106 (FP)			150108 (TN)
+
+Threshold k = 169:
+		Predicted Positive	Predicted Negative
+Actual Positive		63 (TP)			2003 (FN)
+Actual Negative		106 (FP)			150108 (TN)
+
+Threshold k = 169:
+		Predicted Positive	Predicted Negative
+Actual Positive		63 (TP)			2003 (FN)
+Actual Negative		106 (FP)			150108 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.2000
+Weight at rank 171 (last prediction): 0.3900
+Weight at rank 172 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		5.628120e+02 (TP)			1.503188e+03 (FN)
+Actual Negative		3.750719e+04 (FP)			1.127068e+05 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.063875e+03 (TP)			1.002125e+03 (FN)
+Actual Negative		7.507613e+04 (FP)			7.513787e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.564937e+03 (TP)			5.010627e+02 (FN)
+Actual Negative		1.126451e+05 (FP)			3.756894e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			-8.378720e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			-4.584726e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_BC3NET_1_threads.csv
+Summary for future merging saved to: results/summary_BC3NET_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_BC3NET_1_threads.csv
+Evaluation completed for technique: BC3NET with 1 threads
+AUROC: 0.5151 (p-value: 0.9996)
+AUPR:  0.0260 (p-value: 0.9992)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: C3NET with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_C3NET_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.496754 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_C3NET_Network3.tsv
+Processing chunk 1/4 (rows 1 to 3573)...
+Processing chunk 2/4 (rows 3574 to 7146)...
+Processing chunk 3/4 (rows 7147 to 10719)...
+Processing chunk 4/4 (rows 10720 to 14292)...
+Elapsed time is 0.331215 seconds.
+TPL: 30
+First 5 TPk: [1 2 3 4 4]
+Last 5 TPk: [2065.94649603295 2065.9598720258 2065.97324801865 2065.9866240115 2066.00000000435]
+First 5 FPk: [0 0 0 0 1]
+Last 5 FPk: [150210.053503588 150211.040127595 150212.026751602 150213.013375609 150213.999999616]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 67:
+		Predicted Positive	Predicted Negative
+Actual Positive		30 (TP)			2036 (FN)
+Actual Negative		37 (FP)			150177 (TN)
+
+Threshold k = 29:
+		Predicted Positive	Predicted Negative
+Actual Positive		19 (TP)			2047 (FN)
+Actual Negative		10 (FP)			150204 (TN)
+
+Threshold k = 6:
+		Predicted Positive	Predicted Negative
+Actual Positive		4 (TP)			2062 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.6209
+Weight at rank 67 (last prediction): 0.0522
+Weight at rank 68 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		5.383279e+02 (TP)			1.527672e+03 (FN)
+Actual Negative		3.753167e+04 (FP)			1.126823e+05 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.047552e+03 (TP)			1.018448e+03 (FN)
+Actual Negative		7.509245e+04 (FP)			7.512155e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.556776e+03 (TP)			5.092240e+02 (FN)
+Actual Negative		1.126532e+05 (FP)			3.756078e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			-4.354661e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			3.837340e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_C3NET_1_threads.csv
+Summary for future merging saved to: results/summary_C3NET_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_C3NET_1_threads.csv
+Evaluation completed for technique: C3NET with 1 threads
+AUROC: 0.5071 (p-value: 0.9996)
+AUPR:  0.0243 (p-value: 0.9992)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: KBOOST with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_KBOOST_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.514640 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_KBOOST_Network3.tsv
+Processing chunk 1/4 (rows 1 to 10172305)...
+Processing chunk 2/4 (rows 10172306 to 20344610)...
+Processing chunk 3/4 (rows 20344611 to 30516915)...
+Processing chunk 4/4 (rows 30516916 to 40689220)...
+Elapsed time is 486.342992 seconds.
+TPL: 2066
+First 5 TPk: [0 1 1 2 3]
+Last 5 TPk: [2066 2066 2066 2066 2066]
+First 5 FPk: [1 1 2 2 2]
+Last 5 FPk: [150210 150211 150212 150213 150214]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Threshold k = 4:
+		Predicted Positive	Predicted Negative
+Actual Positive		2 (TP)			2064 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.4456
+Weight at rank 152280 (last prediction): 0.0000
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		685 (TP)			1381 (FN)
+Actual Negative		37385 (FP)			112829 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1114 (TP)			952 (FN)
+Actual Negative		75026 (FP)			75188 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1669 (TP)			397 (FN)
+Actual Negative		112541 (FP)			37673 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2066 (TP)			0 (FN)
+Actual Negative		150214 (FP)			0 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_KBOOST_1_threads.csv
+Summary for future merging saved to: results/summary_KBOOST_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_KBOOST_1_threads.csv
+Evaluation completed for technique: KBOOST with 1 threads
+AUROC: 0.5572 (p-value: 0.9995)
+AUPR:  0.0445 (p-value: 0.5725)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: MRNETB with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_MRNETB_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.491006 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_MRNETB_Network3.tsv
+Processing chunk 1/4 (rows 1 to 4239673)...
+Processing chunk 2/4 (rows 4239674 to 8479346)...
+Processing chunk 3/4 (rows 8479347 to 12719019)...
+Processing chunk 4/4 (rows 12719020 to 16958692)...
+Elapsed time is 307.355237 seconds.
+TPL: 1051
+First 5 TPk: [1 2 3 3 3]
+Last 5 TPk: [2065.9570320343 2065.96777402543 2065.97851601656 2065.98925800769 2065.99999999882]
+First 5 FPk: [0 0 0 1 2]
+Last 5 FPk: [150210.042967537 150211.032225546 150212.021483554 150213.010741563 150213.999999572]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 57791:
+		Predicted Positive	Predicted Negative
+Actual Positive		1051 (TP)			1015 (FN)
+Actual Negative		56740 (FP)			93474 (TN)
+
+Threshold k = 41:
+		Predicted Positive	Predicted Negative
+Actual Positive		34 (TP)			2032 (FN)
+Actual Negative		7 (FP)			150207 (TN)
+
+Threshold k = 6:
+		Predicted Positive	Predicted Negative
+Actual Positive		4 (TP)			2062 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.6292
+Weight at rank 57791 (last prediction): 0.0000
+Weight at rank 57792 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		819 (TP)			1247 (FN)
+Actual Negative		37251 (FP)			112963 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.248105e+03 (TP)			8.178952e+02 (FN)
+Actual Negative		7.489190e+04 (FP)			7.532210e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.657052e+03 (TP)			4.089476e+02 (FN)
+Actual Negative		1.125529e+05 (FP)			3.766105e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			1.175977e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			4.278845e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_MRNETB_1_threads.csv
+Summary for future merging saved to: results/summary_MRNETB_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_MRNETB_1_threads.csv
+Evaluation completed for technique: MRNETB with 1 threads
+AUROC: 0.5948 (p-value: 0.0045)
+AUPR:  0.0697 (p-value: 0.0000)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: MRNET with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_MRNET_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.501733 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_MRNET_Network3.tsv
+Processing chunk 1/4 (rows 1 to 4239414)...
+Processing chunk 2/4 (rows 4239415 to 8478828)...
+Processing chunk 3/4 (rows 8478829 to 12718242)...
+Processing chunk 4/4 (rows 12718243 to 16957656)...
+Elapsed time is 302.053916 seconds.
+TPL: 1051
+First 5 TPk: [1 2 3 4 4]
+Last 5 TPk: [2065.95705476663 2065.96779107651 2065.9785273864 2065.98926369628 2066.00000000616]
+First 5 FPk: [0 0 0 0 1]
+Last 5 FPk: [150210.042945253 150211.032208943 150212.021472633 150213.010736323 150214.000000013]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 57741:
+		Predicted Positive	Predicted Negative
+Actual Positive		1051 (TP)			1015 (FN)
+Actual Negative		56690 (FP)			93524 (TN)
+
+Threshold k = 29:
+		Predicted Positive	Predicted Negative
+Actual Positive		19 (TP)			2047 (FN)
+Actual Negative		10 (FP)			150204 (TN)
+
+Threshold k = 6:
+		Predicted Positive	Predicted Negative
+Actual Positive		4 (TP)			2062 (FN)
+Actual Negative		2 (FP)			150212 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.6211
+Weight at rank 57741 (last prediction): 0.0000
+Weight at rank 57742 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		819 (TP)			1247 (FN)
+Actual Negative		37251 (FP)			112963 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.248537e+03 (TP)			8.174626e+02 (FN)
+Actual Negative		7.489146e+04 (FP)			7.532254e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.657269e+03 (TP)			4.087313e+02 (FN)
+Actual Negative		1.125527e+05 (FP)			3.766127e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			-6.161372e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			-1.321314e-08 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_MRNET_1_threads.csv
+Summary for future merging saved to: results/summary_MRNET_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_MRNET_1_threads.csv
+Evaluation completed for technique: MRNET with 1 threads
+AUROC: 0.5943 (p-value: 0.0057)
+AUPR:  0.0557 (p-value: 0.0076)
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+X11 connection rejected because of wrong authentication.
+
+                                                                           < M A T L A B (R) >
+                                                                 Copyright 1984-2025 The MathWorks, Inc.
+                                                                R2025b (25.2.0.2998904) 64-bit (glnxa64)
+                                                                             August 21, 2025
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Evaluating technique: PCIT with 1 threads
+Prediction folder: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab
+Gold standard file: ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Prediction file: /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_PCIT_Network3.tsv
+PDF AUPR file: ../INPUT/probability_densities/Network3_AUPR.mat
+PDF AUROC file: ../INPUT/probability_densities/Network3_AUROC.mat
+Loading ../INPUT/gold_standard_edges_only/DREAM5_NetworkInference_Edges_Network3.tsv
+Processing chunk 1/4 (rows 1 to 1033)...
+Processing chunk 2/4 (rows 1034 to 2066)...
+Processing chunk 3/4 (rows 2067 to 3099)...
+Processing chunk 4/4 (rows 3100 to 4132)...
+Elapsed time is 0.492685 seconds.
+Loading /home/a62924/virt_machine/dimreduction-python/monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/DREAM5_NetworkInference_PCIT_Network3.tsv
+Processing chunk 1/4 (rows 1 to 622955)...
+Processing chunk 2/4 (rows 622956 to 1245910)...
+Processing chunk 3/4 (rows 1245911 to 1868865)...
+Processing chunk 4/4 (rows 1868866 to 2491818)...
+Elapsed time is 34.277648 seconds.
+TPL: 461
+First 5 TPk: [1 2 3 3 3]
+Last 5 TPk: [2065.95399729636 2065.9654979735 2065.97699865064 2065.98849932779 2066.00000000493]
+First 5 FPk: [0 0 0 1 2]
+Last 5 FPk: [150210.046002822 150211.034502145 150212.023001467 150213.01150079 150214.000000113]
+
+--- Confusion Matrix by Threshold (weight) ---
+Threshold k = 12723:
+		Predicted Positive	Predicted Negative
+Actual Positive		461 (TP)			1605 (FN)
+Actual Negative		12262 (FP)			137952 (TN)
+
+Threshold k = 12721:
+		Predicted Positive	Predicted Negative
+Actual Positive		461 (TP)			1605 (FN)
+Actual Negative		12260 (FP)			137954 (TN)
+
+Threshold k = 3476:
+		Predicted Positive	Predicted Negative
+Actual Positive		284 (TP)			1782 (FN)
+Actual Negative		3192 (FP)			147022 (TN)
+
+Threshold k = 107:
+		Predicted Positive	Predicted Negative
+Actual Positive		59 (TP)			2007 (FN)
+Actual Negative		48 (FP)			150166 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+Threshold k = 0:
+		Predicted Positive	Predicted Negative
+Actual Positive		0 (TP)			2066 (FN)
+Actual Negative		0 (FP)			150214 (TN)
+
+
+--- Minimum Weight per Rank ---
+Weight at rank 1: 0.9776
+Weight at rank 12723 (last prediction): 0.2362
+Weight at rank 12724 (first padded rank): -1
+A list `min_weight_per_rank` has been created with weights for all 152280 possible ranks.
+
+--- Confusion Matrix by Threshold (Rank) ---
+Threshold k = 38070:
+		Predicted Positive	Predicted Negative
+Actual Positive		7.525077e+02 (TP)			1.313492e+03 (FN)
+Actual Negative		3.731749e+04 (FP)			1.128965e+05 (TN)
+
+Threshold k = 76140:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.190338e+03 (TP)			8.756616e+02 (FN)
+Actual Negative		7.494966e+04 (FP)			7.526434e+04 (TN)
+
+Threshold k = 114210:
+		Predicted Positive	Predicted Negative
+Actual Positive		1.628169e+03 (TP)			4.378308e+02 (FN)
+Actual Negative		1.125818e+05 (FP)			3.763217e+04 (TN)
+
+Threshold k = 152280:
+		Predicted Positive	Predicted Negative
+Actual Positive		2.066000e+03 (TP)			-4.929007e-09 (FN)
+Actual Negative		1.502140e+05 (FP)			-1.131848e-07 (TN)
+
+Scalar metrics saved to: results/scalar_metrics_PCIT_1_threads.csv
+Summary for future merging saved to: results/summary_PCIT_1_threads.csv
+Curve data for Python visualization saved to: results/curve_data_PCIT_1_threads.csv
+Evaluation completed for technique: PCIT with 1 threads
+AUROC: 0.5751 (p-value: 0.8779)
+AUPR:  0.0621 (p-value: 0.0001)
+/home/a62924/virt_machine/dimreduction-python
+
+==================================================
+Starting Evaluation Analysis
+==================================================
+Time files: ['monitoring_plots/20250912_mutiples_runs_From_VM2/evaluation_results_confident-in-0.csv', 'monitoring_plots/20250914_mutiples_runs/evaluation_results_confident-in-0.csv']
+Data folders: ['monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/results', 'monitoring_plots/20250914_mutiples_runs/matlab/results']
+Thread counts: [1, 64]
+Output directory: test_to_report_mix_vm1_vm2/graphs
+Figure width: 12.0
+Transpose plots: False
+Loading time data from multiple files:
+  - monitoring_plots/20250912_mutiples_runs_From_VM2/evaluation_results_confident-in-0.csv (threads: 1)
+    Filtered data: 12 rows (from 12 total)
+    Warning: Ignoring 1 entries with missing execution time
+  - monitoring_plots/20250914_mutiples_runs/evaluation_results_confident-in-0.csv (threads: 64)
+    Filtered data: 4 rows (from 4 total)
+Successfully loaded time data for 15 entries across 15 technique-thread combinations
+Loading summary data from multiple folders:
+  - monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/results (threads: 1)
+  - monitoring_plots/20250914_mutiples_runs/matlab/results (threads: 64)
+Successfully loaded summary data for 15 entries across 15 technique-thread combinations
+Loading curve data from multiple folders:
+  - monitoring_plots/20250912_mutiples_runs_From_VM2/matlab/results (threads: 1)
+  - monitoring_plots/20250914_mutiples_runs/matlab/results (threads: 64)
+Successfully loaded curve data for 2284200 entries across thread counts: [np.int64(1), np.int64(64)]
+Combined data created with 15 technique-thread combinations
+Thread counts in combined data: [np.int64(1), np.int64(64)]
+
+Generating visualizations...
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/execution_time_comparison.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/roc_curve.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/precision_recall_curve.png
+
+Generating confusion matrix and TP/FP plots...
+Confusion matrix analysis saved to: test_to_report_mix_vm1_vm2/graphs/confusion_matrix_analysis.csv
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tp_vs_rank.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/fp_vs_rank.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/auroc-aupr_performance_bar.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_auroc-aupr_bar_thread_1.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_auroc-aupr_bar_thread_64.png
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_auroc-aupr_bar_all_threads.png
+
+Trade-off Analysis AUC Summary (Thread = 1, Metric = AUROC):
+------------------------------------------------------------
+  MRNET: 0.7953
+  CLR: 0.7944
+  MRNETB: 0.7943
+  KBOOST: 0.7715
+  PCIT: 0.7577
+  ARACNE: 0.7556
+  C3NET: 0.7532
+  DimReduction: 0.7374
+  BC3NET: 0.6578
+  GENIE3_ET: 0.6363
+  GENIE3_RF: 0.3265
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_analysis_auroc_thread_1.png
+
+Trade-off Analysis AUC Summary (Thread = 64, Metric = AUROC):
+------------------------------------------------------------
+  DimReduction: 0.7324
+  GENIE3_ET: 0.5007
+  KBOOST: 0.4792
+  GENIE3_RF: 0.3273
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_analysis_auroc_thread_64.png
+
+Trade-off Analysis AUC Summary (Thread = 1, Metric = AUPR):
+------------------------------------------------------------
+  MRNETB: 0.5318
+  CLR: 0.5299
+  MRNET: 0.5260
+  KBOOST: 0.5152
+  ARACNE: 0.5139
+  C3NET: 0.5118
+  PCIT: 0.5012
+  DimReduction: 0.4933
+  BC3NET: 0.4132
+  GENIE3_ET: 0.3440
+  GENIE3_RF: 0.0423
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_analysis_aupr_thread_1.png
+
+Trade-off Analysis AUC Summary (Thread = 64, Metric = AUPR):
+------------------------------------------------------------
+  DimReduction: 0.4883
+  KBOOST: 0.2228
+  GENIE3_ET: 0.2112
+  GENIE3_RF: 0.0407
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_analysis_aupr_thread_64.png
+
+Trade-off Analysis AUC Summary (All Threads, Metric = AUROC):
+----------------------------------------------------------------------
+  GENIE3_ET_threads_64: 0.8243
+  GENIE3_RF_threads_64: 0.8146
+  MRNET_threads_1: 0.7953
+  CLR_threads_1: 0.7944
+  MRNETB_threads_1: 0.7943
+  KBOOST_threads_1: 0.7715
+  KBOOST_threads_64: 0.7710
+  PCIT_threads_1: 0.7577
+  ARACNE_threads_1: 0.7556
+  C3NET_threads_1: 0.7532
+  DimReduction_threads_64: 0.7509
+  DimReduction_threads_1: 0.7374
+  BC3NET_threads_1: 0.6578
+  GENIE3_ET_threads_1: 0.6363
+  GENIE3_RF_threads_1: 0.3265
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_analysis_auroc_all_threads.png
+
+Trade-off Analysis AUC Summary (All Threads, Metric = AUPR):
+----------------------------------------------------------------------
+  GENIE3_ET_threads_64: 0.5349
+  MRNETB_threads_1: 0.5318
+  CLR_threads_1: 0.5299
+  GENIE3_RF_threads_64: 0.5280
+  MRNET_threads_1: 0.5260
+  KBOOST_threads_1: 0.5152
+  KBOOST_threads_64: 0.5146
+  ARACNE_threads_1: 0.5139
+  C3NET_threads_1: 0.5118
+  DimReduction_threads_64: 0.5068
+  PCIT_threads_1: 0.5012
+  DimReduction_threads_1: 0.4933
+  BC3NET_threads_1: 0.4132
+  GENIE3_ET_threads_1: 0.3440
+  GENIE3_RF_threads_1: 0.0423
+Plot saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_analysis_aupr_all_threads.png
+
+Generating trade-off rank tables...
+AUROC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_auroc_ranks_thread_1.csv
+AUPR trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_aupr_ranks_thread_1.csv
+AUROC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_auroc_ranks_thread_64.csv
+AUPR trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_aupr_ranks_thread_64.csv
+AUROC AUC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_auroc_ranks_thread_1.csv
+AUPR AUC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_aupr_ranks_thread_1.csv
+AUROC AUC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_auroc_ranks_thread_64.csv
+AUPR AUC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_aupr_ranks_thread_64.csv
+AUROC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_auroc_ranks_all_threads.csv
+AUPR trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/tradeoff_aupr_ranks_all_threads.csv
+AUROC AUC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_auroc_ranks_all_threads.csv
+AUPR AUC trade-off ranks saved to: test_to_report_mix_vm1_vm2/graphs/auc_tradeoff_aupr_ranks_all_threads.csv
+
+Generating performance rank tables...
+AUROC performance ranks saved to: test_to_report_mix_vm1_vm2/graphs/auroc_ranks_thread_1.csv
+AUPR performance ranks saved to: test_to_report_mix_vm1_vm2/graphs/aupr_ranks_thread_1.csv
+AUROC performance ranks saved to: test_to_report_mix_vm1_vm2/graphs/auroc_ranks_thread_64.csv
+AUPR performance ranks saved to: test_to_report_mix_vm1_vm2/graphs/aupr_ranks_thread_64.csv
+AUROC performance ranks (all threads) saved to: test_to_report_mix_vm1_vm2/graphs/auroc_ranks_all_threads.csv
+AUPR performance ranks (all threads) saved to: test_to_report_mix_vm1_vm2/graphs/aupr_ranks_all_threads.csv
+
+==================================================
+Analysis Complete!
+Graphs saved to: /home/a62924/virt_machine/dimreduction-python/test_to_report_mix_vm1_vm2/graphs
+==================================================
