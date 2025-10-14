@@ -330,7 +330,7 @@ class EvaluationAnalyzer:
                         df = pd.read_csv(file_path)
                         df['technique'] = technique
                         df['num_threads'] = num_threads
-                        df.rename(columns={'min_weight': 'weight'}, inplace=True)
+                        # df.rename(columns={'min_weight': 'weight'}, inplace=True)
                         dfs.append(df)
                         
                         
@@ -1675,7 +1675,7 @@ class EvaluationAnalyzer:
             print(f"Error creating performance metrics bar charts: {e}")
 
     def plot_tp_vs_weight(self, output_dir=None, show=False):
-        """Generate a line graph of True Positives (TP) vs Weight for each technique."""
+        """Generate a line graph of True Positives (TP) vs Weight threshold for each technique."""
         if self.curve_data is None:
             print("No curve data available for plotting TP vs Weight.")
             return
@@ -1683,41 +1683,55 @@ class EvaluationAnalyzer:
         try:
             fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
-            # Average curve data across runs for each technique and weight
-            if 'weight' in self.curve_data.columns:
-                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
-            else:
-                print("Warning: 'weight' column not found in curve data. Cannot plot TP vs Weight.")
-                return
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
             
             techniques = avg_curve_data['technique'].unique()
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
 
-                if 'P' not in tech_data.columns or 'tpr' not in tech_data.columns:
-                    print(f"Warning: P or tpr values not found for technique {technique}. Skipping TP vs Weight plot.")
+                if 'P' not in tech_data.columns or 'tpr' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: P, tpr, or min_weight values not found for technique {technique}. Skipping TP vs Weight plot.")
                     continue
 
                 P = tech_data['P'].iloc[0]
                 
-                # Sort by weight for proper line plotting
-                tech_data = tech_data.sort_values('weight')
+                # Sort by min_weight (descending) for threshold analysis
+                tech_data = tech_data.sort_values('min_weight', ascending=False)
                 
-                weights = tech_data['weight']
-                tpr = tech_data['tpr']
-                TP = tpr * P
-
-                color = self.color_palette[i % len(self.color_palette)]
+                # Create weight thresholds (use actual min_weight values from data)
+                weight_thresholds = sorted(tech_data['min_weight'].unique(), reverse=True)
                 
-                # Plot the line
-                ax.plot(weights, TP, label=f'{technique}', color=color, linewidth=2)
+                tps = []
+                valid_weights = []
+                
+                for weight_threshold in weight_thresholds:
+                    # Find the rank with the smallest min_weight that is >= threshold
+                    # (this corresponds to including all predictions with weight >= threshold)
+                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
+                    if not candidate_ranks.empty:
+                        # Take the rank with the highest min_weight that meets the threshold
+                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
+                        tpr = best_rank['tpr']
+                        TP = tpr * P
+                        tps.append(TP)
+                        valid_weights.append(weight_threshold)
+                
+                if len(valid_weights) > 0:
+                    color = self.color_palette[i % len(self.color_palette)]
+                    
+                    # Plot the line
+                    ax.plot(valid_weights, tps, label=f'{technique}', color=color, linewidth=2)
 
-            ax.set_xlabel('Weight (Confidence Threshold)', fontsize=12)
+            ax.set_xlabel('Weight Threshold', fontsize=12)
             ax.set_ylabel('True Positives (TP)', fontsize=12)
-            ax.set_title('True Positives (TP) vs. Weight', fontsize=14, fontweight='bold')
+            ax.set_title('True Positives (TP) vs. Weight Threshold', fontsize=14, fontweight='bold')
             ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
+            
+            # Set x-axis to show thresholds from high to low confidence
+            ax.invert_xaxis()
             
             plt.tight_layout()
 
@@ -1734,7 +1748,7 @@ class EvaluationAnalyzer:
             print(f"Error creating TP vs Weight plot: {e}")
 
     def plot_fp_vs_weight(self, output_dir=None, show=False):
-        """Generate a line graph of False Positives (FP) vs Weight for each technique."""
+        """Generate a line graph of False Positives (FP) vs Weight threshold for each technique."""
         if self.curve_data is None:
             print("No curve data available for plotting FP vs Weight.")
             return
@@ -1742,41 +1756,54 @@ class EvaluationAnalyzer:
         try:
             fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
-            # Average curve data across runs for each technique and weight
-            if 'weight' in self.curve_data.columns:
-                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
-            else:
-                print("Warning: 'weight' column not found in curve data. Cannot plot FP vs Weight.")
-                return
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
             
             techniques = avg_curve_data['technique'].unique()
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
 
-                if 'N' not in tech_data.columns or 'fpr' not in tech_data.columns:
-                    print(f"Warning: N or fpr values not found for technique {technique}. Skipping FP vs Weight plot.")
+                if 'N' not in tech_data.columns or 'fpr' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: N, fpr, or min_weight values not found for technique {technique}. Skipping FP vs Weight plot.")
                     continue
 
                 N = tech_data['N'].iloc[0]
                 
-                # Sort by weight for proper line plotting
-                tech_data = tech_data.sort_values('weight')
+                # Sort by min_weight (descending) for threshold analysis
+                tech_data = tech_data.sort_values('min_weight', ascending=False)
                 
-                weights = tech_data['weight']
-                fpr = tech_data['fpr']
-                FP = fpr * N
-
-                color = self.color_palette[i % len(self.color_palette)]
+                # Create weight thresholds (use actual min_weight values from data)
+                weight_thresholds = sorted(tech_data['min_weight'].unique(), reverse=True)
                 
-                # Plot the line
-                ax.plot(weights, FP, label=f'{technique}', color=color, linewidth=2)
+                fps = []
+                valid_weights = []
+                
+                for weight_threshold in weight_thresholds:
+                    # Find the rank with the smallest min_weight that is >= threshold
+                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
+                    if not candidate_ranks.empty:
+                        # Take the rank with the highest min_weight that meets the threshold
+                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
+                        fpr = best_rank['fpr']
+                        FP = fpr * N
+                        fps.append(FP)
+                        valid_weights.append(weight_threshold)
+                
+                if len(valid_weights) > 0:
+                    color = self.color_palette[i % len(self.color_palette)]
+                    
+                    # Plot the line
+                    ax.plot(valid_weights, fps, label=f'{technique}', color=color, linewidth=2)
 
-            ax.set_xlabel('Weight (Confidence Threshold)', fontsize=12)
+            ax.set_xlabel('Weight Threshold', fontsize=12)
             ax.set_ylabel('False Positives (FP)', fontsize=12)
-            ax.set_title('False Positives (FP) vs. Weight', fontsize=14, fontweight='bold')
+            ax.set_title('False Positives (FP) vs. Weight Threshold', fontsize=14, fontweight='bold')
             ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
+            
+            # Set x-axis to show thresholds from high to low confidence
+            ax.invert_xaxis()
             
             plt.tight_layout()
 
@@ -1793,7 +1820,7 @@ class EvaluationAnalyzer:
             print(f"Error creating FP vs Weight plot: {e}")
 
     def plot_precision_vs_weight(self, output_dir=None, show=False):
-        """Generate a line graph of Precision vs Weight for each technique."""
+        """Generate a line graph of Precision vs Weight threshold for each technique."""
         if self.curve_data is None:
             print("No curve data available for plotting Precision vs Weight.")
             return
@@ -1801,39 +1828,52 @@ class EvaluationAnalyzer:
         try:
             fig, ax = plt.subplots(figsize=self.get_figure_size(10))
             
-            # Average curve data across runs for each technique and weight
-            if 'weight' in self.curve_data.columns:
-                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
-            else:
-                print("Warning: 'weight' column not found in curve data. Cannot plot Precision vs Weight.")
-                return
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
             
             techniques = avg_curve_data['technique'].unique()
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
 
-                if 'precision' not in tech_data.columns:
-                    print(f"Warning: precision values not found for technique {technique}. Skipping Precision vs Weight plot.")
+                if 'precision' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: precision or min_weight values not found for technique {technique}. Skipping Precision vs Weight plot.")
                     continue
                 
-                # Sort by weight for proper line plotting
-                tech_data = tech_data.sort_values('weight')
+                # Sort by min_weight (descending) for threshold analysis
+                tech_data = tech_data.sort_values('min_weight', ascending=False)
                 
-                weights = tech_data['weight']
-                precision = tech_data['precision']
-
-                color = self.color_palette[i % len(self.color_palette)]
+                # Create weight thresholds (use actual min_weight values from data)
+                weight_thresholds = sorted(tech_data['min_weight'].unique(), reverse=True)
                 
-                # Plot the line
-                ax.plot(weights, precision, label=f'{technique}', color=color, linewidth=2)
+                precisions = []
+                valid_weights = []
+                
+                for weight_threshold in weight_thresholds:
+                    # Find the rank with the smallest min_weight that is >= threshold
+                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
+                    if not candidate_ranks.empty:
+                        # Take the rank with the highest min_weight that meets the threshold
+                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
+                        precision = best_rank['precision']
+                        precisions.append(precision)
+                        valid_weights.append(weight_threshold)
+                
+                if len(valid_weights) > 0:
+                    color = self.color_palette[i % len(self.color_palette)]
+                    
+                    # Plot the line
+                    ax.plot(valid_weights, precisions, label=f'{technique}', color=color, linewidth=2)
 
-            ax.set_xlabel('Weight (Confidence Threshold)', fontsize=12)
+            ax.set_xlabel('Weight Threshold', fontsize=12)
             ax.set_ylabel('Precision', fontsize=12)
-            ax.set_title('Precision vs. Weight', fontsize=14, fontweight='bold')
+            ax.set_title('Precision vs. Weight Threshold', fontsize=14, fontweight='bold')
             ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
             ax.grid(True, alpha=0.3)
             ax.set_ylim(0, 1)
+            
+            # Set x-axis to show thresholds from high to low confidence
+            ax.invert_xaxis()
             
             plt.tight_layout()
 
@@ -1858,51 +1898,49 @@ class EvaluationAnalyzer:
         try:
             all_cm_data = []
             
-            # Average curve data across runs for each technique and weight
-            if 'weight' in self.curve_data.columns:
-                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
-            else:
-                print("Warning: 'weight' column not found in curve data. Cannot generate weight-based confusion tables.")
-                return
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
 
             techniques = avg_curve_data['technique'].unique()
 
             for technique in techniques:
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
                 
-                if 'P' not in tech_data.columns or 'N' not in tech_data.columns:
-                    print(f"Warning: P and N values not found for technique {technique}. Skipping weight-based confusion matrix.")
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping weight-based confusion matrix.")
                     continue
 
                 P = tech_data['P'].iloc[0]
                 N = tech_data['N'].iloc[0]
                 
-                # Define weight thresholds to evaluate (adjust these as needed)
+                # Define weight thresholds to evaluate (adjust these as needed based on your data)
                 weight_thresholds = [1.0, 0.75, 0.5, 0.25, 0.0]
-                
+
                 for weight_threshold in weight_thresholds:
-                    # Find the closest weight in the data
-                    weight_data = tech_data.iloc[(tech_data['weight'] - weight_threshold).abs().argsort()[:1]]
-                    
-                    if weight_data.empty:
-                        continue
+                    # Find the rank with the smallest min_weight that is >= threshold
+                    candidate_ranks = tech_data[tech_data['min_weight'] >= weight_threshold]
+                    if not candidate_ranks.empty:
+                        # Take the rank with the highest min_weight that meets the threshold
+                        best_rank = candidate_ranks.loc[candidate_ranks['min_weight'].idxmax()]
+                        
+                        tpr = best_rank['tpr']
+                        fpr = best_rank['fpr']
 
-                    tpr = weight_data['tpr'].iloc[0]
-                    fpr = weight_data['fpr'].iloc[0]
-
-                    TP = tpr * P
-                    FP = fpr * N
-                    FN = P - TP
-                    TN = N - FP
-                    
-                    all_cm_data.append({
-                        'technique': technique,
-                        'weight_threshold': weight_threshold,
-                        'TP': TP,
-                        'FP': FP,
-                        'FN': FN,
-                        'TN': TN
-                    })
+                        TP = tpr * P
+                        FP = fpr * N
+                        FN = P - TP
+                        TN = N - FP
+                        
+                        all_cm_data.append({
+                            'technique': technique,
+                            'weight_threshold': weight_threshold,
+                            'rank_at_threshold': best_rank['rank'],
+                            'min_weight_at_rank': best_rank['min_weight'],
+                            'TP': TP,
+                            'FP': FP,
+                            'FN': FN,
+                            'TN': TN
+                        })
 
             if all_cm_data:
                 cm_df = pd.DataFrame(all_cm_data)
@@ -1913,7 +1951,6 @@ class EvaluationAnalyzer:
 
         except Exception as e:
             print(f"Error generating weight-based confusion matrix tables: {e}")
-
 def main():
     """Main function to run the evaluation analysis"""
     parser = argparse.ArgumentParser(description='Evaluate and visualize performance metrics')
