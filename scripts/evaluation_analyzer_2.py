@@ -1672,6 +1672,246 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error creating performance metrics bar charts: {e}")
 
+    def plot_tp_vs_weight(self, output_dir=None, show=False):
+        """Generate a line graph of True Positives (TP) vs Weight for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for plotting TP vs Weight.")
+            return
+
+        try:
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Average curve data across runs for each technique and weight
+            if 'weight' in self.curve_data.columns:
+                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
+            else:
+                print("Warning: 'weight' column not found in curve data. Cannot plot TP vs Weight.")
+                return
+            
+            techniques = avg_curve_data['technique'].unique()
+
+            for i, technique in enumerate(techniques):
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+
+                if 'P' not in tech_data.columns or 'tpr' not in tech_data.columns:
+                    print(f"Warning: P or tpr values not found for technique {technique}. Skipping TP vs Weight plot.")
+                    continue
+
+                P = tech_data['P'].iloc[0]
+                
+                # Sort by weight for proper line plotting
+                tech_data = tech_data.sort_values('weight')
+                
+                weights = tech_data['weight']
+                tpr = tech_data['tpr']
+                TP = tpr * P
+
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                ax.plot(weights, TP, label=f'{technique}', color=color, linewidth=2)
+
+            ax.set_xlabel('Weight (Confidence Threshold)', fontsize=12)
+            ax.set_ylabel('True Positives (TP)', fontsize=12)
+            ax.set_title('True Positives (TP) vs. Weight', fontsize=14, fontweight='bold')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'tp_vs_weight.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+
+        except Exception as e:
+            print(f"Error creating TP vs Weight plot: {e}")
+
+    def plot_fp_vs_weight(self, output_dir=None, show=False):
+        """Generate a line graph of False Positives (FP) vs Weight for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for plotting FP vs Weight.")
+            return
+
+        try:
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Average curve data across runs for each technique and weight
+            if 'weight' in self.curve_data.columns:
+                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
+            else:
+                print("Warning: 'weight' column not found in curve data. Cannot plot FP vs Weight.")
+                return
+            
+            techniques = avg_curve_data['technique'].unique()
+
+            for i, technique in enumerate(techniques):
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+
+                if 'N' not in tech_data.columns or 'fpr' not in tech_data.columns:
+                    print(f"Warning: N or fpr values not found for technique {technique}. Skipping FP vs Weight plot.")
+                    continue
+
+                N = tech_data['N'].iloc[0]
+                
+                # Sort by weight for proper line plotting
+                tech_data = tech_data.sort_values('weight')
+                
+                weights = tech_data['weight']
+                fpr = tech_data['fpr']
+                FP = fpr * N
+
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                ax.plot(weights, FP, label=f'{technique}', color=color, linewidth=2)
+
+            ax.set_xlabel('Weight (Confidence Threshold)', fontsize=12)
+            ax.set_ylabel('False Positives (FP)', fontsize=12)
+            ax.set_title('False Positives (FP) vs. Weight', fontsize=14, fontweight='bold')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'fp_vs_weight.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+
+        except Exception as e:
+            print(f"Error creating FP vs Weight plot: {e}")
+
+    def plot_precision_vs_weight(self, output_dir=None, show=False):
+        """Generate a line graph of Precision vs Weight for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for plotting Precision vs Weight.")
+            return
+
+        try:
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Average curve data across runs for each technique and weight
+            if 'weight' in self.curve_data.columns:
+                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
+            else:
+                print("Warning: 'weight' column not found in curve data. Cannot plot Precision vs Weight.")
+                return
+            
+            techniques = avg_curve_data['technique'].unique()
+
+            for i, technique in enumerate(techniques):
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+
+                if 'precision' not in tech_data.columns:
+                    print(f"Warning: precision values not found for technique {technique}. Skipping Precision vs Weight plot.")
+                    continue
+                
+                # Sort by weight for proper line plotting
+                tech_data = tech_data.sort_values('weight')
+                
+                weights = tech_data['weight']
+                precision = tech_data['precision']
+
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                ax.plot(weights, precision, label=f'{technique}', color=color, linewidth=2)
+
+            ax.set_xlabel('Weight (Confidence Threshold)', fontsize=12)
+            ax.set_ylabel('Precision', fontsize=12)
+            ax.set_title('Precision vs. Weight', fontsize=14, fontweight='bold')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax.grid(True, alpha=0.3)
+            ax.set_ylim(0, 1)
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'precision_vs_weight.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+
+        except Exception as e:
+            print(f"Error creating Precision vs Weight plot: {e}")
+
+    def generate_weight_based_confusion_tables(self, output_dir=None):
+        """Generate confusion matrix tables at specific weight thresholds for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for generating weight-based confusion matrix tables.")
+            return
+
+        try:
+            all_cm_data = []
+            
+            # Average curve data across runs for each technique and weight
+            if 'weight' in self.curve_data.columns:
+                avg_curve_data = self.curve_data.groupby(['technique', 'weight']).mean().reset_index()
+            else:
+                print("Warning: 'weight' column not found in curve data. Cannot generate weight-based confusion tables.")
+                return
+
+            techniques = avg_curve_data['technique'].unique()
+
+            for technique in techniques:
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+                
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns:
+                    print(f"Warning: P and N values not found for technique {technique}. Skipping weight-based confusion matrix.")
+                    continue
+
+                P = tech_data['P'].iloc[0]
+                N = tech_data['N'].iloc[0]
+                
+                # Define weight thresholds to evaluate (adjust these as needed)
+                weight_thresholds = [0.9, 0.7, 0.5, 0.3, 0.1]
+                
+                for weight_threshold in weight_thresholds:
+                    # Find the closest weight in the data
+                    weight_data = tech_data.iloc[(tech_data['weight'] - weight_threshold).abs().argsort()[:1]]
+                    
+                    if weight_data.empty:
+                        continue
+
+                    tpr = weight_data['tpr'].iloc[0]
+                    fpr = weight_data['fpr'].iloc[0]
+
+                    TP = tpr * P
+                    FP = fpr * N
+                    FN = P - TP
+                    TN = N - FP
+                    
+                    all_cm_data.append({
+                        'technique': technique,
+                        'weight_threshold': weight_threshold,
+                        'TP': TP,
+                        'FP': FP,
+                        'FN': FN,
+                        'TN': TN
+                    })
+
+            if all_cm_data:
+                cm_df = pd.DataFrame(all_cm_data)
+                if output_dir:
+                    output_path = os.path.join(output_dir, 'confusion_matrix_weight_analysis.csv')
+                    cm_df.to_csv(output_path, index=False)
+                    print(f"Weight-based confusion matrix analysis saved to: {output_path}")
+
+        except Exception as e:
+            print(f"Error generating weight-based confusion matrix tables: {e}")
+
 def main():
     """Main function to run the evaluation analysis"""
     parser = argparse.ArgumentParser(description='Evaluate and visualize performance metrics')
@@ -1731,6 +1971,12 @@ def main():
         analyzer.generate_confusion_matrix_tables(output_dir=args.output_dir)
         analyzer.plot_tp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_fp_vs_rank(output_dir=args.output_dir, show=args.show_plots)
+        
+        print("\nGenerating weight-based analysis plots...")
+        analyzer.generate_weight_based_confusion_tables(output_dir=args.output_dir)
+        analyzer.plot_tp_vs_weight(output_dir=args.output_dir, show=args.show_plots)
+        analyzer.plot_fp_vs_weight(output_dir=args.output_dir, show=args.show_plots)
+        analyzer.plot_precision_vs_weight(output_dir=args.output_dir, show=args.show_plots)
         
         # Generate performance metrics bar charts
         analyzer.plot_performance_metrics_bar(output_dir=args.output_dir, show=args.show_plots)
