@@ -330,7 +330,9 @@ class EvaluationAnalyzer:
                         df = pd.read_csv(file_path)
                         df['technique'] = technique
                         df['num_threads'] = num_threads
+                        df.rename(columns={'min_weight': 'weight'}, inplace=True)
                         dfs.append(df)
+                        
                         
                     except Exception as e:
                         print(f"    Warning: Could not load {file_path}: {e}")
@@ -341,7 +343,7 @@ class EvaluationAnalyzer:
             df_combined = pd.concat(dfs, ignore_index=True)
             
             # Handle missing values in curve data
-            required_curve_cols = ['rank', 'fpr', 'tpr', 'recall', 'precision']
+            required_curve_cols = ['rank', 'fpr', 'tpr', 'recall', 'precision', 'weight', 'L', 'P', 'N']
             available_cols = [col for col in required_curve_cols if col in df_combined.columns]
             
             missing_count = df_combined[available_cols].isna().sum().sum()
