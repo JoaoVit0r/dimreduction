@@ -1876,7 +1876,7 @@ class EvaluationAnalyzer:
                 N = tech_data['N'].iloc[0]
                 
                 # Define weight thresholds to evaluate (adjust these as needed)
-                weight_thresholds = [0.9, 0.7, 0.5, 0.3, 0.1]
+                weight_thresholds = [1.0, 0.75, 0.5, 0.25, 0.0]
                 
                 for weight_threshold in weight_thresholds:
                     # Find the closest weight in the data
