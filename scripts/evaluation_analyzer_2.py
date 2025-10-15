@@ -647,10 +647,20 @@ class EvaluationAnalyzer:
                     TP = round(tpr * P)
                     tps.append(TP)
 
+                # Calculate AUC for TP vs Rank
+                valid_indices = ~np.isnan(tps)
+                if np.sum(valid_indices) > 1:
+                    valid_ranks = [ranks_to_plot[i] for i in range(len(ranks_to_plot)) if valid_indices[i]]
+                    valid_tps = [tps[i] for i in range(len(tps)) if valid_indices[i]]
+                    auc = np.trapezoid(valid_tps, valid_ranks)
+                else:
+                    auc = 0
+
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line
-                line = ax.plot(ranks_to_plot, tps, marker='', linestyle='-', color=color, label=f'{technique}', linewidth=2)
+                # Plot the line with AUC in label
+                line = ax.plot(ranks_to_plot, tps, marker='', linestyle='-', color=color, 
+                            label=f'{technique} (AUC: {auc:.2f})', linewidth=2)
                 
                 # Plot markers for all points
                 for j, (rank, tp) in enumerate(zip(ranks_to_plot, tps)):
@@ -737,10 +747,20 @@ class EvaluationAnalyzer:
                     FP = round(fpr * N)
                     fps.append(FP)
 
+                # Calculate AUC for FP vs Rank
+                valid_indices = ~np.isnan(fps)
+                if np.sum(valid_indices) > 1:
+                    valid_ranks = [ranks_to_plot[i] for i in range(len(ranks_to_plot)) if valid_indices[i]]
+                    valid_fps = [fps[i] for i in range(len(fps)) if valid_indices[i]]
+                    auc = np.trapezoid(valid_fps, valid_ranks)
+                else:
+                    auc = 0
+
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line
-                line = ax.plot(ranks_to_plot, fps, marker='', linestyle='--', color=color, label=f'{technique}', linewidth=2)
+                # Plot the line with AUC in label
+                line = ax.plot(ranks_to_plot, fps, marker='', linestyle='--', color=color, 
+                            label=f'{technique} (AUC: {auc:.2f})', linewidth=2)
                 
                 # Plot markers for all points
                 for j, (rank, fp) in enumerate(zip(ranks_to_plot, fps)):
@@ -1726,11 +1746,14 @@ class EvaluationAnalyzer:
                         tps.append(TP)
                         actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
+                # Calculate AUC for TP vs Confidence
+                auc = np.trapezoid(tps, confidence_thresholds)
+
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line on main figure
+                # Plot the line on main figure with AUC in label
                 line = ax_main.plot(confidence_thresholds, tps, marker='o', linestyle='-', 
-                                color=color, label=f'{technique}', linewidth=2)
+                                color=color, label=f'{technique} (AUC: {auc:.2f})', linewidth=2)
                 
                 # Store data for zoomed view
                 all_tp_data[technique] = tps
@@ -1780,11 +1803,14 @@ class EvaluationAnalyzer:
             else:
                 zoom_max = 10  # Default fallback
             
-            # Plot each technique on zoomed view
+            # Plot each technique on zoomed view with AUC
             for i, (technique, tps) in enumerate(tp_data.items()):
+                # Calculate AUC for this technique
+                auc = np.trapezoid(tps, confidence_thresholds)
+                
                 color = self.color_palette[i % len(self.color_palette)]
                 ax_zoom.plot(confidence_thresholds, tps, marker='o', linestyle='-', 
-                            color=color, label=f'{technique}', linewidth=2)
+                            color=color, label=f'{technique} (AUC: {auc:.2f})', linewidth=2)
 
             ax_zoom.set_xlabel('Confidence Threshold', fontsize=12)
             ax_zoom.set_ylabel('True Positives (TP)', fontsize=12)
@@ -1857,15 +1883,18 @@ class EvaluationAnalyzer:
                         # Take the row with the highest rank (largest coverage) that meets the threshold
                         best_row = valid_rows.iloc[-1]
                         fpr = best_row['fpr']
-                        FP = fpr * N
+                        FP = round(fpr * N)
                         fps.append(FP)
                         actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
+                # Calculate AUC for FP vs Confidence
+                auc = np.trapezoid(fps, confidence_thresholds)
+
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line on main figure
+                # Plot the line on main figure with AUC in label
                 line = ax_main.plot(confidence_thresholds, fps, marker='o', linestyle='--', 
-                                color=color, label=f'{technique}', linewidth=2)
+                                color=color, label=f'{technique} (AUC: {auc:.2f})', linewidth=2)
                 
                 # Store data for zoomed view
                 all_fp_data[technique] = fps
@@ -1914,11 +1943,14 @@ class EvaluationAnalyzer:
             else:
                 zoom_max = 10  # Default fallback
             
-            # Plot each technique on zoomed view
+            # Plot each technique on zoomed view with AUC
             for i, (technique, fps) in enumerate(fp_data.items()):
+                # Calculate AUC for this technique
+                auc = np.trapezoid(fps, confidence_thresholds)
+                
                 color = self.color_palette[i % len(self.color_palette)]
                 ax_zoom.plot(confidence_thresholds, fps, marker='o', linestyle='--', 
-                            color=color, label=f'{technique}', linewidth=2)
+                            color=color, label=f'{technique} (AUC: {auc:.2f})', linewidth=2)
 
             ax_zoom.set_xlabel('Confidence Threshold', fontsize=12)
             ax_zoom.set_ylabel('False Positives (FP)', fontsize=12)
@@ -2080,11 +2112,14 @@ class EvaluationAnalyzer:
                         precisions.append(precision)
                         actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
+                # Calculate AUC for Precision vs Confidence
+                auc = np.trapezoid(precisions, confidence_thresholds)
+
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line
+                # Plot the line with AUC in label
                 line = ax.plot(confidence_thresholds, precisions, marker='s', linestyle='-', 
-                            color=color, label=f'{technique}', linewidth=2)
+                            color=color, label=f'{technique} (AUC: {auc:.3f})', linewidth=2)
 
             ax.set_xlabel('Confidence Threshold', fontsize=12)
             ax.set_ylabel('Precision', fontsize=12)
@@ -2152,14 +2187,20 @@ class EvaluationAnalyzer:
                         # Take the row with the highest rank (largest coverage) that meets the threshold
                         best_row = valid_rows.iloc[-1]
                         
-                        # Calculate precision and recall
-                        tpr = best_row['tpr']  # recall
-                        fpr = best_row['fpr']
-                        TP = round(tpr * P)
-                        FP = round(fpr * N)
+                        # Calculate precision from the curve data
+                        if 'precision' in best_row:
+                            precision = best_row['precision']
+                        else:
+                            # Calculate precision from TP and FP if not available
+                            tpr = best_row['tpr']
+                            fpr = best_row['fpr']
+                            TP = round(tpr * P)
+                            FP = round(fpr * N)
+                            precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+                        
                         
                         precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-                        recall = best_row['recall']  # TPR is recall
+                        recall = tpr  # TPR is recall
                         
                         # Calculate F1-score
                         if precision + recall > 0:
@@ -2170,11 +2211,14 @@ class EvaluationAnalyzer:
                         f1_scores.append(f1_score)
                         actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
+                # Calculate AUC for F1-Score vs Confidence
+                auc = np.trapezoid(f1_scores, confidence_thresholds)
+
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line
+                # Plot the line with AUC in label
                 line = ax.plot(confidence_thresholds, f1_scores, marker='^', linestyle='-', 
-                            color=color, label=f'{technique}', linewidth=2)
+                            color=color, label=f'{technique} (AUC: {auc:.3f})', linewidth=2)
 
             ax.set_xlabel('Confidence Threshold', fontsize=12)
             ax.set_ylabel('F1-Score', fontsize=12)
@@ -2183,7 +2227,7 @@ class EvaluationAnalyzer:
             ax.grid(True, alpha=0.3)
             ax.set_xticks(confidence_thresholds)
             ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
-            ax.set_ylim(0, 0.2)  # F1-score ranges
+            ax.set_ylim(0, 0.2)  # F1-score ranges from 0 to 1
             
             plt.tight_layout()
 
@@ -2198,6 +2242,7 @@ class EvaluationAnalyzer:
 
         except Exception as e:
             print(f"Error creating F1-Score vs Confidence plot: {e}")
+
 
 
 def main():
