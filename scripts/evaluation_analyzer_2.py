@@ -579,8 +579,8 @@ class EvaluationAnalyzer:
                     tpr = rank_data['tpr'].iloc[0]
                     fpr = rank_data['fpr'].iloc[0]
 
-                    TP = tpr * P
-                    FP = fpr * N
+                    TP = round(tpr * P)
+                    FP = round(fpr * N)
                     FN = P - TP
                     TN = N - FP
                     
@@ -644,7 +644,7 @@ class EvaluationAnalyzer:
                         continue
 
                     tpr = rank_data['tpr'].iloc[0]
-                    TP = tpr * P
+                    TP = round(tpr * P)
                     tps.append(TP)
 
                 color = self.color_palette[i % len(self.color_palette)]
@@ -734,7 +734,7 @@ class EvaluationAnalyzer:
                         continue
 
                     fpr = rank_data['fpr'].iloc[0]
-                    FP = fpr * N
+                    FP = round(fpr * N)
                     fps.append(FP)
 
                 color = self.color_palette[i % len(self.color_palette)]
@@ -1681,7 +1681,8 @@ class EvaluationAnalyzer:
             return
 
         try:
-            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            # Create main figure
+            fig_main, ax_main = plt.subplots(figsize=self.get_figure_size(10))
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -1689,7 +1690,11 @@ class EvaluationAnalyzer:
             techniques = avg_curve_data['technique'].unique()
             
             # Fixed weight thresholds to evaluate
-            confidence_thresholds = [0.0, 0.25, 0.5, 0.75, 1.0]
+            confidence_thresholds = np.arange(0.05, 1.01, 0.05)
+
+            # Store data for zoomed view
+            all_tp_data = {}
+            max_tp_main = 0
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
@@ -1717,36 +1722,28 @@ class EvaluationAnalyzer:
                         # Take the row with the highest rank (largest coverage) that meets the threshold
                         best_row = valid_rows.iloc[-1]
                         tpr = best_row['tpr']
-                        TP = tpr * P
+                        TP = round(tpr * P)
                         tps.append(TP)
                         actual_confidences.append(f"{best_row['min_weight']:.4f}")
 
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line
-                line = ax.plot(confidence_thresholds, tps, marker='o', linestyle='-', color=color, label=f'{technique}', linewidth=2)
+                # Plot the line on main figure
+                line = ax_main.plot(confidence_thresholds, tps, marker='o', linestyle='-', 
+                                color=color, label=f'{technique}', linewidth=2)
                 
-                # # Add actual weight values as annotations
-                # for j, (confidence, tp, actual_w) in enumerate(zip(confidence_thresholds, tps, actual_confidences)):
-                #     if actual_w != "N/A":
-                #         ax.annotate(f'{actual_w}', 
-                #                 (confidence, tp),
-                #                 textcoords="offset points", 
-                #                 xytext=(0,10), 
-                #                 ha='center',
-                #                 fontsize=8,
-                #                 color=color)
+                # Store data for zoomed view
+                all_tp_data[technique] = tps
+                max_tp_main = max(max_tp_main, max(tps) if tps else 0)
 
-            ax.set_xlabel('Confidence Threshold', fontsize=12)
-            ax.set_ylabel('True Positives (TP)', fontsize=12)
-            ax.set_title('True Positives (TP) vs. Confidence Threshold', fontsize=14, fontweight='bold')
-            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
-            ax.grid(True, alpha=0.3)
-            
-            # Set x-axis labels
-            ax.set_xticks(confidence_thresholds)
-            ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
-            
+            # Configure main plot
+            ax_main.set_xlabel('Confidence Threshold', fontsize=12)
+            ax_main.set_ylabel('True Positives (TP)', fontsize=12)
+            ax_main.set_title('True Positives (TP) vs. Confidence Threshold', fontsize=14, fontweight='bold')
+            ax_main.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax_main.grid(True, alpha=0.3)
+            ax_main.set_xticks(confidence_thresholds)
+            ax_main.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
             plt.tight_layout()
 
             if output_dir:
@@ -1758,8 +1755,60 @@ class EvaluationAnalyzer:
             else:
                 plt.close()
 
+            # Create zoomed figure for better analysis of lower values
+            if all_tp_data:
+                self._create_tp_confidence_zoomed(all_tp_data, confidence_thresholds, output_dir, show)
+
         except Exception as e:
             print(f"Error creating TP vs Confidence plot: {e}")
+
+    def _create_tp_confidence_zoomed(self, tp_data, confidence_thresholds, output_dir=None, show=False):
+        """Create a zoomed version of TP vs Confidence plot for better analysis"""
+        try:
+            fig_zoom, ax_zoom = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Find reasonable y-limit for zoomed view
+            all_values = []
+            for technique, tps in tp_data.items():
+                all_values.extend(tps)
+            
+            # Remove zeros and find reasonable max for zoom
+            non_zero_values = [v for v in all_values if v > 0]
+            if non_zero_values:
+                # Use 80th percentile or max of first few techniques, whichever is smaller
+                zoom_max = min(np.percentile(non_zero_values, 80), max(non_zero_values) * 0.8)
+            else:
+                zoom_max = 10  # Default fallback
+            
+            # Plot each technique on zoomed view
+            for i, (technique, tps) in enumerate(tp_data.items()):
+                color = self.color_palette[i % len(self.color_palette)]
+                ax_zoom.plot(confidence_thresholds, tps, marker='o', linestyle='-', 
+                            color=color, label=f'{technique}', linewidth=2)
+
+            ax_zoom.set_xlabel('Confidence Threshold', fontsize=12)
+            ax_zoom.set_ylabel('True Positives (TP)', fontsize=12)
+            ax_zoom.set_title('True Positives (TP) vs. Confidence Threshold (Zoomed View)', 
+                            fontsize=14, fontweight='bold')
+            ax_zoom.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax_zoom.grid(True, alpha=0.3)
+            ax_zoom.set_xticks(confidence_thresholds)
+            ax_zoom.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
+            ax_zoom.set_ylim(0, zoom_max)
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'tp_vs_confidence_zoomed.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+                
+        except Exception as e:
+            print(f"Error creating zoomed TP vs Confidence plot: {e}")
 
     def plot_fp_vs_confidence(self, output_dir=None, show=False):
         """Generate a line graph of False Positives (FP) vs Confidence Threshold for each technique."""
@@ -1768,7 +1817,7 @@ class EvaluationAnalyzer:
             return
 
         try:
-            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            fig_main, ax_main = plt.subplots(figsize=self.get_figure_size(10))
             
             # Average curve data across runs for each technique and rank
             avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
@@ -1776,7 +1825,11 @@ class EvaluationAnalyzer:
             techniques = avg_curve_data['technique'].unique()
             
             # Fixed weight thresholds to evaluate
-            confidence_thresholds = [0.0, 0.25, 0.5, 0.75, 1.0]
+            confidence_thresholds = np.arange(0.05, 1.01, 0.05)
+
+            # Store data for zoomed view
+            all_fp_data = {}
+            max_fp_main = 0
 
             for i, technique in enumerate(techniques):
                 tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
@@ -1810,30 +1863,21 @@ class EvaluationAnalyzer:
 
                 color = self.color_palette[i % len(self.color_palette)]
                 
-                # Plot the line
-                line = ax.plot(confidence_thresholds, fps, marker='o', linestyle='--', color=color, label=f'{technique}', linewidth=2)
+                # Plot the line on main figure
+                line = ax_main.plot(confidence_thresholds, fps, marker='o', linestyle='--', 
+                                color=color, label=f'{technique}', linewidth=2)
                 
-                # # Add actual weight values as annotations
-                # for j, (confidence, fp, actual_w) in enumerate(zip(confidence_thresholds, fps, actual_confidences)):
-                #     if actual_w != "N/A":
-                #         ax.annotate(f'{actual_w}', 
-                #                 (confidence, fp),
-                #                 textcoords="offset points", 
-                #                 xytext=(0,10), 
-                #                 ha='center',
-                #                 fontsize=8,
-                #                 color=color)
+                # Store data for zoomed view
+                all_fp_data[technique] = fps
+                max_fp_main = max(max_fp_main, max(fps) if fps else 0)
 
-            ax.set_xlabel('Confidence Threshold', fontsize=12)
-            ax.set_ylabel('False Positives (FP)', fontsize=12)
-            ax.set_title('False Positives (FP) vs. Confidence Threshold', fontsize=14, fontweight='bold')
-            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
-            ax.grid(True, alpha=0.3)
-            
-            # Set x-axis labels
-            ax.set_xticks(confidence_thresholds)
-            ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
-            
+            ax_main.set_xlabel('Confidence Threshold', fontsize=12)
+            ax_main.set_ylabel('False Positives (FP)', fontsize=12)
+            ax_main.set_title('False Positives (FP) vs. Confidence Threshold', fontsize=14, fontweight='bold')
+            ax_main.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax_main.grid(True, alpha=0.3)
+            ax_main.set_xticks(confidence_thresholds)
+            ax_main.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
             plt.tight_layout()
 
             if output_dir:
@@ -1845,9 +1889,60 @@ class EvaluationAnalyzer:
             else:
                 plt.close()
 
+            # Create zoomed figure for better analysis of lower values
+            if all_fp_data:
+                self._create_fp_confidence_zoomed(all_fp_data, confidence_thresholds, output_dir, show)
+
         except Exception as e:
             print(f"Error creating FP vs Confidence plot: {e}")
 
+    def _create_fp_confidence_zoomed(self, fp_data, confidence_thresholds, output_dir=None, show=False):
+        """Create a zoomed version of FP vs Confidence plot for better analysis"""
+        try:
+            fig_zoom, ax_zoom = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Find reasonable y-limit for zoomed view
+            all_values = []
+            for technique, fps in fp_data.items():
+                all_values.extend(fps)
+            
+            # Remove zeros and find reasonable max for zoom
+            non_zero_values = [v for v in all_values if v > 0]
+            if non_zero_values:
+                # Use 80th percentile or max of first few techniques, whichever is smaller
+                zoom_max = min(np.percentile(non_zero_values, 80), max(non_zero_values) * 0.8)
+            else:
+                zoom_max = 10  # Default fallback
+            
+            # Plot each technique on zoomed view
+            for i, (technique, fps) in enumerate(fp_data.items()):
+                color = self.color_palette[i % len(self.color_palette)]
+                ax_zoom.plot(confidence_thresholds, fps, marker='o', linestyle='--', 
+                            color=color, label=f'{technique}', linewidth=2)
+
+            ax_zoom.set_xlabel('Confidence Threshold', fontsize=12)
+            ax_zoom.set_ylabel('False Positives (FP)', fontsize=12)
+            ax_zoom.set_title('False Positives (FP) vs. Confidence Threshold (Zoomed View)', 
+                            fontsize=14, fontweight='bold')
+            ax_zoom.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax_zoom.grid(True, alpha=0.3)
+            ax_zoom.set_xticks(confidence_thresholds)
+            ax_zoom.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
+            ax_zoom.set_ylim(0, zoom_max)
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'fp_vs_confidence_zoomed.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+                
+        except Exception as e:
+            print(f"Error creating zoomed FP vs Confidence plot: {e}")
 
     def generate_confusion_matrix_tables_vs_confidence(self, output_dir=None, show=False):
         """Generate confusion matrix tables for each technique at fixed confidence thresholds and save as CSV."""
@@ -1928,6 +2023,182 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error generating confusion matrix tables by confidence: {e}")
 
+    def plot_precision_vs_confidence(self, output_dir=None, show=False):
+        """Generate a line graph of Precision vs Confidence Threshold for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for plotting Precision vs Confidence.")
+            return
+
+        try:
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
+            
+            techniques = avg_curve_data['technique'].unique()
+            
+            # Fixed weight thresholds to evaluate
+            confidence_thresholds = np.arange(0.05, 1.01, 0.05)
+
+            for i, technique in enumerate(techniques):
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping Precision vs confidence plot.")
+                    continue
+
+                P = tech_data['P'].iloc[0]
+                N = tech_data['N'].iloc[0]
+                L = tech_data['L'].iloc[0]
+
+                precisions = []
+                actual_confidences = []
+                
+                for confidence_threshold in confidence_thresholds:
+                    # Find the row with the closest min_weight that is >= threshold
+                    valid_rows = tech_data[tech_data['min_weight'] >= confidence_threshold]
+                    
+                    if len(valid_rows) == 0:
+                        # No predictions meet the weight threshold
+                        precisions.append(0)
+                        actual_confidences.append("N/A")
+                    else:
+                        # Take the row with the highest rank (largest coverage) that meets the threshold
+                        best_row = valid_rows.iloc[-1]
+                        
+                        # Calculate precision from the curve data
+                        if 'precision' in best_row:
+                            precision = best_row['precision']
+                        else:
+                            # Calculate precision from TP and FP if not available
+                            tpr = best_row['tpr']
+                            fpr = best_row['fpr']
+                            TP = round(tpr * P)
+                            FP = round(fpr * N)
+                            precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+                        
+                        precisions.append(precision)
+                        actual_confidences.append(f"{best_row['min_weight']:.4f}")
+
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                line = ax.plot(confidence_thresholds, precisions, marker='s', linestyle='-', 
+                            color=color, label=f'{technique}', linewidth=2)
+
+            ax.set_xlabel('Confidence Threshold', fontsize=12)
+            ax.set_ylabel('Precision', fontsize=12)
+            ax.set_title('Precision vs. Confidence Threshold', fontsize=14, fontweight='bold')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax.grid(True, alpha=0.3)
+            ax.set_xticks(confidence_thresholds)
+            ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
+            ax.set_ylim(0, 1)  # Precision ranges from 0 to 1
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'precision_vs_confidence.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+
+        except Exception as e:
+            print(f"Error creating Precision vs Confidence plot: {e}")
+
+    def plot_f1_vs_confidence(self, output_dir=None, show=False):
+        """Generate a line graph of F1-Score vs Confidence Threshold for each technique."""
+        if self.curve_data is None:
+            print("No curve data available for plotting F1-Score vs Confidence.")
+            return
+
+        try:
+            fig, ax = plt.subplots(figsize=self.get_figure_size(10))
+            
+            # Average curve data across runs for each technique and rank
+            avg_curve_data = self.curve_data.groupby(['technique', 'rank']).mean().reset_index()
+            
+            techniques = avg_curve_data['technique'].unique()
+            
+            # Fixed weight thresholds to evaluate
+            confidence_thresholds = np.arange(0.05, 1.01, 0.05)
+
+            for i, technique in enumerate(techniques):
+                tech_data = avg_curve_data[avg_curve_data['technique'] == technique]
+
+                if 'P' not in tech_data.columns or 'N' not in tech_data.columns or 'min_weight' not in tech_data.columns:
+                    print(f"Warning: P, N, or min_weight values not found for technique {technique}. Skipping F1-Score vs confidence plot.")
+                    continue
+
+                P = tech_data['P'].iloc[0]
+                N = tech_data['N'].iloc[0]
+                L = tech_data['L'].iloc[0]
+
+                f1_scores = []
+                actual_confidences = []
+                
+                for confidence_threshold in confidence_thresholds:
+                    # Find the row with the closest min_weight that is >= threshold
+                    valid_rows = tech_data[tech_data['min_weight'] >= confidence_threshold]
+                    
+                    if len(valid_rows) == 0:
+                        # No predictions meet the weight threshold
+                        f1_scores.append(0)
+                        actual_confidences.append("N/A")
+                    else:
+                        # Take the row with the highest rank (largest coverage) that meets the threshold
+                        best_row = valid_rows.iloc[-1]
+                        
+                        # Calculate precision and recall
+                        tpr = best_row['tpr']  # recall
+                        fpr = best_row['fpr']
+                        TP = round(tpr * P)
+                        FP = round(fpr * N)
+                        
+                        precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+                        recall = best_row['recall']  # TPR is recall
+                        
+                        # Calculate F1-score
+                        if precision + recall > 0:
+                            f1_score = 2 * (precision * recall) / (precision + recall)
+                        else:
+                            f1_score = 0
+                        
+                        f1_scores.append(f1_score)
+                        actual_confidences.append(f"{best_row['min_weight']:.4f}")
+
+                color = self.color_palette[i % len(self.color_palette)]
+                
+                # Plot the line
+                line = ax.plot(confidence_thresholds, f1_scores, marker='^', linestyle='-', 
+                            color=color, label=f'{technique}', linewidth=2)
+
+            ax.set_xlabel('Confidence Threshold', fontsize=12)
+            ax.set_ylabel('F1-Score', fontsize=12)
+            ax.set_title('F1-Score vs. Confidence Threshold', fontsize=14, fontweight='bold')
+            ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3)
+            ax.grid(True, alpha=0.3)
+            ax.set_xticks(confidence_thresholds)
+            ax.set_xticklabels([f'{w:.2f}' for w in confidence_thresholds])
+            ax.set_ylim(0, 0.2)  # F1-score ranges
+            
+            plt.tight_layout()
+
+            if output_dir:
+                output_path = os.path.join(output_dir, 'f1_score_vs_confidence.png')
+                self.save_plot_transposed(plt, output_path)
+
+            if show:
+                plt.show()
+            else:
+                plt.close()
+
+        except Exception as e:
+            print(f"Error creating F1-Score vs Confidence plot: {e}")
+
 
 def main():
     """Main function to run the evaluation analysis"""
@@ -1993,7 +2264,8 @@ def main():
         analyzer.generate_confusion_matrix_tables_vs_confidence(output_dir=args.output_dir)
         analyzer.plot_tp_vs_confidence(output_dir=args.output_dir, show=args.show_plots)
         analyzer.plot_fp_vs_confidence(output_dir=args.output_dir, show=args.show_plots)
-        # analyzer.plot_precision_vs_weight(output_dir=args.output_dir, show=args.show_plots)
+        analyzer.plot_precision_vs_confidence(output_dir=args.output_dir, show=args.show_plots)  # New
+        analyzer.plot_f1_vs_confidence(output_dir=args.output_dir, show=args.show_plots)        # New
         
         # Generate performance metrics bar charts
         analyzer.plot_performance_metrics_bar(output_dir=args.output_dir, show=args.show_plots)
