@@ -157,14 +157,7 @@ class EvaluationAnalyzer:
 
     def load_time_data(self, file_paths, num_threads_list):
         """
-        Load and preprocess time data from multiple CSV files
-        
-        Args:
-            file_paths (list): List of paths to time data CSV files
-            num_threads_list (list): List of thread counts corresponding to each file
-            
-        Returns:
-            pandas.DataFrame: Processed time data
+        Load and preprocess time data from multiple CSV files with scientific notation support
         """
         try:
             if len(file_paths) != len(num_threads_list):
@@ -175,6 +168,8 @@ class EvaluationAnalyzer:
             
             for file_path, num_threads in zip(file_paths, num_threads_list):
                 print(f"  - {file_path} (threads: {num_threads})")
+                
+                # Read CSV with explicit handling of scientific notation
                 df = pd.read_csv(file_path)
                 
                 # Check required columns
@@ -184,6 +179,9 @@ class EvaluationAnalyzer:
                     raise ValueError(f"Missing required columns in {file_path}: {missing_cols}")
                 
                 df.rename(columns={'threads': 'num_threads'}, inplace=True)
+                
+                # Convert execution_time to numeric, handling scientific notation
+                df['execution_time'] = pd.to_numeric(df['execution_time'], errors='coerce')
                 
                 # Filter by threads
                 original_count = len(df)
@@ -221,17 +219,10 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error loading time data: {e}")
             return None
-    
+
     def load_summary_data(self, folder_paths, num_threads_list):
         """
-        Load and preprocess summary data from multiple folders
-        
-        Args:
-            folder_paths (list): List of paths to folders containing summary CSV files
-            num_threads_list (list): List of thread counts corresponding to each folder
-            
-        Returns:
-            pandas.DataFrame: Processed summary data
+        Load and preprocess summary data from multiple folders with scientific notation support
         """
         try:
             if len(folder_paths) != len(num_threads_list):
@@ -253,11 +244,16 @@ class EvaluationAnalyzer:
                     try:
                         # Extract technique name from filename
                         filename = os.path.basename(file_path)
-                        technique = filename.split('_')[1]  # Assuming format: summary_<technique>_<threads>_threads.csv
+                        technique = filename.split('_')[1]
                         if technique == 'GENIE3':
                             technique = f'{technique}_{filename.split("_")[2]}'
                         
                         df = pd.read_csv(file_path)
+                        
+                        # Convert performance metrics to numeric, handling scientific notation
+                        df['auroc'] = pd.to_numeric(df['auroc'], errors='coerce')
+                        df['aupr'] = pd.to_numeric(df['aupr'], errors='coerce')
+                        
                         df['technique'] = technique
                         df['num_threads'] = num_threads
                         dfs.append(df)
@@ -291,17 +287,10 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error loading summary data: {e}")
             return None
-    
+
     def load_curve_data(self, folder_paths, num_threads_list):
         """
-        Load and preprocess curve data from multiple folders
-        
-        Args:
-            folder_paths (list): List of paths to folders containing curve CSV files
-            num_threads_list (list): List of thread counts corresponding to each folder
-            
-        Returns:
-            pandas.DataFrame: Processed curve data
+        Load and preprocess curve data from multiple folders with scientific notation support
         """
         try:
             if len(folder_paths) != len(num_threads_list):
@@ -323,16 +312,21 @@ class EvaluationAnalyzer:
                     try:
                         # Extract technique name from filename
                         filename = os.path.basename(file_path)
-                        technique = filename.split('_')[2]  # Assuming format: curve_data_<technique>_<threads>_threads.csv
+                        technique = filename.split('_')[2]
                         if technique == 'GENIE3':
                             technique = f'{technique}_{filename.split("_")[3]}'
                         
                         df = pd.read_csv(file_path)
+                        
+                        # Convert all numeric columns to handle scientific notation
+                        numeric_columns = ['rank', 'fpr', 'tpr', 'recall', 'precision', 'weight', 'min_weight', 'L', 'P', 'N']
+                        for col in numeric_columns:
+                            if col in df.columns:
+                                df[col] = pd.to_numeric(df[col], errors='coerce')
+                        
                         df['technique'] = technique
                         df['num_threads'] = num_threads
-                        # df.rename(columns={'min_weight': 'weight'}, inplace=True)
                         dfs.append(df)
-                        
                         
                     except Exception as e:
                         print(f"    Warning: Could not load {file_path}: {e}")
@@ -343,7 +337,7 @@ class EvaluationAnalyzer:
             df_combined = pd.concat(dfs, ignore_index=True)
             
             # Handle missing values in curve data
-            required_curve_cols = ['rank', 'fpr', 'tpr', 'recall', 'precision', 'weight', 'L', 'P', 'N']
+            required_curve_cols = ['rank', 'fpr', 'tpr', 'recall', 'precision', 'weight', 'min_weight', 'L', 'P', 'N']
             available_cols = [col for col in required_curve_cols if col in df_combined.columns]
             
             missing_count = df_combined[available_cols].isna().sum().sum()
@@ -358,7 +352,44 @@ class EvaluationAnalyzer:
         except Exception as e:
             print(f"Error loading curve data: {e}")
             return None
-    
+
+    def validate_data_quality(self):
+        """
+        Validate data quality and report on scientific notation conversion
+        """
+        print("\n" + "="*60)
+        print("DATA QUALITY VALIDATION")
+        print("="*60)
+        
+        if self.time_data is not None:
+            print(f"\nTime Data Summary:")
+            print(f"  Total entries: {len(self.time_data)}")
+            print(f"  Execution time range: {self.time_data['execution_time'].min():.6e} to {self.time_data['execution_time'].max():.6e}")
+            print(f"  Missing values: {self.time_data['execution_time'].isna().sum()}")
+        
+        if self.summary_data is not None:
+            print(f"\nSummary Data Summary:")
+            print(f"  Total entries: {len(self.summary_data)}")
+            print(f"  AUROC range: {self.summary_data['auroc'].min():.6f} to {self.summary_data['auroc'].max():.6f}")
+            print(f"  AUPR range: {self.summary_data['aupr'].min():.6f} to {self.summary_data['aupr'].max():.6f}")
+            print(f"  Missing AUROC: {self.summary_data['auroc'].isna().sum()}")
+            print(f"  Missing AUPR: {self.summary_data['aupr'].isna().sum()}")
+        
+        if self.curve_data is not None:
+            print(f"\nCurve Data Summary:")
+            print(f"  Total entries: {len(self.curve_data)}")
+            
+            numeric_cols = ['fpr', 'tpr', 'recall', 'precision', 'weight', 'min_weight', 'L', 'P', 'N']
+            available_cols = [col for col in numeric_cols if col in self.curve_data.columns]
+            
+            for col in available_cols:
+                if col in self.curve_data.columns:
+                    col_data = self.curve_data[col]
+                    if len(col_data) > 0:
+                        min_val = col_data.min()
+                        max_val = col_data.max()
+                        print(f"  {col}: {min_val:.6e} to {max_val:.6e} (missing: {col_data.isna().sum()})")
+
     def combine_data(self, time_avg, summary_avg):
         """
         Combine time and summary data into a single DataFrame
@@ -2198,9 +2229,10 @@ class EvaluationAnalyzer:
                             FP = round(fpr * N)
                             precision = TP / (TP + FP) if (TP + FP) > 0 else 0
                         
-                        
-                        precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-                        recall = tpr  # TPR is recall
+                        if 'recall' in best_row:
+                            recall = best_row['recall']
+                        else:
+                            recall = best_row['tpr'] # TPR is recall
                         
                         # Calculate F1-score
                         if precision + recall > 0:
@@ -2288,6 +2320,9 @@ def main():
     time_avg = analyzer.load_time_data(args.time_file, args.threads)
     summary_avg = analyzer.load_summary_data(args.data_folder, args.threads)
     curve_data = analyzer.load_curve_data(args.data_folder, args.threads)
+    
+    # Validate data quality
+    analyzer.validate_data_quality()
     
     # Combine data
     if time_avg is not None and summary_avg is not None:
