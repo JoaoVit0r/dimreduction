@@ -33,6 +33,7 @@ def load_and_process_data(time_file, portion_file):
     
     # Map distribution types to aliases
     distribution_map = {
+        'demand': 'Dynamic Assignment',
         'demain': 'Dynamic Assignment',
         'sequential': 'Slice Groups', 
         'spaced': 'Stride Groups'
@@ -115,6 +116,12 @@ def create_plots(results_df, output_dir, figure_width=10, suffix=''):
         'Stride Groups': '^'
     }
     
+    linestyles = {
+        'Dynamic Assignment': '',
+        'Slice Groups': '--',
+        'Stride Groups': ''
+    }
+    
     # Calculate figure size (width x height)
     fig_width = figure_width
     fig_height = fig_width * 0.8  # Aspect ratio
@@ -126,8 +133,9 @@ def create_plots(results_df, output_dir, figure_width=10, suffix=''):
         dist_data = results_df[results_df['distribution'] == distribution].sort_values('threads')
         color = colors[distribution]
         marker = markers[distribution]
+        linestyle = linestyles[distribution]
         
-        ax1.plot(dist_data['threads'], dist_data['execution_time']/60, 
+        ax1.plot(dist_data['threads'], dist_data['execution_time']/60, linestyle,
                 label=distribution, color=color, marker=marker, linewidth=2, markersize=8)
     
     ax1.set_xlabel('Number of Threads', fontsize=12)

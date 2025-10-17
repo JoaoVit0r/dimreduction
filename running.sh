@@ -191,56 +191,58 @@ set -e
 
 
 
-# # Run Local FIX ENV TO DREAM5-from-geneci-data
-# cd $THESIS_HOME/virt_machine/java-dimreduction
-# sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
-# sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
-# sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
-# sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
-# sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
-# sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
-# sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
+# Run Local FIX ENV TO DREAM5-from-geneci-data
+cd $THESIS_HOME/virt_machine/java-dimreduction
+sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
+sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
+sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
+sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
+# sed -i "s/^TF_FILE_PATH=.*/TF_FILE_PATH=/home/jvski/Downloads/dist-20251016T140225Z-1-001/dist/dados/Network3_transcription_factors.tsv/g" .env;
 
-# cd $THESIS_HOME/dimreduction
-# sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
-# sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
-# sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
 
-# FORMATTED_INPUT_FILE=$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP_DimReduction/net3_exp.csv
+cd $THESIS_HOME/dimreduction
+sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
 
-# files=($(ls -la "$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP/" | grep "net3" | awk '{print $9}'))
-# for ORIGINAL_INPUT_FILE in "${files[@]}"; do
-# # for ORIGINAL_INPUT_FILE in "$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP/dream5_100"*; do
-#     ORIGINAL_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP/"$(basename "$ORIGINAL_INPUT_FILE")
-#     FORMATTED_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP_DimReduction/"$(basename "$ORIGINAL_INPUT_FILE")
+FORMATTED_INPUT_FILE=$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP_DimReduction/net3_exp.csv
 
-#     echo FORMATTED_INPUT_FILE: $FORMATTED_INPUT_FILE
-#     echo ORIGINAL_INPUT_FILE: $ORIGINAL_INPUT_FILE
+files=($(ls -la "$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP/" | grep "net3" | awk '{print $9}'))
+for ORIGINAL_INPUT_FILE in "${files[@]}"; do
+# for ORIGINAL_INPUT_FILE in "$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP/dream5_100"*; do
+    ORIGINAL_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP/"$(basename "$ORIGINAL_INPUT_FILE")
+    FORMATTED_INPUT_FILE="$THESIS_HOME/test_external_code/try_minet/input_data/geneci/DREAM5/EXP_DimReduction/"$(basename "$ORIGINAL_INPUT_FILE")
 
-#     # # Run Local JAVA DREAM5-from-geneci-data
-#     # ./run_all_monitoring.sh \
-#     #     --sleep-time 5 \
-#     #     --sleep-time-monitor 5 \
-#     #     --number-of-executions 1 \
-#     #     --thread-distribution none \
-#     #     --threads 1 \
-#     #     --repository-java $THESIS_HOME/virt_machine/java-dimreduction \
-#     #     --custom-input-file $FORMATTED_INPUT_FILE \
-#     #     java
+    echo FORMATTED_INPUT_FILE: $FORMATTED_INPUT_FILE
+    echo ORIGINAL_INPUT_FILE: $ORIGINAL_INPUT_FILE
 
-#     # Run Local Geneci DREAM5-from-geneci-data
-#     ./run_all_monitoring.sh --sleep-time 5 \
-#         --number-of-executions 1 \
-#         --sleep-time-monitor 5 \
-#         --thread-distribution none \
-#         --threads 1 \
-#         --repository-geneci $THESIS_HOME/test_external_code/try_minet \
-#         --custom-input-file $ORIGINAL_INPUT_FILE \
-#         --geneci-files dream5_scripts/run_geneci_aracne.sh,dream5_scripts/run_geneci_clr.sh \
-#         geneci;
-#     # # Run Local Python DREAM4
-#     # ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
-# done
+    # Run Local JAVA DREAM5-from-geneci-data
+    ./run_all_monitoring.sh \
+        --sleep-time 5 \
+        --sleep-time-monitor 5 \
+        --number-of-executions 1 \
+        --thread-distribution none \
+        --threads 1 \
+        --repository-java $THESIS_HOME/virt_machine/java-dimreduction \
+        --custom-input-file "/home/jvski/Downloads/dist-20251016T140225Z-1-001/dist/dados/Network3_expression_data_transposed.tsv" \
+        java
+
+    # # Run Local Geneci DREAM5-from-geneci-data
+    # ./run_all_monitoring.sh --sleep-time 5 \
+    #     --number-of-executions 1 \
+    #     --sleep-time-monitor 5 \
+    #     --thread-distribution none \
+    #     --threads 1 \
+    #     --repository-geneci $THESIS_HOME/test_external_code/try_minet \
+    #     --custom-input-file $ORIGINAL_INPUT_FILE \
+    #     --geneci-files dream5_scripts/run_geneci_aracne.sh,dream5_scripts/run_geneci_clr.sh \
+    #     geneci;
+    # # # Run Local Python DREAM4
+    # # ./run_all_monitoring.sh --sleep-time 5 --sleep-time-monitor 5 --number-of-executions 1 --thread-distribution none --threads 1 --custom-input-file $FORMATTED_INPUT_FILE --python-files main_from_cli.py venv_v12 venv_v13-nogil
+done
 
 
 
@@ -307,62 +309,62 @@ set -e
 # done
 
 
-# Run VM1 FIX ENV TO DREAM5-from-geneci-data
-THESIS_HOME_VM1="$HOME/virt_machine"
-cd $THESIS_HOME_VM1/dimreduction-java
-sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
-sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
-sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
-sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
-sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
-sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
-sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
+# # Run VM1 FIX ENV TO DREAM5-from-geneci-data
+# THESIS_HOME_VM1="$HOME/virt_machine"
+# cd $THESIS_HOME_VM1/dimreduction-java
+# sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+# sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+# sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+# sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
+# sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
+# sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
+# sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
 
-cd $THESIS_HOME_VM1/dimreduction-python
-sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
-sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
-sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
+# cd $THESIS_HOME_VM1/dimreduction-python
+# sed -i "s/^ARE_COLUMNS_DESCRIPTIVE=.*/ARE_COLUMNS_DESCRIPTIVE=false/g" .env;
+# sed -i "s/^ARE_TITLES_ON_FIRST_COLUMN=.*/ARE_TITLES_ON_FIRST_COLUMN=true/g" .env;
+# sed -i "s/^TRANSPOSE_MATRIX=.*/TRANSPOSE_MATRIX=false/g" .env;
 
-FORMATTED_INPUT_FILE=$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP_DimReduction/net3_exp.csv
+# FORMATTED_INPUT_FILE=$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP_DimReduction/net3_exp.csv
 
-files=($(ls -la "$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/" | grep "net3" | awk '{print $9}'))
-for ORIGINAL_INPUT_FILE in "${files[@]}"; do
-# for ORIGINAL_INPUT_FILE in "$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/net3"*; do
-    ORIGINAL_INPUT_FILE="$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/"$(basename "$ORIGINAL_INPUT_FILE")
-    FORMATTED_INPUT_FILE="$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP_DimReduction/"$(basename "$ORIGINAL_INPUT_FILE")
+# files=($(ls -la "$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/" | grep "net3" | awk '{print $9}'))
+# for ORIGINAL_INPUT_FILE in "${files[@]}"; do
+# # for ORIGINAL_INPUT_FILE in "$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/net3"*; do
+#     ORIGINAL_INPUT_FILE="$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP/"$(basename "$ORIGINAL_INPUT_FILE")
+#     FORMATTED_INPUT_FILE="$THESIS_HOME_VM1/dimreduction_external_comparisons/input_data/geneci/DREAM5/EXP_DimReduction/"$(basename "$ORIGINAL_INPUT_FILE")
 
-    echo FORMATTED_INPUT_FILE: $FORMATTED_INPUT_FILE
-    echo ORIGINAL_INPUT_FILE: $ORIGINAL_INPUT_FILE
-    # Run VM1 JAVA (DREAM5 from Geneci)
-    ./run_all_monitoring.sh --sleep-time 5 \
-        --number-of-executions 1 \
-        --thread-distribution demain \
-        --threads 1 \
-        --repository-python $THESIS_HOME_VM1/dimreduction-python \
-        --repository-java $THESIS_HOME_VM1/dimreduction-java \
-        --custom-input-file $FORMATTED_INPUT_FILE \
-        java;
+#     echo FORMATTED_INPUT_FILE: $FORMATTED_INPUT_FILE
+#     echo ORIGINAL_INPUT_FILE: $ORIGINAL_INPUT_FILE
+#     # Run VM1 JAVA (DREAM5 from Geneci)
+#     ./run_all_monitoring.sh --sleep-time 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution demain \
+#         --threads 1 \
+#         --repository-python $THESIS_HOME_VM1/dimreduction-python \
+#         --repository-java $THESIS_HOME_VM1/dimreduction-java \
+#         --custom-input-file $FORMATTED_INPUT_FILE \
+#         java;
 
-    # Run VM1 Geneci (DREAM5 from Geneci)
-    ./run_all_monitoring.sh --sleep-time 5 \
-        --number-of-executions 1 \
-        --thread-distribution none \
-        --threads 1 \
-        --repository-python $THESIS_HOME_VM1/dimreduction-python \
-        --repository-geneci $THESIS_HOME_VM1/dimreduction_external_comparisons \
-        --custom-input-file $ORIGINAL_INPUT_FILE \
-        --geneci-files dream5_scripts/run_geneci_aracne.sh,dream5_scripts/run_geneci_clr.sh,dream5_scripts/run_geneci_genie3-et.sh,dream5_scripts/run_geneci_genie3-rf.sh \
-        geneci;
+#     # Run VM1 Geneci (DREAM5 from Geneci)
+#     ./run_all_monitoring.sh --sleep-time 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution none \
+#         --threads 1 \
+#         --repository-python $THESIS_HOME_VM1/dimreduction-python \
+#         --repository-geneci $THESIS_HOME_VM1/dimreduction_external_comparisons \
+#         --custom-input-file $ORIGINAL_INPUT_FILE \
+#         --geneci-files dream5_scripts/run_geneci_aracne.sh,dream5_scripts/run_geneci_clr.sh,dream5_scripts/run_geneci_genie3-et.sh,dream5_scripts/run_geneci_genie3-rf.sh \
+#         geneci;
 
-    # more
-    ./run_all_monitoring.sh --sleep-time 5 \
-        --number-of-executions 1 \
-        --thread-distribution none \
-        --threads 1 \
-        --repository-python $THESIS_HOME_VM1/dimreduction-python \
-        --repository-geneci $THESIS_HOME_VM1/dimreduction_external_comparisons \
-        --custom-input-file $ORIGINAL_INPUT_FILE \
-        --geneci-files dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_mrnet.sh,dream5_scripts/run_geneci_bc3net.sh,dream5_scripts/run_geneci_c3net.sh,dream5_scripts/run_geneci_kboost.sh,dream5_scripts/run_geneci_mrnetb.sh,dream5_scripts/run_geneci_pcit.sh \
-        geneci;
+#     # more
+#     ./run_all_monitoring.sh --sleep-time 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution none \
+#         --threads 1 \
+#         --repository-python $THESIS_HOME_VM1/dimreduction-python \
+#         --repository-geneci $THESIS_HOME_VM1/dimreduction_external_comparisons \
+#         --custom-input-file $ORIGINAL_INPUT_FILE \
+#         --geneci-files dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_mrnet.sh,dream5_scripts/run_geneci_bc3net.sh,dream5_scripts/run_geneci_c3net.sh,dream5_scripts/run_geneci_kboost.sh,dream5_scripts/run_geneci_mrnetb.sh,dream5_scripts/run_geneci_pcit.sh \
+#         geneci;
 
-done
+# done
