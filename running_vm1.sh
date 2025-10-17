@@ -30,6 +30,8 @@ sed -i "s/^SAVE_FINAL_DATA=.*/SAVE_FINAL_DATA=true/g" .env;
 sed -i "s/^SAVE_FINAL_WEIGHT_DATA=.*/SAVE_FINAL_WEIGHT_DATA=true/g" .env;
 sed -i "s/^THRESHOLD=.*/THRESHOLD=1.0/g" .env;
 sed -i "s/^VERBOSITY_LEVEL=.*/VERBOSITY_LEVEL=0/g" .env;
+# sed -i "s/^QUANTIZATION_VALUE=.*/QUANTIZATION_VALUE=16/g" .env;
+# sed -i "s/^APPLY_QUANTIZATION_TYPE=.*/APPLY_QUANTIZATION_TYPE=0/g" .env;
 
 cd "$GENECI_FOLDER"
 sed -i "s/^QUANTIZATION_INPUT_FILE_PATH=.*/QUANTIZATION_INPUT_FILE_PATH=/g" .env;
@@ -57,27 +59,46 @@ for ORIGINAL_INPUT_FILE in "${files[@]}"; do
         --repository-java "$DIMREDUCTION_JAVA_FOLDER" \
         --custom-input-file "$FORMATTED_INPUT_FILE" \
         java;
-
-    # Run VM1 GENECI (DREAM5 from GENECI)
     ./run_all_monitoring.sh --sleep-time 5 \
         --number-of-executions 1 \
-        --thread-distribution none \
-        --threads 64 \
+        --thread-distribution demain \
+        --threads 1 \
         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
-        --repository-geneci "$GENECI_FOLDER" \
-        --custom-input-file "$ORIGINAL_INPUT_FILE" \
-        --geneci-files dream5_scripts/run_geneci_genie3-et.sh,dream5_scripts/run_geneci_genie3-rf.sh \
-        geneci;
+        --repository-java "$DIMREDUCTION_JAVA_FOLDER" \
+        --custom-input-file "$FORMATTED_INPUT_FILE" \
+        java;
+ 
+#     # Run VM1 GENECI (DREAM5 from GENECI)
+#     ./run_all_monitoring.sh --sleep-time 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution none \
+#         --threads 64 \
+#         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
+#         --repository-geneci "$GENECI_FOLDER" \
+#         --custom-input-file "$ORIGINAL_INPUT_FILE" \
+#         --geneci-files dream5_scripts/run_geneci_genie3-et.sh,dream5_scripts/run_geneci_genie3-rf.sh \
+#         geneci;
 
-    # more
-    ./run_all_monitoring.sh --sleep-time 5 \
-        --number-of-executions 1 \
-        --thread-distribution none \
-        --threads 64 \
-        --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
-        --repository-geneci "$GENECI_FOLDER" \
-        --custom-input-file "$ORIGINAL_INPUT_FILE" \
-        --geneci-files dream5_scripts/run_geneci_tigress.sh,dream5_scripts/run_geneci_kboost.sh \
-        geneci;
+#     # more
+#     ./run_all_monitoring.sh --sleep-time 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution none \
+#         --threads 64 \
+#         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
+#         --repository-geneci "$GENECI_FOLDER" \
+#         --custom-input-file "$ORIGINAL_INPUT_FILE" \
+#         --geneci-files dream5_scripts/run_geneci_kboost.sh \
+#         geneci;
+# 
+#     # more
+#     ./run_all_monitoring.sh --sleep-time 5 \
+#         --number-of-executions 1 \
+#         --thread-distribution none \
+#         --threads 60 \
+#         --repository-python "$DIMREDUCTION_PYTHON_FOLDER" \
+#         --repository-geneci "$GENECI_FOLDER" \
+#         --custom-input-file "$ORIGINAL_INPUT_FILE" \
+#         --geneci-files dream5_scripts/run_geneci_tigress.sh \
+#         geneci;
 
 done
